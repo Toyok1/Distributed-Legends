@@ -1,8 +1,4 @@
-/*GAME.CPP
-*corpo della classe Game. Qui verra' implementata la partita.
-*	AUTHORS:
-*		Andrea D'Arpa				
-* 		Davide Balestra				
+/*GAME.CPP		
 */
 
 #include "game.h"
@@ -10,14 +6,14 @@ const string start_s ="®";
 const string end_s ="©";
 const string empty_s ="○";
 const string busy_s ="●"; 
-	Game::Game():Menu(){									//costruttore di default
+	Game::Game():Menu(){									//default constuctor
 		
 		//i parametri ereditati verranno inizializzati dal costruttore di menu
 		
 		//i puntatori degli oggetti da impementare saranno inizializzati a Null
 	}
-	Game::Game(int p, bool mo):Menu(p, mo){		//costruttore con parametri rispettivamente: giocatori, mappa e modalità.
-		//i parametri ereditati verranno inizializzati dal costruttore di menu
+	Game::Game(int p, bool mo):Menu(p, mo){		//constructor with parameters respectively players, map and mode.
+		//hereditary parameters are initialized by Menu's constructor
 		
 		//Create the map Now
 		this->map=new Map(this->getMode());
@@ -31,7 +27,7 @@ const string busy_s ="●";
 		
 		this->initMap();
 		//this->parseMap();
-		//i puntatori degli oggetti da impementare saranno inizializzati a Null
+		//pointers to objects to be implemented will be initialized as Null
 	}
 
 	void Game::createPlayers(){
@@ -188,7 +184,7 @@ const string busy_s ="●";
 			else {	cout <<p->getName()<<" Salta il turno";getchar();system("clear");
 				p->setTurn(p->getTurn()-1);}
 				//handle the lock/skip a tourn state
-			winner=p->getName();			//tieni traccia per stampare il vincitore
+			winner=p->getName();			//keep track to print the winner's name.
 			p=p->next;
 			if (p->getTurn()==-1) p=p->next;	//handle the sentinel: it will be skipped
 	}	

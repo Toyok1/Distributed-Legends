@@ -1,8 +1,4 @@
-/*GAME.H
-*header della classe Game. Qui verra' implementata la partita.
-*	AUTHORS:
-*	Andrea D'Arpa				
-* 	Davide Balestra				
+/*GAME.H		
 */
 
 #include "menu.h"
@@ -15,7 +11,7 @@ using namespace std;
 
 class Game:public Menu{
 protected:
-	//i parametri di numero giocatori sono ereditati dalla classe madre Menu
+	//parameters about player number are inherited from the Menu class
 	string graphicMap[NLENGTH][MLENGTH];	
 
 public:
@@ -23,10 +19,8 @@ public:
 	Mazzo *mazzo;
 	Player *player;
 //constructors:
-	Game();								//costruttore di default
-	Game(int p, bool mo);		//costruttore con parametri rispettivamente: giocatori, mappa e modalità.
-
-//da implementare set e get degli oggetti da implementare
+	Game();								//default constructor  
+	Game(int p, bool mo);		//constructor with parameters respectively players, map and mode.
 	
 	//Method that creates a list of player (knowing player's number)
 	void createPlayers();

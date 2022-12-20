@@ -1,8 +1,3 @@
-/* Authors:	Davide Balestra
-*		Andrea D'Arpa
-*
-*  Description:	Implementation of of Map class
-*/
 
 #include "map.h"
 
@@ -103,7 +98,7 @@
 	Box* Map::genBox(){
 		Box *n;
 		int a;
-		int i= rand() % 100 + 1;	//estraction of the number for the probability cases
+		int i= rand() % 100 + 1;	//extraction of the number for the probability cases
 		if(i <= this->getAvg()){
 			n = new Box();
 		}
@@ -129,7 +124,7 @@
 					n=new Skull();
 					break;
 				default: 
-					cout <<"Si e' verificato un errore inaspettato" <<endl <<"Premere un tasto per continuare . . .";
+					cout <<"An unexpected error occurred" <<endl <<"Press any key to continue . . .";
 					getchar();
 					break;
 			}

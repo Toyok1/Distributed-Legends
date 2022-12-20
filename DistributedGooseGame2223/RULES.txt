@@ -1,32 +1,30 @@
-REGOLE - GIOCO DELL' OCA PAZZA:
+RULES - GIOCO DELL' OCA PAZZA:
 
--NUMERO DI GIOCATORI:  minimo 2
-Il gioco consiste nel procedere fino alla fine del tabellone la cui lunghezza può 
-variare da un minimo di 40 caselle a un massimo di 90 tramite un classico tiro di dadi. 
-Ci saranno vari bonus e malus durante il tragitto:
-ci saranno delle caselle con effetti particolari da tenere d'occhio.
-	START		è la casella di partenza... nulla vieta di tornarci
-	BRIDGE 		ripete il movimento del turno
-	INN    		fermo 1 turno
-	PRISION 	fermo 3 turni
-	LABIRINTH 	torna indietro del tuo ultimo tiro di dadi
-	SKULL    	torna alla casella START
-	END		HAI VINTO IL GIOCO!
+- NUMBER OF PLAYERS: minimum 2
+The goal of the game is getting to the end of the board whose length can
+vary from a minimum of 40 boxes to a maximum of 90 through a classic dice roll.
+There will be various bonuses and maluses along the way:
+there will be boxes with special effects to keep an eye on.
+	START: is the starting point... nothing prevents you from coming back here after you start
+	BRIDGE: repeats the movement of the turn
+	INN: stopped 1 round
+	PRISION: stopped 3 rounds
+	LABIRINTH: rolls back your last dice roll
+	SKULL: returns to the START box
+	END: YOU WIN THE GAME!
 
-inoltre ci saranno delle caselle particolari dove sarà possibile pescare una carta 
-dal mazzo in dotazione, che come le caselle hanno degli effetti particolari.
-le carte in questione sono
-	VUOTA 
-    	VAI AVANTI	avanza di una casella 
-    	STOP		salta un turno
-    	DICE-		ritira i dadi e arretra dei punti dati dal dado 
-    	DICE+		ritira i dadi e avanza  dei punti dati dal dado 
-    	GOP CARD	sposta il giocatore del turno successivo alla casella start 
+moreover there will be special boxes where it will be possible to draw a card
+from the supplied deck, which like the boxes have particular effects.
+the cards in question are:
+	EMPTY: does nothing
+    GO FORWARD: Advance one square
+    STOP: skips a turn
+    DICE-: reroll the dice and withdraw data points from the dice
+    DICE+: rerolls the dice and advances data points from the dice
+    GOP CARD: moves the next player to the start square
 
-A seconda della modalità di gioco scelta dall'utente nelle apposite impostazioni, 
-sarà detreminato il numero di caselle generato randomicamente.
-E' possibile modificare le opzioni di gioco rispettando le istruzioni che vengono fornite. 
-In caso di inserimento errato le impostazioni verranno lasciate come default.
-La sequenza di azione (ovvero il turno di gioco) sarà determinato dall'età dei giocatori (come nel gioco originale).
-
-
+Depending on the game mode chosen by the user in the appropriate settings,
+the number of boxes generated randomly will be determined.
+It is possible to change the game options by following the instructions provided.
+In case of incorrect entry the settings will be left as default.
+The sequence of action (ie the turn of the game) will be determined by the age of the players (as in the original game).

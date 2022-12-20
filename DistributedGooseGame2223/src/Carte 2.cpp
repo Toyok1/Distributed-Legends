@@ -1,11 +1,11 @@
-// Created by Andrea D'Arpa on 02/05/18.
+// Created by Andrea D'Arpa
 
 #include "Carte.h"
 
 using namespace std;
 
 
-//there'll be 6 type of cards that will be initialized in Main calling the constructor.
+//there'll be 6 types of cards that will be initialized in Main calling the constructor.
 
 void Carte::messaggio(){
     cout<< Name << ": "<< Description << endl;
@@ -32,39 +32,39 @@ int Carte::getId(){
 
 Carta_vuota::Carta_vuota(){
     setId(0);
-    setName("Carta Vuota");
-    setDescription("E che t'aspettavi?");
+    setName("Empty Card");
+    setDescription("Tough luck :(");
 }
 
 
 
 Carta_Avanti::Carta_Avanti(){
-    setName("AVANTI TUTTA!");
-    setDescription("avanti di 1");
+    setName("FULL THROTTLE!");
+    setDescription("Forward one square");
     setId(1);
 }
 
 Carta_Turno::Carta_Turno(){
-    setName("Bloccato!");
-    setDescription("ops, sei bloccato per un turno...");
+    setName("Stopped!");
+    setDescription("Whoopsie, you're stuck for one turn...");
     setId(2);
 }
 
 Carta_Tira_Avanti::Carta_Tira_Avanti(){
-    setName("Tira Ancora!");
-    setDescription("e vai avanti");
+    setName("Roll Again!");
+    setDescription("and go forward");
     setId(3);
 }
 
 
 Carta_Tira_Indietro::Carta_Tira_Indietro(){
-    setName("Tira Ancora, MA!");
-    setDescription("Questa volta vai dietro!");
+    setName("Roll Again, BUT!");
+    setDescription("go backwards!");
     setId(4);
 }
 
 Carta_Start::Carta_Start() {//porta un giocatore al punto di partenza
-        setName("Tanto va la gatta al lardo");
-          setDescription("che porta il giocatore succesivo al punto di partenza!");
+        setName("The pitcher goes so often to the well");
+          setDescription("that the next player goes back to the starting square!");
           setId(5);
       }

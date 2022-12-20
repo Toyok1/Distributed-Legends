@@ -1,7 +1,4 @@
 /*	BOX.H
-*	AUTHORS:
-*		Andrea D'Arpa
-*		Davide Balestra
 *
 *	DESCRIPTION:
 *		Header file of Box's class.

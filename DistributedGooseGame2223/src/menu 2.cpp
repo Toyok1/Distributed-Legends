@@ -1,8 +1,3 @@
-/*	Authors: Davide Balestra 
- *           Andrea D'Arpa   
- *	Date: 09-05-2018
- *	Implementation of class menu
- */
 
 #include "menu.h"
 
@@ -45,7 +40,7 @@ bool Menu::getMode(){
 }
 
 void Menu::displayAll(){
-   cout<< "MODALITA' = "<< getMode() << endl<<"premere un tasto per continuare. . . ";
+   cout<< "MODE = "<< getMode() << endl<<"Press any key to continue. . . ";
    getchar();getchar();
    system("clear");
     
@@ -63,9 +58,9 @@ void Menu::display(){
 	cout<<" |___| |____| |_|    "<<endl<<endl;
 
 	cout <<"Menu" <<endl;
-	cout <<" Nuova partita		(1)" <<endl;
-	cout <<" Opzioni		(2)" <<endl;
-	cout <<endl <<"Esci dal gioco	(3)"<<endl;
+	cout <<" New Game		(1)" <<endl;
+	cout <<" Options		(2)" <<endl;
+	cout <<endl <<"Exit Game	(3)"<<endl;
 }
 
 void Menu::choice(){
@@ -82,14 +77,14 @@ void Menu::choice(){
 		//Exit the game
 		case 3:
 			while ((i_tmp!=1)&&(i_tmp!=2)){
-				cout <<"Sei sicuro di voler uscire da GOP?" <<endl <<"(1) Si" <<endl <<"(2) No"<<endl;
+				cout <<"Are you sure you want to exit GOP?" <<endl <<"(1) Yes" <<endl <<"(2) No"<<endl;
 				getline(cin,tmp);
                 i_tmp=atoi(tmp.c_str());
 				switch(i_tmp){
 					case 1:
 						system("clear");
-						cout <<"Grazie per aver Giocato a GOP, alla prossima" <<endl;
-						cout <<"Premere un tasto per continuare . . .";
+						cout <<"Thanks for playing GOP, see you next time" <<endl;
+						cout <<"Press any key to continue . . .";
 						getchar();system("clear");
 						exit(1);
 						break;
@@ -97,13 +92,13 @@ void Menu::choice(){
 						system("clear");
 						break;
 					default:
-						cout <<"Scelta non consentita, scegli (0) per Si, (1) per No" <<endl;
+						cout <<"Wrong input, please select (0) for Yes or (1) for No" <<endl;
 						break;
 				}
 			}
             break;
         default:
-            cout << "Opzione non valida!" <<endl<<"premere un tasto per continuare. . . ";
+            cout << "Not valid!" <<endl<<"Press any key to continue . . .";
 			getchar();
 			system("clear");
             break;
@@ -114,11 +109,11 @@ void Menu::setOptions(){
     std::string s_c="";
     int c;
     while (true){
-        cout << "OPZIONI" << endl << endl;
-        cout << "Difficoltà             (1)"<<endl;
-        cout << "Regole                 (2)"<<endl;
+        cout << "OPTIONS" << endl << endl;
+        cout << "Difficulty             (1)"<<endl;
+        cout << "Rules                 (2)"<<endl;
         cout << "Credits                (3)"<<endl<<endl;
-        cout << "Menu Principale        (4)"<<endl<<endl;
+        cout << "Main Menu       (4)"<<endl<<endl;
         
         //input handled with cin, it hallows multiples input by spacing them with blanks, that can facilitates the option settings
         cin >> s_c;
@@ -129,21 +124,21 @@ void Menu::setOptions(){
                 int c;
                 s_c="";
 		system("clear");
-                cout << "DIFFICOLTA'" << endl;
+                cout << "DIFFICULTY'" << endl;
                 cout << "0) EASY " << endl << "1) HARD"<<endl;
-				cout << "Se il valore inserito non sarà consono, rimarrà impostato il valore di DEFAULT."<<endl;
+				cout << "In casae of a bad input, the default value of EASY will be chosen."<<endl;
                 cin >> s_c;
                 if (s_c=="0"||s_c=="1"){
 				c=atoi(s_c.c_str());
                 setMode((bool)c);
                 if (getMode())
-                    cout << "HARDCORE MODE" << endl<<"premere un tasto per continuare. . . "<<endl;
-                else cout << "EASY MODE" << endl<<"premere un tasto per continuare. . . "<<endl;
+                    cout << "HARDCORE MODE" << endl<<"Press any key to continue . . ."<<endl;
+                else cout << "EASY MODE" << endl<<"Press any key to continue . . ."<<endl;
         getchar();getchar();
 		system("clear");
 		break;
 			}
-			cout << "Difficoltà di default EASY MODE attiva."<<endl<<"premere un tasto per continuare. . . "<<endl;
+			cout << "Default difficulty EASY MODE activated."<<endl<<"Press any key to continue . . ."<<endl;
 			getchar();getchar();
 			system("clear");
 			break;
@@ -162,13 +157,13 @@ void Menu::setOptions(){
         
             case 4:
 		system("clear");
-                cout<<"ECCO LE OPZIONI ATTIVE AL MOMENTO:"<<endl;
+                cout<<"THESE ARE THE ACTIVE OPTIONS AT THE MOMENT:"<<endl;
                 this->displayAll();
                 return;
 		break;
         
             default:
-                cout << "ERRARE E' UMANO, PERSEVERARE ANCHE."<<endl<<"premere un tasto per continuare. . . ";
+                cout << "TO ERR IS HUMAN, TO PERSERVERE IS AS WELL."<<endl<<"Press any key to continue . . .";
 		getchar();getchar();
 		system("clear");
                 break;
@@ -179,7 +174,7 @@ void Menu::setOptions(){
 void Menu::parseFile(string name){
 	this->file_in.open(name);
 	if(!(this->file_in))
-		cout <<"C'è stato un errore nell'apertura del file, controlla che il file " << name <<" esista" <<endl ;
+		cout <<"Error while opening a file, please check if file " << name <<" exists" <<endl ;
 	else{
 		cout << "The file is Open . . ." <<endl <<name <<endl <<endl;
 		//parse the file
@@ -189,7 +184,7 @@ void Menu::parseFile(string name){
 		//this->parser='\';
 		this->file_in.close();
 	}
-	cout <<endl <<"Premere un tasto per continuare . . .";
+	cout <<endl <<"Press any key to continue . . .";
 	getchar();getchar();	
 }
 

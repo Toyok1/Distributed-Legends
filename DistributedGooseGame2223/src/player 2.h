@@ -1,10 +1,3 @@
-/* Authors:	Davide Balestra	
- *		Andrea D'Arpa	
- *		Matteo Celani	
- *
- * Date: 05-06-2018
- * Description: Header file of class Player
- */
 
 #include <iostream>
 #include <cstdlib>
@@ -22,7 +15,7 @@ class Player{
 		int nBox;
 		int d;			//save the last dice throw		
 	public:
-		Player *next;		//gestore lista giocatori
+		Player *next;		//player list handler
 		Box *position;		//current position on map
 		//Constructors
 		Player();

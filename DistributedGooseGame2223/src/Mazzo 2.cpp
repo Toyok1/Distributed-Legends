@@ -1,9 +1,5 @@
-//
-// Created by Andrea D'Arpa on 02/05/18.
-//
-
 #include "Mazzo.h"
- Mazzo::Mazzo() {             //genera il mazzo di carte ordinato.
+ Mazzo::Mazzo() {             //generates an ordered deck of cards.
    
         for (int i=0; i<10; i++){
             CartaMazzoEasy[i] = new Carta_vuota();
@@ -39,19 +35,20 @@ void Mazzo::Mischia(){
     int i;
     i = 40;
     Carte *tmp;
-    for (int p=0; p<40; p++){       //algoritmo che "mischia" le carte, generando un intero random che indicherà la posizione
-        int k;                      //da scambiare con l'ultimo elemento della lista, che andrà poi a scalare perchè già "scambiato"
+    for (int p=0; p<40; p++){       //"shuffling" algorithm, generates a random integes that dictates the position
+        int k;                      //will be swapped with the last element of the list, which will then increment because it was already swapped.
         k = rand() % i;
             tmp = this->CartaMazzoEasy[k];
             this->CartaMazzoEasy[k] = this->CartaMazzoEasy[i-1];
             this->CartaMazzoEasy[i] = tmp;
-        i--;                        //decremento dell' indice dell'ultima posizione
+        i--;                        //decrement last position index
     }
 this->setSegnalino(0);
 }
 
+
+
 Carte Mazzo::Pesca(){
-	//segnalino ++;                          //contatore che tiene conto della carta pescata e della prossima carta da pescare
    	if (segnalino <= 39 )
 	 return *CartaMazzoEasy[segnalino++];
 	else {
@@ -62,6 +59,6 @@ Carte Mazzo::Pesca(){
 }
 
 void Mazzo::stampa(){
-    int k=1;                            //funzione temporanea per il test!!!!DA ELIMINARE!!!
+    int k=1;                            //testing function, DELETE!!!
     for (auto &i : CartaMazzoEasy) { cout << i->getName() << " - "<< k <<" - " << i->getDescription() << endl ; k++;}
 }

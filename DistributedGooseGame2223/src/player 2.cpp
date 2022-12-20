@@ -1,10 +1,3 @@
-/* 	Authors:	 Davide Balestra
-			 Andrea D'Arpa
-			 Matteo Celani
-
-	Description: Implements the player class
-*/
-
 #include "player.h"
 
 
@@ -74,15 +67,14 @@ int Player::getDice(){
 
 
 void Player::Turn(Mazzo *m){
-	cout<< "E' IL TURNO DI: "<<this->getName()<<endl;
-	cout << "Premere invio per premere il dado . . .";
+	cout<< "IT'S "<<this->getName()<<"\'S TURN!"<<endl;
+	cout << "Press Enter to roll the dice . . .";
 	getchar();
 	this->setDice(this->dice());
-	//incrementi nbox e spostamento puntatore a mappa del pg
 	this->move(this->getDice(),false);
-	cout<<"WOW! hai tirato un bel "<<this->getDice()<<endl;
+	cout<<"WOW! you rolled a "<<this->getDice()<<endl;
 	this->action(m);
-	cout << "FINE DEL TURNO DI " <<this->getName()<<" PREMERE INVIO!";
+	cout << "END OF " <<this->getName()<<"\'S TURN! PRESS ENTER!";
 	getchar();
 	system("clear");
 }
@@ -94,20 +86,19 @@ return (x+rand()%6+1);
 }
 
 void Player::move(int x, bool v){	//if v is 0, move straight, else move backward
-//prende un personaggio e sposta il suo puntatore a casella di posizione rispetto al tiro di dadi
-//aggiorna il parametro position e il parametro nBox
+//takes a player and moves its pointer to the apopropriate box one at the time
+//updates the position and nBox parameters
 	for(x; x>0; x--){
 		if ((this->position->getId() != 1)&&(!v)){	
-			//muovi avanti solo se non sei in casella finale e v non è true
+			//go forward if it's not the final square AND v is false
 			this->position= this->position->next;
 			this->setNBox(this->getNBox()+1);
 		}
-		else if (this->position->prev!=NULL){					//sei andato oltre end box. torna indietro, solo se, Manage the back movement if we are in start  
+		else if (this->position->prev!=NULL){					
 			this->position=this->position->prev;
 			this->setNBox(this->getNBox()-1);
 			v=true;
 		}
-	//gestire limite di move back a start
 	}
 }
 
@@ -142,7 +133,7 @@ void Player::action(Mazzo *m){
 		default:
 			break;
 	}
-	cout <<"premere un tasto per continuare . . .";getchar();
+	cout <<"Press any key to continue . . .";getchar();
 	if(curr!=this->position)
 		this->action(m);	//iterate the action only if on a different box
 }
@@ -159,17 +150,17 @@ void Player::handleCard(Carte c, Mazzo *m){
 			this->setTurn(1);	//block for 1 turn
 			break;
 		case 3: //Throw straight
-			cout <<"premere invio per tirare i dadi . . .";
+			cout <<"Press enter to roll the dice . . .";
 			getchar();
 			this->setDice(this->dice());
 			cout <<"WOW! hai tirato un bel " <<this->getDice()<<endl;
 			this->move(this->getDice(),false);	//throw dice and move straight
 			break;
 		case 4: //throw back
-			cout <<"premere invio per tirare i dadi . . .";
+			cout <<"Press enter to roll the dice . . .";
 			getchar();
 			this->setDice(this->dice());
-			cout <<"WOW! hai tirato un bel "<<this->getDice()<<endl;
+			cout <<"WOW! You rolled a "<<this->getDice()<<endl;
 			this->move(this->getDice(),true);	//throw dice and move backward
 			break;
 		case 5:	//back to start a player
@@ -177,7 +168,7 @@ void Player::handleCard(Carte c, Mazzo *m){
 			if(app->getAge()==0)	app=app->next;	//skipping the sentinel
 			if(app->getTurn()==0)	//moving player only if is unblocked
 				app->move(app->getNBox()-1,true);		//next player goes to start box
-			else cout<<app->getName() <<" e' in prigione. Non puo' essere spostato";
+			else cout<<app->getName() <<" is in jail. He can't be moved.";
 			break;
 	}
 }

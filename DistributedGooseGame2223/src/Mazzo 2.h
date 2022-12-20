@@ -14,21 +14,21 @@
 
 class Mazzo{
 private:
-    Carte *CartaMazzoEasy[40];    	//vettore di puntatori a carte che fanno parte del mazzo
-    int segnalino; 	//contatore alla carta corrente da pescare 
+    Carte *CartaMazzoEasy[40];    	//array of pointers to cards that are part of the deck
+    int segnalino; 	//counter for the card to draw 
 public:
-    Mazzo(); //costruttore di default
+    Mazzo(); //default constructor
 
     //getters & setters
     void setSegnalino(int i); 
     int getSegnalino();
    
-//funzioni di gestione del mazzo
+//deck handling functions
 
-/*Mischia --> Genera un intero casuale (1-n), avviene uno swap tra la carta n e la carta k,
-              se coincidono, viene rigenerato un nuovo numero casuale, n viene decrementato ad ogni iterazione */
+/* Mischia --> Generate a random integer (1-n), swap between card n and card k,
+              if they match, a new random number is generated, n is decremented at each iteration */
     void Mischia();
-    Carte Pesca();	//ritorna la prima carta al top del mazzo
+    Carte Pesca();	//returns the first card of the deck
     void stampa();
 };
 #endif //GOP_MAZZO_H

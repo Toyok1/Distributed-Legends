@@ -1,7 +1,4 @@
 /*	BOX.H
-*	AUTHORS:
-*		Andrea D'Arpa
-*		Davide Balestra
 *
 *	DESCRIPTION:
 *		Header file of Box's class.
@@ -17,16 +14,16 @@ using namespace std;
 
 class Box{
 protected:
-	string name;						//nome della casella
-	string description;					//descrizione del tipo di casella
-	int id;							//intero che identifica il tipo di casella
+	string name;						//box name
+	string description;					//box description
+	int id;								//type of box
 	
 public:
-	Box *prev;						//parametri next prev per la gestione del cammino dei pg sulla mappa
+	Box *prev;							//next and prev are used to handle plaeyer's movement on the map.
 	Box *next;
 //constructors
-	Box();							//default constructor
-	Box(string n, string d, int id);			//costruttore con parametri
+	Box();								//default constructor
+	Box(string n, string d, int id);	//constructor with parameters
 	
 //SETTER METHODS
 	void setName(string n);
