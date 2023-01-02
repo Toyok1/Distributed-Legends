@@ -21,32 +21,32 @@ Menu::Menu(int playerAmount, bool mode)
 
 void Menu::setMenuOption(int option)
 {
-	this->menuOption = option;
+	this->MenuOption = option;
 }
 
 void Menu::setPlayerAmount(int playerAmount)
 {
-	this->playerAmount = playerAmount;
+	this->PlayerAmount = playerAmount;
 }
 
 void Menu::setMode(bool mode)
 {
-	this->mode = mode;
+	this->Mode = mode;
 }
 
 int Menu::getMenuOption()
 {
-	return this->menuOption;
+	return this->MenuOption;
 }
 
 int Menu::getPlayerAmount()
 {
-	return playerAmount;
+	return PlayerAmount;
 }
 
 bool Menu::getMode()
 {
-	return mode;
+	return Mode;
 }
 
 void Menu::displayAll()
@@ -79,7 +79,7 @@ void Menu::choice()
 {
 	std::string tmp = "";
 	int i_tmp = 3;
-	switch (this->menuOption)
+	switch (this->MenuOption)
 	{
 	case 1:
 		// New Game

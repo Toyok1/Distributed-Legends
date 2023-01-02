@@ -8,16 +8,16 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
-#include "CardDeck.h"
+#include "Mazzo.h"
 
 using namespace std;
 
 class Box
 {
 protected:
-	string name;				// box name
-	string description; // box description
-	int id;							// type of box
+	string Name;				// box name
+	string Description; // box description
+	int Id;							// type of box
 
 public:
 	Box *prev; // next and prev are used to handle plaeyer's movement on the map.

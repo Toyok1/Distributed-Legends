@@ -1,41 +1,38 @@
 /*GAME.H
-*header della classe Game. Qui verra' implementata la partita.
-*	AUTHORS:
-*	Andrea D'Arpa				
-* 	Davide Balestra				
-*/
+ *header della classe Game. Qui verra' implementata la partita.
+ */
 
 #include "menu.h"
-#include "Mazzo.h"
+#include "CardDeck.h"
 #include "map.h"
-const int MLENGTH =25;
-const int NLENGTH=15;
+const int MLENGTH = 25;
+const int NLENGTH = 15;
 using namespace std;
 
-
-class Game:public Menu{
+class Game : public Menu
+{
 protected:
-	//i parametri di numero giocatori sono ereditati dalla classe madre Menu
-	string graphicMap[NLENGTH][MLENGTH];	
+	// i parametri di numero giocatori sono ereditati dalla classe madre Menu
+	string graphicMap[NLENGTH][MLENGTH];
 
 public:
 	Map *map;
-	Mazzo *mazzo;
+	CardDeck *cardDeck;
 	Player *player;
-//constructors:
-	Game();								//costruttore di default
-	Game(int p, bool mo);		//costruttore con parametri rispettivamente: giocatori, mappa e modalità.
+	// constructors:
+	Game();														 // Default constructor
+	Game(int playerAmount, bool mode); // constructor with parameters respectively players, map and mode.
 
-//da implementare set e get degli oggetti da implementare
-	
-	//Method that creates a list of player (knowing player's number)
+	// da implementare set e get degli oggetti da implementare
+
+	// Method that creates a list of player (knowing player's number)
 	void createPlayers();
-	Player* sortInsert(Player *p);
+	Player *sortInsert(Player *player);
 	void displayPlayers();
-	void parseMap();	//parse the list and update the graphc map
+	void parseMap(); // parse the list and update the graphc map
 	void printMap();
-	void initMap();		//initialize the matrix with empty strings
-	bool isBusy(Box *b);
+	void initMap(); // initialize the matrix with empty strings
+	bool isBusy(Box *box);
 	void gameStart();
-	void prntLog(Player *p);
+	void prntLog(Player *player);
 };

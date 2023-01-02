@@ -1,8 +1,3 @@
-/* Authors:	Davide Balestra: 
- * 		Andrea D'Arpa:	 
- * 		Matteo Celani
- * Main file of GOP Project, include the main menu and the access of Game's functions
- */
 #ifndef GOP_DEF
 #define GOP_DEF
 #include <iostream>
@@ -19,43 +14,48 @@
 
 using namespace std;
 
-int main(){
+int main()
+{
     srand(time(NULL));
-    std::string s;
-    int x;
-    //defining structures needed for the game
-    //Menu is the static structure used to select game's options
-    //Game is the dinamic structure where actually runs the game
-    Menu m;
-    Game *g;
-    cout <<"Benvenuto in GOP! (Gioco dell'Oca Pazza)" <<endl;
-    //The menu will continues to show up until the user will choice to exit the game (q)
-    
-    while(true){
-	system("clear");
-	m.display();
-        //the input is made parsing a string to an integer so we can handle input errors
-        //not valid string (not numbers) will not be accepted
-        //string relatives to double/float values will take as integer (casting by truncation)
-        getline(cin,s);
-        x=atoi(s.c_str());
-        m.setX(x);
-        m.choice();
-	
-	//If the user has choice New Game
-	if(m.getX()==1){
-		system("clear");
-		//the static attributes are setted by the user or default
-		//Now, creating the data structures for the game
-		cout <<"Numero giocatori " <<endl <<"in caso di inserimento errato, rimarrà il numero di giocatori di default: 2"<<endl <<"Insert Here: " ;
-		getline(cin,s);
-		x=atoi(s.c_str());
-		cout <<"La partita e' stata avviata, buon divertimento!" <<endl <<"Premere un tasto per continuare . . .";
-		getchar();
-		system("clear");
-		g = new Game(x,m.getMode());
-		g->gameStart();
-	}
+    std::string input;
+    int menuOption;
+    // defining structures needed for the game
+    // Menu is the static structure used to select game's options
+    // Game is the dinamic structure where actually runs the game
+    Menu menu;
+    Game *game;
+    cout << "Welcome to GOP! (Gioco dell'Oca Pazza)" << endl;
+    // The menu will continues to show up until the user will choice to exit the game (q)
 
+    while (true)
+    {
+        system("clear");
+        menu.display();
+        // the input is made parsing a string to an integer so we can handle input errors
+        // not valid string (not numbers) will not be accepted
+        // string relatives to double/float values will take as integer (casting by truncation)
+        getline(cin, input);
+        menuOption = atoi(input.c_str());
+        menu.setMenuOption(menuOption);
+        menu.choice();
+
+        // If the user has choice New Game
+        if (menu.getMenuOption() == 1)
+        {
+            system("clear");
+            // the static attributes are setted by the user or default
+            // Now, creating the data structures for the game
+            cout << "Number of players " << endl
+                 << "The default number is 2 and it will stay as the selected number in case of a bad input" << endl
+                 << "Insert Here: ";
+            getline(cin, input);
+            menuOption = atoi(input.c_str());
+            cout << "The game has started, have fun!" << endl
+                 << "Press any key to continue . . .";
+            getchar();
+            system("clear");
+            game = new Game(menuOption, menu.getMode());
+            game->gameStart();
+        }
     }
 }

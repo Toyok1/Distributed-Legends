@@ -33,8 +33,8 @@ public:
      Menu(int pn, bool mo);
     
     //set methods
-    void setX(int x);
-    void setPlayer_n(int n);
+    void setMenuOption(int x);
+    void setPlayerAmount(int n);
     void setMode(bool n);
     
     //get methods

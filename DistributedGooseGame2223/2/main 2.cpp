@@ -16,40 +16,40 @@ using namespace std;
 
 int main(){
     srand(time(NULL));
-    std::string s;
-    int x;
+    std::string input;
+    int menuOption;
     //defining structures needed for the game
     //Menu is the static structure used to select game's options
     //Game is the dinamic structure where actually runs the game
-    Menu m;
-    Game *g;
+    Menu menu;
+    Game *game;
     cout <<"Welcome to GOP! (Gioco dell'Oca Pazza)" <<endl;
     //The menu will continues to show up until the user will choice to exit the game (q)
     
     while(true){
 	system("clear");
-	m.display();
+	menu.display();
         //the input is made parsing a string to an integer so we can handle input errors
         //not valid string (not numbers) will not be accepted
         //string relatives to double/float values will take as integer (casting by truncation)
-        getline(cin,s);
-        x=atoi(s.c_str());
-        m.setX(x);
-        m.choice();
+        getline(cin,input);
+        menuOption=atoi(input.c_str());
+        menu.setMenuOption(menuOption);
+        menu.choice();
 	
 	//If the user has choice New Game
-	if(m.getX()==1){
+	if(menu.getX()==1){
 		system("clear");
 		//the static attributes are setted by the user or default
 		//Now, creating the data structures for the game
 		cout <<"Number of players " <<endl <<"the default number is 2 and it will stay as the selected number in case of a bad input"<<endl <<"Insert Here: " ;
-		getline(cin,s);
-		x=atoi(s.c_str());
+		getline(cin,input);
+		menuOption=atoi(input.c_str());
 		cout <<"The game has started, have fun!" <<endl <<"Press any key to continue . . .";
 		getchar();
 		system("clear");
-		g = new Game(x,m.getMode());
-		g->gameStart();
+		game = new Game(menuOption,menu.getMode());
+		game->gameStart();
 	}
 
     }

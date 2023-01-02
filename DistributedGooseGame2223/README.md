@@ -1,6 +1,6 @@
 GOP - GIOCO DELL'OCA PAZZA
 ------------------------------------------------------------------------------------------------------------------------------
-Progetto Programmazione A.A.2017/2018
+Progetto Programmazione A.A.2022/2023
 Corso di Programmazione - Facoltà di Scienze Informatiche
 Alma Mater Studiorum
 Bologna (BO)
@@ -18,8 +18,8 @@ ENJOY YOUR GAME!
 You will find all project information in our documentation file.
 
                                                                                            Andrea D'Arpa
-                                                                                           Davide Balestra
-                                                                                           Matteo Celani
+                                                                                           Simone Branchetti
+                                                                                           Benedicte Myrvoll
                                                                                                     
                                                                                                    
                                                                                                   

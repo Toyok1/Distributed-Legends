@@ -1,5 +1,5 @@
-output: main.cpp menu.o game.o Carte.o Mazzo.o player.o box.o map.o
-	g++ main.cpp menu.o game.o Carte.o Mazzo.o player.o box.o map.o -o ../GOP
+output: main.cpp menu.o game.o Card.o CardDeck.o player.o box.o map.o
+	g++ main.cpp menu.o game.o Card.o CardDeck.o player.o box.o map.o -o ../GOP
 	rm *.o *.h.gch
 	@echo Main - Done
 	@echo Everything Done!
@@ -12,16 +12,16 @@ map.o: map.cpp map.h box.h
 	g++ -c map.cpp map.h box.h
 	@echo Map - done
 
-game.o: game.cpp game.h menu.h Mazzo.h player.h map.h
-	g++ -c game.cpp game.h menu.h Mazzo.h player.h map.h
+game.o: game.cpp game.h menu.h CardDeck.h player.h map.h
+	g++ -c game.cpp game.h menu.h CardDeck.h player.h map.h
 	@echo GAME - Done
 
-Mazzo.o: Mazzo.cpp Mazzo.h Carte.h
-	g++ -c Mazzo.cpp Mazzo.h Carte.h
-	@echo MAZZO - done
+CardDeck.o: CardDeck.cpp CardDeck.h Card.h
+	g++ -c CardDeck.cpp CardDeck.h Card.h
+	@echo CardDeck - done
 
-Carte.o: Carte.cpp Carte.h
-	g++ -c Carte.cpp Carte.h
+Card.o: Card.cpp Card.h
+	g++ -c Card.cpp Card.h
 	@echo CARTE - done
 
 player.o: player.cpp player.h

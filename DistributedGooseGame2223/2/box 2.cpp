@@ -14,7 +14,6 @@ Box::Box()
 	this->prev = NULL;
 	this->next = NULL;
 } // default constructor
-
 Box::Box(string name, string description, int id)
 { // costruttore con parametri
 	setName(name);
@@ -24,14 +23,14 @@ Box::Box(string name, string description, int id)
 	this->next = NULL;
 }
 // SETTER METHODS
-void Box::setName(string name) { this->name = name; }
-void Box::setDescription(string description) { this->description = description; }
-void Box::setId(int id) { this->id = id; }
+void Box::setName(string name) { this->Name = name; }
+void Box::setDescription(string description) { this->Description = description; }
+void Box::setId(int id) { this->Id = id; }
 
 // GETTER METHODS
-string Box::getName() { return this->name; }
-string Box::getDescription() { return this->description; }
-int Box::getId() { return this->id; }
+string Box::getName() { return this->Name; }
+string Box::getDes() { return this->Description; }
+int Box::getId() { return this->Id; }
 
 // Display box's info
 void Box::display()
