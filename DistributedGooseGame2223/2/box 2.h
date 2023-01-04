@@ -8,7 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
-#include "Mazzo.h"
+#include "Mazzo 2.h"
 
 using namespace std;
 
@@ -33,7 +33,7 @@ public:
 
 	// GETTER METHODS
 	string getName();
-	string getDescription();
+	string getDes();
 	int getId();
 
 	void display();

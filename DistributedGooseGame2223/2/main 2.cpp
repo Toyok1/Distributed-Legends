@@ -8,7 +8,7 @@
 #include <sstream>
 #include <ctime>
 #include <fstream>
-#include "game.h"
+#include "game 2.h"
 #define const INT_MAX 5;
 #endif
 

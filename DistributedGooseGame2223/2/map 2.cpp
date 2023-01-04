@@ -1,5 +1,5 @@
 
-#include "map.h"
+#include "map 2.h"
 
 	Map::Map(bool mode){
 		this->init=new Start();

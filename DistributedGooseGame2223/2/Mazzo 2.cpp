@@ -1,4 +1,4 @@
-#include "Mazzo.h"
+#include "Mazzo 2.h"
  Mazzo::Mazzo() {             //generates an ordered deck of cards.
    
         for (int i=0; i<10; i++){

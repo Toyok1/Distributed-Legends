@@ -1,9 +1,9 @@
 /*GAME.H		
 */
 
-#include "menu.h"
-#include "Mazzo.h"
-#include "map.h"
+#include "menu 2.h"
+#include "Mazzo 2.h"
+#include "map 2.h"
 const int MLENGTH =25;
 const int NLENGTH=15;
 using namespace std;

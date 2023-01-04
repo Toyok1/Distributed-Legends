@@ -3,7 +3,7 @@
  *		Implementation of Box's class.
  */
 
-#include "box.h"
+#include "box 2.h"
 
 // constructors
 Box::Box()
@@ -35,7 +35,7 @@ int Box::getId() { return this->Id; }
 // Display box's info
 void Box::display()
 {
-	cout << this->getName() << " - " << this->getDescription() << endl;
+	cout << this->getName() << " - " << this->getDes() << endl;
 }
 
 // Now defining the constructor of subclasses

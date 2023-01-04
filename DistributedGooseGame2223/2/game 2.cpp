@@ -1,7 +1,7 @@
 /*GAME.CPP		
 */
 
-#include "game.h"
+#include "game 2.h"
 const string start_s ="®";
 const string end_s ="©";
 const string empty_s ="○";

@@ -9,7 +9,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <ctime>
-#include "Carte.h"
+#include "Carte 2.h"
 
 
 class Mazzo{

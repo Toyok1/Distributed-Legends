@@ -9,7 +9,7 @@
 #include<cstdio>
 #include<cstdlib>
 #include<ctime>
-#include "player.h"
+#include "player 2.h"
 
 using namespace std;
 class Map{

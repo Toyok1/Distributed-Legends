@@ -2,8 +2,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
-#include "box.h"
-#include "Mazzo.h"
+#include "box 2.h"
+#include "Mazzo 2.h"
 
 using namespace std;
 
