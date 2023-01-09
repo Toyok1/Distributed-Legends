@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+service ChatService {
+  rpc Connect(ConnectRequest) returns (ConnectResponse) {}
+  rpc Disconnect(DisconnectRequest) returns (DisconnectResponse) {}
+  rpc SendMessage(SendMessageRequest) returns (stream SendMessageResponse) {}
+}
+
+message ConnectRequest {
+  string name = 1;
+}
+
+message ConnectResponse {
+  string message = 1;
+}
+
+message DisconnectRequest {
+  string name = 1;
+}
+
+message DisconnectResponse {
+  string message = 1;
+}
+
+message SendMessageRequest {
+  string name = 1;
+  string message = 2;
+}
+
+message SendMessageResponse {
+  string name = 1;
+  string message = 2;
+}
