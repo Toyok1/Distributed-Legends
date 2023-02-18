@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package grpc;
+
+message Empty {}
+
+// I called it Note because message Message sounds complicated
+message Note { // must be remove
+    string name = 1;
+    string message = 2;
+}
+
+message PrivateInfo{
+    bytes ip = 1;
+    string user = 2;
+}
+
+message Ping {
+    bytes ip = 1;
+}
+
+message Pong {
+    string message = 1;
+}
+
+message GameStatus {
+    string timeStamp = 1;
+    string playerPositions = 2; // stringified array of position
+    string lastPlayer = 3; // sender of messge    
+}
+
+message Map {
+    int32 length = 1;
+    string board = 2; // ["utente1","utente2"][hp1, hp2]
+}
+
+message Health{
+    bytes ip = 1;
+    int32 hp = 2; 
+    string user = 3;
+}
+
+service ChatServer {
+    // This bi-directional stream makes it possible to send and receive Notes between 2 persons
+    rpc ChatStream (Empty) returns (stream Note);
+    rpc SendNote (Note) returns (Empty);
+    rpc SendPrivateInfo (PrivateInfo) returns (Empty);
+    rpc SendPing(Ping) returns (Pong);
+    rpc StartGame(PrivateInfo) returns(Map);
+    rpc SendHealth(Health) returns(Empty);
+    rpc HealthStream(Empty) returns(stream Health);
+    rpc GetActiveMap(Empty) returns(Map);
+    rpc FinishGame(Empty) returns(Note);
+    rpc EndTurn(PrivateInfo) returns(Empty);
+    rpc TurnStream (Empty) returns (stream PrivateInfo);
+}
+// python3 -m grpc_tools.protoc -I=. --python_out=. --grpc_python_out=. chat.proto 
+// python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. chat.proto      --Simone is a very special boy
