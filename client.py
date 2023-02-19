@@ -14,7 +14,7 @@ from requests import get
 from cryptography.fernet import Fernet
 
 #address = 'localhost'
-port = 11912 # decide if change this port
+port = 11912 # decide if we have to change this port
 key = b'ZhDach4lH7NbH-Gy9EfN2e2HNrWRfbBFD8zeCTBgdEA='
 
 class Client:

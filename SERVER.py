@@ -1,16 +1,21 @@
 import grpc
 import time
-
+import random
+import threading
 from concurrent import futures
 
-import chat_pb2
-import chat_pb2_grpc
+import chat_pb2 as chat
+import chat_pb2_grpc as rpc
 
-class ChatServer(chat_pb2_grpc.ChatServiceServicer):
+from requests import get
+from cryptography.fernet import Fernet
+
+port = 11912 # decide if we have to change this port
+key = b'ZhDach4lH7NbH-Gy9EfN2e2HNrWRfbBFD8zeCTBgdEA='
+
+class ChatServer(rpc.ChatServiceServicer):
     def __init__(self):
-<<<<<<< Updated upstream
         self.clients = []
-=======
         # List with all the chat history
         self.chats = []
         self.hp = []
@@ -21,19 +26,17 @@ class ChatServer(chat_pb2_grpc.ChatServiceServicer):
         self.activeMap = chat.Map()
         self.activeMap.board = ""
         self.isStartedGame = False
->>>>>>> Stashed changes
 
     def Connect(self, request, context):
         print(f"{request.name} has connected")
         self.clients.append(request.name)
-        return chat_pb2.ConnectResponse(message=f"Welcome, {request.name}!")
+        return chat.ConnectResponse(message=f"Welcome, {request.name}!")
 
-<<<<<<< Updated upstream
     def Disconnect(self, request, context):
         print(f"{request.name} has disconnected")
         self.clients.remove(request.name)
-        return chat_pb2.DisconnectResponse(message=f"Goodbye, {request.name}!")
-=======
+        return chat.DisconnectResponse(message=f"Goodbye, {request.name}!")
+
     def  __updateUserList(self, req_ip):
         for  utente  in  self.listUser:
             if  utente["ip"]  ==  req_ip: 
@@ -107,7 +110,6 @@ class ChatServer(chat_pb2_grpc.ChatServiceServicer):
                 n.hp = self.hp[lastindex]["hp"]
                 lastindex += 1
                 yield n
->>>>>>> Stashed changes
 
     def SendMessage(self, request, context):
         print(f"{request.name}: {request.message}")
@@ -115,12 +117,6 @@ class ChatServer(chat_pb2_grpc.ChatServiceServicer):
             if client != request.name:
                 yield chat_pb2.SendMessageResponse(name=request.name, message=request.message)
 
-<<<<<<< Updated upstream
-def serve():
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    chat_pb2_grpc.add_ChatServiceServicer_to_server(ChatServer(), server)
-    server.add_insecure_port("[::]:50051")
-=======
     def SendPrivateInfo(self, request: chat.PrivateInfo, context):
         """
         This method is called when a clients sends a PrivateInfo to the server.
@@ -201,13 +197,9 @@ if __name__ == '__main__':
     # gRPC basically manages all the threading and server responding logic, which is perfect!
     print('Starting server. Listening...')
     server.add_insecure_port('[::]:' + str(port))
->>>>>>> Stashed changes
     server.start()
     try:
         while True:
             time.sleep(86400)
     except KeyboardInterrupt:
         server.stop(0)
-
-if __name__ == "__main__":
-    serve()
