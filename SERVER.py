@@ -1,3 +1,4 @@
+from concurrent import futures
 import grpc
 import time
 import random
@@ -7,66 +8,70 @@ from concurrent import futures
 import chat_pb2 as chat
 import chat_pb2_grpc as rpc
 
-from requests import get
 from cryptography.fernet import Fernet
 
 port = 11912 # decide if we have to change this port
 key = b'ZhDach4lH7NbH-Gy9EfN2e2HNrWRfbBFD8zeCTBgdEA='
 
-class ChatServer(rpc.ChatServiceServicer):
+class ChatServer(rpc.ChatServerServicer):
     def __init__(self):
         self.clients = []
         # List with all the chat history
         self.chats = []
         self.hp = []
         self.turns = []
-        self.listUser = [] #  every element is a dictionary with  {"name":  username,  "ip": user public ip , "ping_time": timestamp of last pingpong , "role": Bool}
+        self.listUser = [] #  every element is a dictionary with  {"user":  username,  "ip": user public ip , "ping_time": timestamp of last pingpong , "player_type": int}
         self.fernet = Fernet(key)   
         threading.Thread(target=self.__clean_user_list, daemon=True).start()
         self.activeMap = chat.Map()
         self.activeMap.board = ""
         self.isStartedGame = False
 
-    def Connect(self, request, context):
-        print(f"{request.name} has connected")
-        self.clients.append(request.name)
-        return chat.ConnectResponse(message=f"Welcome, {request.name}!")
-
-    def Disconnect(self, request, context):
-        print(f"{request.name} has disconnected")
-        self.clients.remove(request.name)
-        return chat.DisconnectResponse(message=f"Goodbye, {request.name}!")
-
     def  __updateUserList(self, req_ip):
         for  utente  in  self.listUser:
             if  utente["ip"]  ==  req_ip: 
-                utente["ping_time"]  =  time.time() 
+                utente["ping_time"]  =  time.time()
+
+    def __clean_user_list(self):
+        # il tempo lo calcola il server
+        while True: 
+            #print("Player List", self.listUser)
+            for user in self.listUser:
+                if (int(time.time()) - int(user["ping_time"])) > 5 :
+                    self.listUser.remove(user)
+            time.sleep(2.5) 
     
     '''def __createBoard(self):
         self.activeMap.length = random.randint(40,90)
         self.activeMap.board =  str(random.choices(range(0,  8), k = self.activeMap.length))'''
 
     def __distributeHealth(self):
-        random.choice(self.listUser)["role"] = True
+        random.choice(self.listUser)["player_type"] = 1
         for user in self.listUser:
-            if user["role"]:
-                self.hp.append({"ip": user["ip"], "hp": 100, "user": user["name"]}) #TODO tweak values
+            if user["player_type"] == 1:
+                self.hp.append({"ip": user["ip"], "hp": 100, "user": user["user"], "player_type": 1}) #TODO tweak values
             else:
-                self.hp.append({"ip": user["ip"], "hp": 50, "user": user["name"]}) #TODO tweak values
+                self.hp.append({"ip": user["ip"], "hp": 50, "user": user["user"], "player_type": 0}) #TODO tweak values
         
         length = len(self.hp)
 
         values = []
         values2 = []
+        values3 = []
+        values4 = []
         for d in self.hp:
                 values.append(d["user"])
-        for d in self.hp:
                 values2.append(d["hp"])
+                values3.append(d["player_type"])
+                values4.append(d["ip"])
 
         board = str(values) + str(values2)
         mmmap = chat.Map()
         mmmap.length = length
         mmmap.board = board
+        mmmap.player_type = str(values3)
+        mmmap.ip = str(values4)
+        print(mmmap)
         self.activeMap = mmmap
     
     # The stream which will be used to send new messages to clients
@@ -87,9 +92,23 @@ class ChatServer(rpc.ChatServiceServicer):
                 lastindex += 1
                 yield n
 
+    def SendNote(self, request: chat.Note, context):
+        """
+        This method is called when a clients sends a Note to the server.
+        :param request:
+        :param context:
+        :return:
+        """
+        # this is only for the server console
+        print("[{}] {}".format(request.name, request.message))
+        # Add it to the chat history
+        self.chats.append(request)
+        return chat.Empty()  # something needs to be returned required by protobuf language, we just return empty msg
+
     def SendHealth(self, request: chat.Health, context):
-        new_h = {"ip": self.fernet.decrypt(request.ip).decode(), "hp": request.hp}
+        new_h = {"ip": self.fernet.decrypt(request.ip).decode(), "hp": request.hp, "user": str(request.user)}
         self.hp.append(new_h)
+        #print(new_h)
         return chat.Empty()
     
     def HealthStream(self, request_iterator, context):
@@ -108,14 +127,10 @@ class ChatServer(rpc.ChatServiceServicer):
                 n = chat.Health()
                 n.ip = self.fernet.encrypt(self.hp[lastindex]["ip"].encode())
                 n.hp = self.hp[lastindex]["hp"]
+                n.user = self.hp[lastindex]["user"]
+                #print(n)
                 lastindex += 1
                 yield n
-
-    def SendMessage(self, request, context):
-        print(f"{request.name}: {request.message}")
-        for client in self.clients:
-            if client != request.name:
-                yield chat_pb2.SendMessageResponse(name=request.name, message=request.message)
 
     def SendPrivateInfo(self, request: chat.PrivateInfo, context):
         """
@@ -128,7 +143,7 @@ class ChatServer(rpc.ChatServiceServicer):
         user = request.user
         decMessage = self.fernet.decrypt(encMessage).decode()
         
-        new_user  =  {"name":  user,  "ip":  decMessage,  "ping_time":  time.time(), "role": False}
+        new_user  =  {"user":  user,  "ip":  decMessage,  "ping_time":  time.time(), "player_type": 0}
         if len(self.listUser) == 0:
             self.turns.append(request)
         self.listUser.append(new_user)
@@ -147,9 +162,9 @@ class ChatServer(rpc.ChatServiceServicer):
 
         for i in range(0,len(self.listUser)):
             #if self.listUser[i]["ip"] == ipLast:
-            if userLast == self.listUser[i]["name"]:
+            if userLast == self.listUser[i]["user"]:
                 ipNext = self.listUser[(i+1)%len(self.listUser)]["ip"]
-                userNext = self.listUser[(i+1)%len(self.listUser)]["name"]
+                userNext = self.listUser[(i+1)%len(self.listUser)]["user"]
         r = chat.PrivateInfo() #create the return message, encrypt the ip and send it in broadcast to everyone.
         r.ip = self.fernet.encrypt(ipNext.encode()) #TODO: create the methods to recieve the broadcast
         r.user = userNext
@@ -174,7 +189,7 @@ class ChatServer(rpc.ChatServiceServicer):
         print('StartGame', self.listUser)
         ip = self.fernet.decrypt(request.ip).decode()
         #if self.listUser[0]["ip"] == ip:    #TODO quando si testa su macchine diverse usare l'ip
-        if self.listUser[0]["name"] == request.user:
+        if self.listUser[0]["user"] == request.user:
             print("L'host è onnipotente")
             self.isStartedGame = True
             self.__distributeHealth()

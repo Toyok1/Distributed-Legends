@@ -32,6 +32,8 @@ message GameStatus {
 message Map {
     int32 length = 1;
     string board = 2; // ["utente1","utente2"][hp1, hp2]
+    string player_type = 3; //["1","0"]
+    string ip = 4; //["enc_ip","enc_ip"]
 }
 
 message Health{

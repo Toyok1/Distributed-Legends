@@ -22,11 +22,11 @@ class Client:
     def __init__(self, u: str, a: str, window):
         # the frame to put ui components on
         self.window = window
+        self.myHp = 1
         self.username = u
         self.map = chat.Map()
         self.map.length = 0
-        self.listHealth = []
-        #self.map.length = 0
+        self.listHealth = [] # [{"ip": ip, "hp": hp, "user": user},{},{},{}]
         self.myTurn = False
 
         self.ip = get('https://api.ipify.org').content.decode('utf8')
@@ -75,12 +75,15 @@ class Client:
         when waiting for new messages
         """
         for health in self.conn.HealthStream(chat.Empty()): # this line will wait for new messages from the server!
-            req_ip = self.fernet.decrypt(health.ip).decode()  
-            print("R[{}] {}".format(health.user, health.hp)) 
+            req_ip = self.fernet.decrypt(health.ip).decode()
+            print("------")  
+            print(health, "HEALTH") 
             for  utente  in  self.listHealth:
                 #if  utente["ip"]  ==  req_ip: 
-                if  utente["name"]  ==  health.user:
+                if  utente["user"]  ==  health.user:
                     utente["hp"]  =  health.hp
+                if utente["user"] == self.username:
+                    self.myHp = health.hp
 
     def __listen_for_turns(self):
         time.sleep(0.5) #some wait time before running to ensure that the ui gets created in time 
@@ -89,7 +92,11 @@ class Client:
             #if self.fernet.decrypt(turn.ip).decode() == self.ip:   
                 print("Mio turno: " + self.username)
                 self.turn_button["state"] = "normal"
-                #TODO start the turn
+                #if miei hp <= 0 endturn + interfaccia "you died"
+                if self.myHp <= 0:
+                    print("YOU DIED!")
+                    self.send_end_turn()
+                #TODO start the turn 
 
     def send_end_turn(self):
         info = chat.PrivateInfo()
@@ -99,22 +106,31 @@ class Client:
         self.turn_button["state"] = "disabled"
         n = chat.Health()
         n.ip = info.ip
-        n.hp = random.randint(0, 100)
+        n.hp = random.randint(-10, 10)
         n.user = self.username
         self.conn.SendHealth(n)
         print(self.listHealth)
         self.conn.EndTurn(info)
+
+    def attack():
+        pass
 
     def cleanMap(self, mess):
         string = mess.board
         rows = string.split("][")  # split the string by the '][' delimiter
         array = []
         for row in rows:
+            print(row, " ROW")
             row = row.strip("[]")  # remove the square brackets from the row string
-            values = [str(x) for x in row.split(",")]  # split the row string by the ',' delimiter and convert the values to integers
+            values = [str(x).strip().strip("'") for x in row.split(",")]  # split the row string by the ',' delimiter and convert the values to integers
             array.append(values)
-            
-        self.listHealth.extend([{"ip":self.ip, "hp":array[1][i], "user":array[0][i]} for i in range(0,len(array[0]))])
+         
+        array_ip = mess.ip.strip("[]").strip("''").split(",") #["enc_ip","enc_ip"]
+        array_role = mess.player_type.strip("[]").strip().strip("''").split(",") #[T,F,T]
+
+        self.listHealth.extend([{"ip":array_ip[i].strip().strip("'"), "hp":array[1][i],
+                                  "user":array[0][i], "player_type": int(array_role[i].strip())} for i in range(0,len(array[0]))])
+        print(self.listHealth)
 
     def send_message(self, event):
         """
@@ -143,6 +159,8 @@ class Client:
         self.entry_message.pack(side=BOTTOM)
         self.turn_button = Button(self.window, text = "End Turn", command = self.send_end_turn)
         self.turn_button.pack()
+        self.attack_button = Button(self.window, text = "ATTACK!", command = self.attack)
+        self.attack_button.pack()
         self.turn_button["state"] = "disabled"
 
 
