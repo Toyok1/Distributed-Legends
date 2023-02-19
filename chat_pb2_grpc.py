@@ -44,10 +44,20 @@ class ChatServerStub(object):
                 request_serializer=chat__pb2.Health.SerializeToString,
                 response_deserializer=chat__pb2.Empty.FromString,
                 )
+        self.SendAction = channel.unary_unary(
+                '/grpc.ChatServer/SendAction',
+                request_serializer=chat__pb2.Action.SerializeToString,
+                response_deserializer=chat__pb2.Empty.FromString,
+                )
         self.HealthStream = channel.unary_stream(
                 '/grpc.ChatServer/HealthStream',
                 request_serializer=chat__pb2.Empty.SerializeToString,
                 response_deserializer=chat__pb2.Health.FromString,
+                )
+        self.ActionStream = channel.unary_stream(
+                '/grpc.ChatServer/ActionStream',
+                request_serializer=chat__pb2.Empty.SerializeToString,
+                response_deserializer=chat__pb2.Action.FromString,
                 )
         self.GetActiveMap = channel.unary_unary(
                 '/grpc.ChatServer/GetActiveMap',
@@ -111,7 +121,19 @@ class ChatServerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def SendAction(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def HealthStream(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ActionStream(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -174,10 +196,20 @@ def add_ChatServerServicer_to_server(servicer, server):
                     request_deserializer=chat__pb2.Health.FromString,
                     response_serializer=chat__pb2.Empty.SerializeToString,
             ),
+            'SendAction': grpc.unary_unary_rpc_method_handler(
+                    servicer.SendAction,
+                    request_deserializer=chat__pb2.Action.FromString,
+                    response_serializer=chat__pb2.Empty.SerializeToString,
+            ),
             'HealthStream': grpc.unary_stream_rpc_method_handler(
                     servicer.HealthStream,
                     request_deserializer=chat__pb2.Empty.FromString,
                     response_serializer=chat__pb2.Health.SerializeToString,
+            ),
+            'ActionStream': grpc.unary_stream_rpc_method_handler(
+                    servicer.ActionStream,
+                    request_deserializer=chat__pb2.Empty.FromString,
+                    response_serializer=chat__pb2.Action.SerializeToString,
             ),
             'GetActiveMap': grpc.unary_unary_rpc_method_handler(
                     servicer.GetActiveMap,
@@ -312,6 +344,23 @@ class ChatServer(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
+    def SendAction(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/grpc.ChatServer/SendAction',
+            chat__pb2.Action.SerializeToString,
+            chat__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
     def HealthStream(request,
             target,
             options=(),
@@ -325,6 +374,23 @@ class ChatServer(object):
         return grpc.experimental.unary_stream(request, target, '/grpc.ChatServer/HealthStream',
             chat__pb2.Empty.SerializeToString,
             chat__pb2.Health.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ActionStream(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(request, target, '/grpc.ChatServer/ActionStream',
+            chat__pb2.Empty.SerializeToString,
+            chat__pb2.Action.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

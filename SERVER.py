@@ -18,6 +18,7 @@ class ChatServer(rpc.ChatServerServicer):
         self.clients = []
         # List with all the chat history
         self.chats = []
+        self.actions = []
         self.hp = []
         self.turns = []
         self.listUser = [] #  every element is a dictionary with  {"user":  username,  "ip": user public ip , "ping_time": timestamp of last pingpong , "player_type": int}
@@ -111,6 +112,13 @@ class ChatServer(rpc.ChatServerServicer):
         #print(new_h)
         return chat.Empty()
     
+    def SendAction(self, request: chat.Action, context):
+        #new_a = {"ip_sender": self.fernet.decrypt(request.ip_sender).decode(), "ip_reciever": self.fernet.decrypt(request.ip_reciever).decode(), "amount": int(request.amount)}
+        self.actions.append(request)
+        #manage the fact that people are attacking you
+         
+        return chat.Empty()
+
     def HealthStream(self, request_iterator, context):
         """
         This is a response-stream type call. This means the server can keep sending messages
@@ -129,6 +137,16 @@ class ChatServer(rpc.ChatServerServicer):
                 n.hp = self.hp[lastindex]["hp"]
                 n.user = self.hp[lastindex]["user"]
                 #print(n)
+                lastindex += 1
+                yield n
+    
+    def ActionStream(self, request_iterator, context):
+        lastindex = 0
+        # For every client a infinite loop starts (in gRPC's own managed thread)
+        while True:
+            # Check if there are any new messages
+            while len(self.actions) > lastindex:
+                n = self.actions[lastindex]
                 lastindex += 1
                 yield n
 

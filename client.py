@@ -23,6 +23,7 @@ class Client:
         # the frame to put ui components on
         self.window = window
         self.myHp = 1
+        self.myPlayerType = 0
         self.username = u
         self.map = chat.Map()
         self.map.length = 0
@@ -48,6 +49,7 @@ class Client:
 
         threading.Thread(target=self.__listen_for_turns, daemon=True).start()
         threading.Thread(target=self.__listen_for_health, daemon=True).start()
+        threading.Thread(target=self.__listen_for_actions, daemon=True).start()
 
         if self.p.user != 'a': # host TODO change this line to be "not the host" (probably easiest when we launch both programs from the same place)
             while self.map.length == 0:
@@ -85,6 +87,27 @@ class Client:
                 if utente["user"] == self.username:
                     self.myHp = health.hp
 
+    def __listen_for_actions(self):
+        for action in self.conn.ActionStream(chat.Empty()):
+            action_ip_sender = self.fernet.decrypt(action.ip_sender).decode()
+            action_ip_reciever = self.fernet.decrypt(action.ip_reciever).decode()
+            action_amount = action.amount
+
+            if action_amount > 0:
+                mode = "heals"
+            else:
+                mode = "attacks"
+
+            print_message = "User "
+            for user in self.listHealth:
+                if user["ip"] == action_ip_sender:
+                    actor = user["user"]
+                if user["ip"] == action_ip_reciever:
+                    victim = user["user"]
+            print_message = print_message + actor +" "+ mode +" "+ victim + " for " + str(abs(action_amount)) + " points!"
+            print(print_message)
+            #TODO send health message
+
     def __listen_for_turns(self):
         time.sleep(0.5) #some wait time before running to ensure that the ui gets created in time 
         for turn in self.conn.TurnStream(chat.Empty()):
@@ -112,8 +135,16 @@ class Client:
         print(self.listHealth)
         self.conn.EndTurn(info)
 
-    def attack():
-        pass
+    def attack(self):
+        # attack people that are not your same class or friends 
+        for user in self.listHealth:
+            if user["player_type"] != self.myPlayerType:
+                n = chat.Action()
+                n.ip_sender = self.fernet.encrypt(self.ip.encode())
+                n.ip_reciever = self.fernet.encrypt(user["ip"].encode())
+                n.amount = -10 + random.randint(-5,5) #TODO range of damage
+                self.conn.SendAction(n)
+
 
     def cleanMap(self, mess):
         string = mess.board
@@ -130,8 +161,13 @@ class Client:
 
         self.listHealth.extend([{"ip":array_ip[i].strip().strip("'"), "hp":array[1][i],
                                   "user":array[0][i], "player_type": int(array_role[i].strip())} for i in range(0,len(array[0]))])
+        self.genMyRole()
         print(self.listHealth)
 
+    def genMyRole(self):
+        for user in self.listHealth:
+            if user["user"] == self.username:
+                self.myPlayerType = user["player_type"]
     def send_message(self, event):
         """
         This method is called when user enters something into the textbox

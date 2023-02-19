@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nchat.proto\x12\x04grpc\"\x07\n\x05\x45mpty\"%\n\x04Note\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\"\'\n\x0bPrivateInfo\x12\n\n\x02ip\x18\x01 \x01(\x0c\x12\x0c\n\x04user\x18\x02 \x01(\t\"\x12\n\x04Ping\x12\n\n\x02ip\x18\x01 \x01(\x0c\"\x17\n\x04Pong\x12\x0f\n\x07message\x18\x01 \x01(\t\"L\n\nGameStatus\x12\x11\n\ttimeStamp\x18\x01 \x01(\t\x12\x17\n\x0fplayerPositions\x18\x02 \x01(\t\x12\x12\n\nlastPlayer\x18\x03 \x01(\t\"E\n\x03Map\x12\x0e\n\x06length\x18\x01 \x01(\x05\x12\r\n\x05\x62oard\x18\x02 \x01(\t\x12\x13\n\x0bplayer_type\x18\x03 \x01(\t\x12\n\n\x02ip\x18\x04 \x01(\t\".\n\x06Health\x12\n\n\x02ip\x18\x01 \x01(\x0c\x12\n\n\x02hp\x18\x02 \x01(\x05\x12\x0c\n\x04user\x18\x03 \x01(\t2\xdc\x03\n\nChatServer\x12\'\n\nChatStream\x12\x0b.grpc.Empty\x1a\n.grpc.Note0\x01\x12#\n\x08SendNote\x12\n.grpc.Note\x1a\x0b.grpc.Empty\x12\x31\n\x0fSendPrivateInfo\x12\x11.grpc.PrivateInfo\x1a\x0b.grpc.Empty\x12\"\n\x08SendPing\x12\n.grpc.Ping\x1a\n.grpc.Pong\x12)\n\tStartGame\x12\x11.grpc.PrivateInfo\x1a\t.grpc.Map\x12\'\n\nSendHealth\x12\x0c.grpc.Health\x1a\x0b.grpc.Empty\x12+\n\x0cHealthStream\x12\x0b.grpc.Empty\x1a\x0c.grpc.Health0\x01\x12&\n\x0cGetActiveMap\x12\x0b.grpc.Empty\x1a\t.grpc.Map\x12%\n\nFinishGame\x12\x0b.grpc.Empty\x1a\n.grpc.Note\x12)\n\x07\x45ndTurn\x12\x11.grpc.PrivateInfo\x1a\x0b.grpc.Empty\x12.\n\nTurnStream\x12\x0b.grpc.Empty\x1a\x11.grpc.PrivateInfo0\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nchat.proto\x12\x04grpc\"\x07\n\x05\x45mpty\"%\n\x04Note\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\"\'\n\x0bPrivateInfo\x12\n\n\x02ip\x18\x01 \x01(\x0c\x12\x0c\n\x04user\x18\x02 \x01(\t\"\x12\n\x04Ping\x12\n\n\x02ip\x18\x01 \x01(\x0c\"\x17\n\x04Pong\x12\x0f\n\x07message\x18\x01 \x01(\t\"L\n\nGameStatus\x12\x11\n\ttimeStamp\x18\x01 \x01(\t\x12\x17\n\x0fplayerPositions\x18\x02 \x01(\t\x12\x12\n\nlastPlayer\x18\x03 \x01(\t\"E\n\x03Map\x12\x0e\n\x06length\x18\x01 \x01(\x05\x12\r\n\x05\x62oard\x18\x02 \x01(\t\x12\x13\n\x0bplayer_type\x18\x03 \x01(\t\x12\n\n\x02ip\x18\x04 \x01(\t\".\n\x06Health\x12\n\n\x02ip\x18\x01 \x01(\x0c\x12\n\n\x02hp\x18\x02 \x01(\x05\x12\x0c\n\x04user\x18\x03 \x01(\t\"@\n\x06\x41\x63tion\x12\x11\n\tip_sender\x18\x01 \x01(\x0c\x12\x13\n\x0bip_reciever\x18\x02 \x01(\x0c\x12\x0e\n\x06\x61mount\x18\x03 \x01(\x05\x32\xb2\x04\n\nChatServer\x12\'\n\nChatStream\x12\x0b.grpc.Empty\x1a\n.grpc.Note0\x01\x12#\n\x08SendNote\x12\n.grpc.Note\x1a\x0b.grpc.Empty\x12\x31\n\x0fSendPrivateInfo\x12\x11.grpc.PrivateInfo\x1a\x0b.grpc.Empty\x12\"\n\x08SendPing\x12\n.grpc.Ping\x1a\n.grpc.Pong\x12)\n\tStartGame\x12\x11.grpc.PrivateInfo\x1a\t.grpc.Map\x12\'\n\nSendHealth\x12\x0c.grpc.Health\x1a\x0b.grpc.Empty\x12\'\n\nSendAction\x12\x0c.grpc.Action\x1a\x0b.grpc.Empty\x12+\n\x0cHealthStream\x12\x0b.grpc.Empty\x1a\x0c.grpc.Health0\x01\x12+\n\x0c\x41\x63tionStream\x12\x0b.grpc.Empty\x1a\x0c.grpc.Action0\x01\x12&\n\x0cGetActiveMap\x12\x0b.grpc.Empty\x1a\t.grpc.Map\x12%\n\nFinishGame\x12\x0b.grpc.Empty\x1a\n.grpc.Note\x12)\n\x07\x45ndTurn\x12\x11.grpc.PrivateInfo\x1a\x0b.grpc.Empty\x12.\n\nTurnStream\x12\x0b.grpc.Empty\x1a\x11.grpc.PrivateInfo0\x01\x62\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'chat_pb2', globals())
@@ -36,6 +36,8 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _MAP._serialized_end=301
   _HEALTH._serialized_start=303
   _HEALTH._serialized_end=349
-  _CHATSERVER._serialized_start=352
-  _CHATSERVER._serialized_end=828
+  _ACTION._serialized_start=351
+  _ACTION._serialized_end=415
+  _CHATSERVER._serialized_start=418
+  _CHATSERVER._serialized_end=980
 # @@protoc_insertion_point(module_scope)

@@ -42,6 +42,12 @@ message Health{
     string user = 3;
 }
 
+message Action{
+    bytes ip_sender = 1;
+    bytes ip_reciever = 2;
+    int32 amount = 3;
+}
+
 service ChatServer {
     // This bi-directional stream makes it possible to send and receive Notes between 2 persons
     rpc ChatStream (Empty) returns (stream Note);
@@ -50,7 +56,9 @@ service ChatServer {
     rpc SendPing(Ping) returns (Pong);
     rpc StartGame(PrivateInfo) returns(Map);
     rpc SendHealth(Health) returns(Empty);
+    rpc SendAction(Action) returns(Empty);
     rpc HealthStream(Empty) returns(stream Health);
+    rpc ActionStream(Empty) returns(stream Action);
     rpc GetActiveMap(Empty) returns(Map);
     rpc FinishGame(Empty) returns(Note);
     rpc EndTurn(PrivateInfo) returns(Empty);
