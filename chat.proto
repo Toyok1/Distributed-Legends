@@ -29,7 +29,7 @@ message GameStatus {
     string lastPlayer = 3; // sender of messge    
 }
 
-message Map {
+message InitialList {
     int32 length = 1;
     string board = 2; // ["utente1","utente2"][hp1, hp2]
     string player_type = 3; //["1","0"]
@@ -42,10 +42,17 @@ message Health{
     string user = 3;
 }
 
+message Block{
+    bytes ip = 1;
+    int32 block = 2; 
+    string user = 3;
+}
+
 message Action{
     bytes ip_sender = 1;
     bytes ip_reciever = 2;
     int32 amount = 3;
+    int32 action_type = 4; //0 = attack, 1 = heal, 2 = block etc etc
 }
 
 service ChatServer {
@@ -54,15 +61,17 @@ service ChatServer {
     rpc SendNote (Note) returns (Empty);
     rpc SendPrivateInfo (PrivateInfo) returns (Empty);
     rpc SendPing(Ping) returns (Pong);
-    rpc StartGame(PrivateInfo) returns(Map);
+    rpc StartGame(PrivateInfo) returns(InitialList);
     rpc SendHealth(Health) returns(Empty);
+    rpc SendBlock(Block) returns(Empty);
     rpc SendAction(Action) returns(Empty);
     rpc HealthStream(Empty) returns(stream Health);
+    rpc BlockStream(Empty) returns(stream Block);
     rpc ActionStream(Empty) returns(stream Action);
-    rpc GetActiveMap(Empty) returns(Map);
+    rpc GetActiveMap(Empty) returns(InitialList);
     rpc FinishGame(Empty) returns(Note);
     rpc EndTurn(PrivateInfo) returns(Empty);
     rpc TurnStream (Empty) returns (stream PrivateInfo);
 }
 // python3 -m grpc_tools.protoc -I=. --python_out=. --grpc_python_out=. chat.proto 
-// python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. chat.proto      --Simone is a very special boy
+// python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. chat.proto      //Simone is a very special boy

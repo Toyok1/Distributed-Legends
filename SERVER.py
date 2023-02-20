@@ -20,11 +20,12 @@ class ChatServer(rpc.ChatServerServicer):
         self.chats = []
         self.actions = []
         self.hp = []
+        self.listBlock = []
         self.turns = []
         self.listUser = [] #  every element is a dictionary with  {"user":  username,  "ip": user public ip , "ping_time": timestamp of last pingpong , "player_type": int}
         self.fernet = Fernet(key)   
         threading.Thread(target=self.__clean_user_list, daemon=True).start()
-        self.activeMap = chat.Map()
+        self.activeMap = chat.InitialList()
         self.activeMap.board = ""
         self.isStartedGame = False
 
@@ -50,9 +51,9 @@ class ChatServer(rpc.ChatServerServicer):
         random.choice(self.listUser)["player_type"] = 1
         for user in self.listUser:
             if user["player_type"] == 1:
-                self.hp.append({"ip": user["ip"], "hp": 100, "user": user["user"], "player_type": 1}) #TODO tweak values
+                self.hp.append({"ip": user["ip"], "hp": 100, "block": 0, "user": user["user"], "player_type": 1}) #TODO tweak values
             else:
-                self.hp.append({"ip": user["ip"], "hp": 50, "user": user["user"], "player_type": 0}) #TODO tweak values
+                self.hp.append({"ip": user["ip"], "hp": 50, "block": 0, "user": user["user"], "player_type": 0}) #TODO tweak values
         
         length = len(self.hp)
 
@@ -67,7 +68,7 @@ class ChatServer(rpc.ChatServerServicer):
                 values4.append(d["ip"])
 
         board = str(values) + str(values2)
-        mmmap = chat.Map()
+        mmmap = chat.InitialList()
         mmmap.length = length
         mmmap.board = board
         mmmap.player_type = str(values3)
@@ -94,12 +95,6 @@ class ChatServer(rpc.ChatServerServicer):
                 yield n
 
     def SendNote(self, request: chat.Note, context):
-        """
-        This method is called when a clients sends a Note to the server.
-        :param request:
-        :param context:
-        :return:
-        """
         # this is only for the server console
         print("[{}] {}".format(request.name, request.message))
         # Add it to the chat history
@@ -109,6 +104,13 @@ class ChatServer(rpc.ChatServerServicer):
     def SendHealth(self, request: chat.Health, context):
         new_h = {"ip": self.fernet.decrypt(request.ip).decode(), "hp": request.hp, "user": str(request.user)}
         self.hp.append(new_h)
+        #print(new_h)
+        return chat.Empty()
+
+    def SendBlock(self, request: chat.Health, context):
+        #new_h = {"ip": self.fernet.decrypt(request.ip).decode(), "hp": request.hp, "user": str(request.user)}
+        self.listBlock.append(request)
+        print(request)
         #print(new_h)
         return chat.Empty()
     
@@ -136,6 +138,21 @@ class ChatServer(rpc.ChatServerServicer):
                 n.ip = self.fernet.encrypt(self.hp[lastindex]["ip"].encode())
                 n.hp = self.hp[lastindex]["hp"]
                 n.user = self.hp[lastindex]["user"]
+                #print(n)
+                lastindex += 1
+                yield n
+    
+    def BlockStream(self, request_iterator, context):
+        lastindex = 0
+        # For every client a infinite loop starts (in gRPC's own managed thread)
+        while True:
+            # Check if there are any new messages
+            while len(self.listBlock) > lastindex:
+                '''n = chat.Block()
+                n.ip = self.fernet.encrypt(self.blockList[lastindex]["ip"].encode())
+                n.block = self.blockList[lastindex]["block"]
+                n.user = self.blockList[lastindex]["user"]'''
+                n = self.listBlock[lastindex]
                 #print(n)
                 lastindex += 1
                 yield n

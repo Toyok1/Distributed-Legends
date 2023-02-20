@@ -37,11 +37,16 @@ class ChatServerStub(object):
         self.StartGame = channel.unary_unary(
                 '/grpc.ChatServer/StartGame',
                 request_serializer=chat__pb2.PrivateInfo.SerializeToString,
-                response_deserializer=chat__pb2.Map.FromString,
+                response_deserializer=chat__pb2.InitialList.FromString,
                 )
         self.SendHealth = channel.unary_unary(
                 '/grpc.ChatServer/SendHealth',
                 request_serializer=chat__pb2.Health.SerializeToString,
+                response_deserializer=chat__pb2.Empty.FromString,
+                )
+        self.SendBlock = channel.unary_unary(
+                '/grpc.ChatServer/SendBlock',
+                request_serializer=chat__pb2.Block.SerializeToString,
                 response_deserializer=chat__pb2.Empty.FromString,
                 )
         self.SendAction = channel.unary_unary(
@@ -54,6 +59,11 @@ class ChatServerStub(object):
                 request_serializer=chat__pb2.Empty.SerializeToString,
                 response_deserializer=chat__pb2.Health.FromString,
                 )
+        self.BlockStream = channel.unary_stream(
+                '/grpc.ChatServer/BlockStream',
+                request_serializer=chat__pb2.Empty.SerializeToString,
+                response_deserializer=chat__pb2.Block.FromString,
+                )
         self.ActionStream = channel.unary_stream(
                 '/grpc.ChatServer/ActionStream',
                 request_serializer=chat__pb2.Empty.SerializeToString,
@@ -62,7 +72,7 @@ class ChatServerStub(object):
         self.GetActiveMap = channel.unary_unary(
                 '/grpc.ChatServer/GetActiveMap',
                 request_serializer=chat__pb2.Empty.SerializeToString,
-                response_deserializer=chat__pb2.Map.FromString,
+                response_deserializer=chat__pb2.InitialList.FromString,
                 )
         self.FinishGame = channel.unary_unary(
                 '/grpc.ChatServer/FinishGame',
@@ -121,6 +131,12 @@ class ChatServerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def SendBlock(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def SendAction(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -128,6 +144,12 @@ class ChatServerServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def HealthStream(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def BlockStream(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -189,11 +211,16 @@ def add_ChatServerServicer_to_server(servicer, server):
             'StartGame': grpc.unary_unary_rpc_method_handler(
                     servicer.StartGame,
                     request_deserializer=chat__pb2.PrivateInfo.FromString,
-                    response_serializer=chat__pb2.Map.SerializeToString,
+                    response_serializer=chat__pb2.InitialList.SerializeToString,
             ),
             'SendHealth': grpc.unary_unary_rpc_method_handler(
                     servicer.SendHealth,
                     request_deserializer=chat__pb2.Health.FromString,
+                    response_serializer=chat__pb2.Empty.SerializeToString,
+            ),
+            'SendBlock': grpc.unary_unary_rpc_method_handler(
+                    servicer.SendBlock,
+                    request_deserializer=chat__pb2.Block.FromString,
                     response_serializer=chat__pb2.Empty.SerializeToString,
             ),
             'SendAction': grpc.unary_unary_rpc_method_handler(
@@ -206,6 +233,11 @@ def add_ChatServerServicer_to_server(servicer, server):
                     request_deserializer=chat__pb2.Empty.FromString,
                     response_serializer=chat__pb2.Health.SerializeToString,
             ),
+            'BlockStream': grpc.unary_stream_rpc_method_handler(
+                    servicer.BlockStream,
+                    request_deserializer=chat__pb2.Empty.FromString,
+                    response_serializer=chat__pb2.Block.SerializeToString,
+            ),
             'ActionStream': grpc.unary_stream_rpc_method_handler(
                     servicer.ActionStream,
                     request_deserializer=chat__pb2.Empty.FromString,
@@ -214,7 +246,7 @@ def add_ChatServerServicer_to_server(servicer, server):
             'GetActiveMap': grpc.unary_unary_rpc_method_handler(
                     servicer.GetActiveMap,
                     request_deserializer=chat__pb2.Empty.FromString,
-                    response_serializer=chat__pb2.Map.SerializeToString,
+                    response_serializer=chat__pb2.InitialList.SerializeToString,
             ),
             'FinishGame': grpc.unary_unary_rpc_method_handler(
                     servicer.FinishGame,
@@ -322,7 +354,7 @@ class ChatServer(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/grpc.ChatServer/StartGame',
             chat__pb2.PrivateInfo.SerializeToString,
-            chat__pb2.Map.FromString,
+            chat__pb2.InitialList.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -339,6 +371,23 @@ class ChatServer(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/grpc.ChatServer/SendHealth',
             chat__pb2.Health.SerializeToString,
+            chat__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SendBlock(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/grpc.ChatServer/SendBlock',
+            chat__pb2.Block.SerializeToString,
             chat__pb2.Empty.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
@@ -378,6 +427,23 @@ class ChatServer(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
+    def BlockStream(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(request, target, '/grpc.ChatServer/BlockStream',
+            chat__pb2.Empty.SerializeToString,
+            chat__pb2.Block.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
     def ActionStream(request,
             target,
             options=(),
@@ -407,7 +473,7 @@ class ChatServer(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/grpc.ChatServer/GetActiveMap',
             chat__pb2.Empty.SerializeToString,
-            chat__pb2.Map.FromString,
+            chat__pb2.InitialList.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
