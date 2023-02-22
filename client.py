@@ -1,4 +1,7 @@
 import threading
+import os
+from PIL import ImageTk, Image 
+
 
 from tkinter import *
 from tkinter import simpledialog
@@ -16,7 +19,8 @@ from cryptography.fernet import Fernet
 #address = 'localhost'
 port = 11912 # decide if we have to change this port
 key = b'ZhDach4lH7NbH-Gy9EfN2e2HNrWRfbBFD8zeCTBgdEA='
-
+pg_type = ["knight", "mage", "archer", "monster"]
+cancel_id = None
 class Client:
 
     def __init__(self, u: str, a: str, window):
@@ -30,7 +34,8 @@ class Client:
         self.map.length = 0
         self.listHealth = [] # [{"ip": ip, "hp": hp, "block": block, "user": user},{},{},{}]
         self.myTurn = False
-
+        self.state = "idle"
+        
         self.ip = get('https://api.ipify.org').content.decode('utf8')
         self.fernet = Fernet(key)
         encMessage = self.fernet.encrypt(self.ip.encode())
@@ -47,6 +52,7 @@ class Client:
         self.p.user = u
         self.conn.SendPrivateInfo(self.p)  # send the Note to the server
         self.__setup_ui()
+        
 
         threading.Thread(target=self.__listen_for_turns, daemon=True).start()
         threading.Thread(target=self.__listen_for_health, daemon=True).start()
@@ -212,6 +218,12 @@ class Client:
 
     def attack(self):
         # attack people that are not your same class or friends 
+        global cancel_id
+        self.state = "attack"
+        self.loadImgs()
+        cancel_id = 1
+        self.cancel_animation()
+       
         for user in self.listHealth:
             if user["player_type"] != self.myPlayerType: #i can attack my enemies only
                 n = chat.Action()
@@ -282,9 +294,54 @@ class Client:
             #print("S[{}] {}".format(n.name, n.message))  # debugging statement
             self.conn.SendNote(n)  # send the Note to the server
 
+    def loadImgs(self):
+        global pg_type
+        self.imgs = []
+        path = "src/"+pg_type[0]+"/"+self.state+"/"
+        for i in os.listdir(path):
+            self.imgs.append(PhotoImage(file=path+i))
+    '''
+    def animate(self, label):
+        global pg_type
+        path = "src/"+pg_type[0]+"/"+self.state+"/"
+        i=0
+        while True:   
+            label.configure(image=self.imgs[i])
+            label.update()
+            time.sleep(0.2)
+            i+=1
+            if i == len(os.listdir(path))-1:
+                i = 0
+    '''    
+    def update_label_image(self, label, ani_img, ms_delay, frame_num):
+        global cancel_id
+        label.configure(image=ani_img[frame_num])
+        frame_num = (frame_num+1) % len(ani_img)
+        cancel_id = root.after(
+            ms_delay, self.update_label_image, label, ani_img, ms_delay, frame_num)
+        
+
+    def enable_animation(self, animation):
+        global cancel_id
+        if cancel_id is None:  # Animation not started?
+            ms_delay = 500 #1000// len(self.imgs)  # Show all frames in 1000 ms.
+            cancel_id = root.after(
+            ms_delay, self.update_label_image, animation, self.imgs, ms_delay, 0)
+
+    def cancel_animation(self):
+        global cancel_id
+        if cancel_id is not None:  # Animation started?
+            self.window.after_cancel(cancel_id)
+            cancel_id = None
+
     def __setup_ui(self):
-        self.chat_list = Text()
-        self.chat_list.pack(side=TOP)
+        self.frame = Frame(self.window)
+        self.frame.pack(side=BOTTOM)
+        self.loadImgs()
+        self.label = Label(self.frame, image=self.imgs[0])
+        self.label.pack(side=LEFT)
+        self.enable_animation(self.label)
+
         self.lbl_username = Label(self.window, text=self.username)
         self.lbl_username.pack(side=LEFT)
         self.entry_message = Entry(self.window, bd=5)
@@ -300,6 +357,9 @@ class Client:
         self.block_button = Button(self.window, text = "BLOCK!", command = self.block)
         self.block_button.pack()
         self.turn_button["state"] = "disabled"
+    
+    
+    
 
 
 if __name__ == '__main__':
