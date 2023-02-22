@@ -41,6 +41,9 @@ class Client:
         encMessage = self.fernet.encrypt(self.ip.encode())
         
         # create a gRPC channel + stub
+        #
+        #a = input()
+        #
         channel = grpc.insecure_channel(a + ':' + str(port))
         self.conn = rpc.ChatServerStub(channel)
 
@@ -366,11 +369,11 @@ class Client:
         self.entry_message.pack(side=BOTTOM)
         self.turn_button = Button(self.window, text = "End Turn", command = self.send_end_turn)
         self.turn_button.pack()
-        self.attack_button = Button(self.window, text = "ATTACK!", command = self.attack)
+        self.attack_button = Button(self.window, text = "ATTACK", command = self.attack)
         self.attack_button.pack()
-        self.heal_button = Button(self.window, text = "HEAL!", command = self.heal)
+        self.heal_button = Button(self.window, text = "HEAL", command = self.heal)
         self.heal_button.pack()
-        self.block_button = Button(self.window, text = "BLOCK!", command = self.block)
+        self.block_button = Button(self.window, text = "BLOCK", command = self.block)
         self.block_button.pack()
         self.turn_button["state"] = "disabled"
         self.lockButtons()
