@@ -190,6 +190,7 @@ class Client:
             #if self.fernet.decrypt(turn.ip).decode() == self.ip:   
                 print("Mio turno: " + self.username)
                 self.turn_button["state"] = "normal"
+                self.unlockButtons() #unlock the buttons when it's my turn
                 #if miei hp <= 0 endturn + interfaccia "you died"
                 if self.myHp <= 0:
                     if self.myPlayerType == True:
@@ -201,6 +202,16 @@ class Client:
                 #TODO start the turn 
 
     #TODO: implement a one action per turn thing
+
+    def lockButtons(self):
+        self.attack_button["state"] = "disabled"
+        self.heal_button["state"] = "disabled"
+        self.block_button["state"] = "disabled"
+    
+    def unlockButtons(self):
+        self.attack_button["state"] = "normal"
+        self.heal_button["state"] = "normal"
+        self.block_button["state"] = "normal"
 
     def send_end_turn(self):
         info = chat.PrivateInfo()
@@ -214,6 +225,7 @@ class Client:
         n.user = self.username
         self.conn.SendHealth(n)'''
         #print(self.listHealth)
+        #self.lockButtons()
         self.conn.EndTurn(info)
 
     def attack(self):
@@ -232,6 +244,8 @@ class Client:
                 n.action_type = 0
                 n.amount = -10 + random.randint(-5,5) #TODO range of damage
                 self.conn.SendAction(n)
+        self.lockButtons()
+
     
     def heal(self):
         for user in self.listHealth:
@@ -242,6 +256,7 @@ class Client:
                 h.action_type = 1
                 h.amount = 8 + random.randint(-5,5) #TODO range of damage
                 self.conn.SendAction(h)
+        self.lockButtons()
     
     def block(self):
         for user in self.listHealth:
@@ -252,6 +267,7 @@ class Client:
                 b.action_type = 2
                 b.amount = 10 #TODO range of damage
                 self.conn.SendAction(b)
+        self.lockButtons()
 
 
 
@@ -357,6 +373,7 @@ class Client:
         self.block_button = Button(self.window, text = "BLOCK!", command = self.block)
         self.block_button.pack()
         self.turn_button["state"] = "disabled"
+        self.lockButtons()
     
     
     
