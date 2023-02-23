@@ -9,6 +9,7 @@ from tkinter import simpledialog
 import grpc
 import time
 import random
+import re
 
 import chat_pb2 as chat
 import chat_pb2_grpc as rpc
@@ -16,7 +17,6 @@ import chat_pb2_grpc as rpc
 from requests import get
 from cryptography.fernet import Fernet
 
-#address = 'localhost'
 port = 11912 # decide if we have to change this port
 key = b'ZhDach4lH7NbH-Gy9EfN2e2HNrWRfbBFD8zeCTBgdEA='
 pg_type = ["knight", "mage", "archer", "monster"]
@@ -388,12 +388,16 @@ if __name__ == '__main__':
     frame.pack()
     root.withdraw()
     username = None
+    address = "localhost" #None when we deploy but for testing localhost is fine
     while username is None:
         # retrieve a username so we can distinguish all the different clients
         username = simpledialog.askstring("Username", "What's your username?", parent=root)
-    address = "localhost" #None
-    #while address is None:
+    #address = "localhost" #None
+    while (address != "localhost") or (address is None) :
         # retrieve a username so we can distinguish all the different clients
-    #    address = simpledialog.askstring("Game's address", "What's the address?", parent=root)
+        address = simpledialog.askstring("Game's address", "What's the address?", parent=root)
+        if re.match(r"^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$",address):
+            break
+        
     root.deiconify()  # don't remember why this was needed anymore...
     c = Client(username, address, frame)  # this starts a client and thus a thread which keeps connection to server open
