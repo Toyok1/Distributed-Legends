@@ -69,8 +69,8 @@ class ChatServerStub(object):
                 request_serializer=chat__pb2.Empty.SerializeToString,
                 response_deserializer=chat__pb2.Action.FromString,
                 )
-        self.GetActiveMap = channel.unary_unary(
-                '/grpc.ChatServer/GetActiveMap',
+        self.GetInitialList = channel.unary_unary(
+                '/grpc.ChatServer/GetInitialList',
                 request_serializer=chat__pb2.Empty.SerializeToString,
                 response_deserializer=chat__pb2.InitialList.FromString,
                 )
@@ -88,6 +88,11 @@ class ChatServerStub(object):
                 '/grpc.ChatServer/TurnStream',
                 request_serializer=chat__pb2.Empty.SerializeToString,
                 response_deserializer=chat__pb2.PrivateInfo.FromString,
+                )
+        self.ReturnStarted = channel.unary_unary(
+                '/grpc.ChatServer/ReturnStarted',
+                request_serializer=chat__pb2.Empty.SerializeToString,
+                response_deserializer=chat__pb2.StartedBool.FromString,
                 )
 
 
@@ -161,7 +166,7 @@ class ChatServerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetActiveMap(self, request, context):
+    def GetInitialList(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -180,6 +185,12 @@ class ChatServerServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def TurnStream(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ReturnStarted(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -243,8 +254,8 @@ def add_ChatServerServicer_to_server(servicer, server):
                     request_deserializer=chat__pb2.Empty.FromString,
                     response_serializer=chat__pb2.Action.SerializeToString,
             ),
-            'GetActiveMap': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetActiveMap,
+            'GetInitialList': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetInitialList,
                     request_deserializer=chat__pb2.Empty.FromString,
                     response_serializer=chat__pb2.InitialList.SerializeToString,
             ),
@@ -262,6 +273,11 @@ def add_ChatServerServicer_to_server(servicer, server):
                     servicer.TurnStream,
                     request_deserializer=chat__pb2.Empty.FromString,
                     response_serializer=chat__pb2.PrivateInfo.SerializeToString,
+            ),
+            'ReturnStarted': grpc.unary_unary_rpc_method_handler(
+                    servicer.ReturnStarted,
+                    request_deserializer=chat__pb2.Empty.FromString,
+                    response_serializer=chat__pb2.StartedBool.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -461,7 +477,7 @@ class ChatServer(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def GetActiveMap(request,
+    def GetInitialList(request,
             target,
             options=(),
             channel_credentials=None,
@@ -471,7 +487,7 @@ class ChatServer(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/grpc.ChatServer/GetActiveMap',
+        return grpc.experimental.unary_unary(request, target, '/grpc.ChatServer/GetInitialList',
             chat__pb2.Empty.SerializeToString,
             chat__pb2.InitialList.FromString,
             options, channel_credentials,
@@ -525,5 +541,22 @@ class ChatServer(object):
         return grpc.experimental.unary_stream(request, target, '/grpc.ChatServer/TurnStream',
             chat__pb2.Empty.SerializeToString,
             chat__pb2.PrivateInfo.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ReturnStarted(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/grpc.ChatServer/ReturnStarted',
+            chat__pb2.Empty.SerializeToString,
+            chat__pb2.StartedBool.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

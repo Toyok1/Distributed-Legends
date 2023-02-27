@@ -37,6 +37,11 @@ class PostOffice:
         self.privateInfo.user = user
         self.conn.SendPrivateInfo(self.privateInfo)  # send the Note to the server
 
+    def CheckStarted(self):
+        return self.conn.ReturnStarted(chat.Empty())
+
+    def GetInitialList(self):
+        return self.conn.GetInitialList(chat.Empty())
 
     def StartGame(self):
         return self.conn.StartGame(self.privateInfo)

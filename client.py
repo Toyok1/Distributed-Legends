@@ -21,6 +21,7 @@ class Client:
 
     def __init__(self, user: str, serverAddress: str, window):
         # the frame to put ui components on
+        self.GAME_STARTED = False
         self.window = window
         self.myHp = 1
         self.myBlock = 0
@@ -41,14 +42,35 @@ class Client:
             self.CloseGame()
         
         self.__setup_ui()
-        
+
         threading.Thread(target=self.__listen_for_turns, daemon=True).start()
         threading.Thread(target=self.__listen_for_health, daemon=True).start()
         threading.Thread(target=self.__listen_for_actions, daemon=True).start()
         threading.Thread(target=self.__listen_for_block, daemon=True).start()
         threading.Thread(target=self.__diagnose, daemon=True).start()
 
-        self.window.mainloop()        
+        #probably the host won't need to run this thread so TODO when we have a way to distinguish them: get rid of it for the host.
+        threading.Thread(target=self.__check_for_start, daemon = True).start()
+
+        '''
+        if self.p.user != 'a': # host TODO change this line
+            while self.map.length == 0:
+                self.map = self.conn.GetActiveMap(chat.Empty())
+                time.sleep(2)
+                print(self.map)
+                '''
+        self.window.mainloop()
+
+    def __check_for_start(self):
+        while not self.GAME_STARTED:
+            b = self.myPostOffice.CheckStarted()
+            self.GAME_STARTED = b.started
+        #self.map = self.conn.GetActiveMap(chat.Empty())
+        if self.listHealth == []:
+            mess = self.myPostOffice.GetInitialList()
+            self.cleanInitialList(mess)
+        self.start_button["state"] = "disabled"
+
 
     def __diagnose(self):
         while True:
@@ -160,7 +182,7 @@ class Client:
                         self.send_end_turn()
                 #TODO start the turn 
 
-    def CloseGame(self):
+    def closeGame(self):
         # TODO end game
         pass
 
@@ -215,7 +237,7 @@ class Client:
 
 
     def cleanInitialList(self, mess):
-        string = mess.board
+        string = mess.name_hp
         rows = string.split("][")  # split the string by the '][' delimiter
         array = []
         for row in rows:
@@ -228,7 +250,7 @@ class Client:
         array_role = mess.player_type.strip("[]").strip().strip("''").split(",") #[T,F,T]
 
         self.listHealth.extend([{"ip":array_ip[i].strip().strip("'"), "hp":array[1][i], "block": 0,
-                                  "user":array[0][i], "player_type": int(array_role[i].strip())} for i in range(0,len(array[0]))])
+                                "user":array[0][i], "player_type": int(array_role[i].strip())} for i in range(0,len(array[0]))])
         self.genMyRole()
         #print(self.listHealth)
 
@@ -236,16 +258,20 @@ class Client:
         for user in self.listHealth:
             if user["user"] == self.username: #TODO change to ip
                 self.myPlayerType = user["player_type"]
+    
+    def send_start_game(self):
+        #if i'm the user i can start the game  TODO: make it so that only hosts can use this button and maybe delete it after use (?)
+        mess = self.myPostOffice.StartGame()
+        self.cleanInitialList(mess)
 
-    def send_message(self, event):
+    '''def send_message(self, event):
         """
         This method is called when user enters something into the textbox
         """
         message = self.entry_message.get()  # retrieve message from the UI
         if message != '':
-            if message == '1': # fake starting
-                mess = self.myPostOffice.StartGame()
-                self.cleanInitialList(mess)
+            if message == '1': # fake starting'''
+                
 
     def loadImgs(self):
         global pg_type
@@ -297,10 +323,12 @@ class Client:
 
         self.lbl_username = Label(self.window, text=self.username)
         self.lbl_username.pack(side=LEFT)
-        self.entry_message = Entry(self.window, bd=5)
+        '''self.entry_message = Entry(self.window, bd=5)
         self.entry_message.bind('<Return>', self.send_message)
         self.entry_message.focus()
-        self.entry_message.pack(side=BOTTOM)
+        self.entry_message.pack(side=BOTTOM)'''
+        self.start_button = Button(self.window, text = "Start Game", command = self.send_start_game)
+        self.start_button.pack()
         self.turn_button = Button(self.window, text = "End Turn", command = self.send_end_turn)
         self.turn_button.pack()
         self.attack_button = Button(self.window, text = "ATTACK", command = self.attack)

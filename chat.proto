@@ -10,6 +10,10 @@ message Note { // must be remove
     string message = 2;
 }
 
+message StartedBool{
+    bool started = 1;
+}
+
 message PrivateInfo{
     bytes ip = 1;
     string user = 2;
@@ -31,7 +35,7 @@ message GameStatus {
 
 message InitialList {
     int32 length = 1;
-    string board = 2; // ["utente1","utente2"][hp1, hp2]
+    string name_hp = 2; // ["utente1","utente2"][hp1, hp2]
     string player_type = 3; //["1","0"]
     string ip = 4; //["enc_ip","enc_ip"]
 }
@@ -68,10 +72,11 @@ service ChatServer {
     rpc HealthStream(Empty) returns(stream Health);
     rpc BlockStream(Empty) returns(stream Block);
     rpc ActionStream(Empty) returns(stream Action);
-    rpc GetActiveMap(Empty) returns(InitialList);
+    rpc GetInitialList(Empty) returns(InitialList);
     rpc FinishGame(Empty) returns(Note);
     rpc EndTurn(PrivateInfo) returns(Empty);
-    rpc TurnStream (Empty) returns (stream PrivateInfo);
+    rpc TurnStream (Empty) returns(stream PrivateInfo);
+    rpc ReturnStarted (Empty) returns(StartedBool);
 }
 // python3 -m grpc_tools.protoc -I=. --python_out=. --grpc_python_out=. chat.proto 
 // python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. chat.proto      //Simone is a very special boy

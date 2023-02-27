@@ -24,9 +24,11 @@ class ChatServer(rpc.ChatServerServicer):
         self.turns = []
         self.listUser = [] #  every element is a dictionary with  {"user":  username,  "ip": user public ip , "ping_time": timestamp of last pingpong , "player_type": int}
         self.fernet = Fernet(key)   
+
         threading.Thread(target=self.__clean_user_list, daemon=True).start()
-        self.activeMap = chat.InitialList()
-        self.activeMap.board = ""
+
+        self.initialList = chat.InitialList()
+        self.initialList.name_hp = ""
         self.isStartedGame = False
 
     def  __updateUserList(self, req_ip):
@@ -37,7 +39,7 @@ class ChatServer(rpc.ChatServerServicer):
     def __clean_user_list(self):
         # il tempo lo calcola il server
         while True: 
-            #print("Player List", self.listUser)
+            print("Player List", self.listUser)
             for user in self.listUser:
                 if (int(time.time()) - int(user["ping_time"])) > 5 :
                     self.listUser.remove(user)
@@ -67,14 +69,14 @@ class ChatServer(rpc.ChatServerServicer):
             values3.append(d["player_type"])
             values4.append(d["ip"])
 
-        board = str(values) + str(values2)
+        name_hp = str(values) + str(values2)
         mmmap = chat.InitialList()
         mmmap.length = length
-        mmmap.board = board
+        mmmap.name_hp = name_hp
         mmmap.player_type = str(values3)
         mmmap.ip = str(values4)
         print(mmmap)
-        self.activeMap = mmmap
+        self.initialList = mmmap
     
     # The stream which will be used to send new messages to clients
     def ChatStream(self, request_iterator, context):
@@ -214,25 +216,29 @@ class ChatServer(rpc.ChatServerServicer):
                 lastindex += 1
                 yield n
                 
-    def GetActiveMap(self, request_iterator, context):
+    def GetInitialList(self, request_iterator, context):
         """ Create game board and send to client, if map is none client resend request"""
-        return self.activeMap
+        return self.initialList
 
+    def ReturnStarted(self, request_iterator, context):
+        b = chat.StartedBool()
+        b.started = self.isStartedGame
+        return b
     
     def StartGame(self, request: chat.PrivateInfo, context):
         print('StartGame', self.listUser)
         ip = self.fernet.decrypt(request.ip).decode()
         #if self.listUser[0]["ip"] == ip:    #TODO quando si testa su macchine diverse usare l'ip
         if self.listUser[0]["user"] == request.user:
-            print("L'host è onnipotente")
+            #print("L'host è onnipotente")
             self.isStartedGame = True
             self.__distributeHealth()
             #self.__createBoard()
-        return self.activeMap
+        return self.initialList
     
     def FinishGame(self, request_iterator, context):
         self.isStartedGame = False
-        #self.activeMap.board = None
+        #self.initialList.name_hp = None
         n = chat.Note()
         n.message = "OK" 
         return n
