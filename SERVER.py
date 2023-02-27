@@ -62,10 +62,10 @@ class ChatServer(rpc.ChatServerServicer):
         values3 = []
         values4 = []
         for d in self.hp:
-                values.append(d["user"])
-                values2.append(d["hp"])
-                values3.append(d["player_type"])
-                values4.append(d["ip"])
+            values.append(d["user"])
+            values2.append(d["hp"])
+            values3.append(d["player_type"])
+            values4.append(d["ip"])
 
         board = str(values) + str(values2)
         mmmap = chat.InitialList()
@@ -118,7 +118,6 @@ class ChatServer(rpc.ChatServerServicer):
         #new_a = {"ip_sender": self.fernet.decrypt(request.ip_sender).decode(), "ip_reciever": self.fernet.decrypt(request.ip_reciever).decode(), "amount": int(request.amount)}
         self.actions.append(request)
         #manage the fact that people are attacking you
-         
         return chat.Empty()
 
     def HealthStream(self, request_iterator, context):

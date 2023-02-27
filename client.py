@@ -2,74 +2,51 @@ import threading
 import os
 from PIL import ImageTk, Image 
 
+from GRPCClientHelper import helper
 
 from tkinter import *
 from tkinter import simpledialog
 
-import grpc
 import time
 import random
 import re
-
-import chat_pb2 as chat
-import chat_pb2_grpc as rpc
-
-from requests import get
 from cryptography.fernet import Fernet
 
-port = 11912 # decide if we have to change this port
+
 key = b'ZhDach4lH7NbH-Gy9EfN2e2HNrWRfbBFD8zeCTBgdEA='
+
 pg_type = ["knight", "mage", "archer", "monster"]
 cancel_id = None
 class Client:
 
-    def __init__(self, u: str, a: str, window):
+    def __init__(self, user: str, serverAddress: str, window):
         # the frame to put ui components on
         self.window = window
         self.myHp = 1
         self.myBlock = 0
         self.myPlayerType = 0
-        self.username = u
-        self.map = chat.InitialList()
-        self.map.length = 0
+        self.username = user
         self.listHealth = [] # [{"ip": ip, "hp": hp, "block": block, "user": user},{},{},{}]
         self.myTurn = False
         self.state = "idle"
         
-        self.ip = get('https://api.ipify.org').content.decode('utf8')
         self.fernet = Fernet(key)
-        encMessage = self.fernet.encrypt(self.ip.encode())
         
-        # create a gRPC channel + stub
-        #
-        #a = input()
-        #
-        channel = grpc.insecure_channel(a + ':' + str(port))
-        self.conn = rpc.ChatServerStub(channel)
-
-        threading.Thread(target=self.__listen_for_pingpong, daemon=True).start()
+        self.myPostOffice = helper.PostOffice(serverAddress)
+        self.myPostOffice.Subscribe(user)
         
-           
-        self.p = chat.PrivateInfo()  # create protobug message (called Note)
-        self.p.ip = encMessage
-        self.p.user = u
-        self.conn.SendPrivateInfo(self.p)  # send the Note to the server
+        try:
+            threading.Thread(target=self.myPostOffice.Listen_for_PingPong, daemon=True).start()        
+        except:
+            self.CloseGame()
+        
         self.__setup_ui()
         
-
         threading.Thread(target=self.__listen_for_turns, daemon=True).start()
         threading.Thread(target=self.__listen_for_health, daemon=True).start()
         threading.Thread(target=self.__listen_for_actions, daemon=True).start()
         threading.Thread(target=self.__listen_for_block, daemon=True).start()
         threading.Thread(target=self.__diagnose, daemon=True).start()
-
-        if self.p.user != 'a': # host TODO change this line to be "not the host" (probably easiest when we launch both programs from the same place)
-            while self.map.length == 0:
-                resp = self.conn.GetActiveMap(chat.Empty())
-                if resp.board != "":
-                    self.map = resp
-                    self.cleanInitialList(self.map)
-                    time.sleep(2)
 
         self.window.mainloop()        
 
@@ -82,21 +59,12 @@ class Client:
             print("-------- END DIAGNOSTIC ---------")
             time.sleep(10)
         
-    def __listen_for_pingpong(self):
-        while True:
-            p = chat.Ping()  # create protobug message (called Ping)
-            p.ip = self.fernet.encrypt(self.ip.encode())
-            pong = self.conn.SendPing(p)
-            time.sleep(5)
-            #pong.message None chiudi gioco
-
-
     def __listen_for_health(self):
         """
         This method will be ran in a separate thread as the main/ui thread, because the for-in call is blocking
         when waiting for new messages
         """
-        for health in self.conn.HealthStream(chat.Empty()): # this line will wait for new messages from the server!
+        for health in self.myPostOffice.HealthStream(): # this line will wait for new messages from the server!
             req_ip = self.fernet.decrypt(health.ip).decode()
 
             '''print("------")  
@@ -110,7 +78,7 @@ class Client:
                     self.myHp = health.hp
     
     def __listen_for_block(self):
-        for block in self.conn.BlockStream(chat.Empty()):
+        for block in self.myPostOffice.BlockStream():
             req_ip = self.fernet.decrypt(block.ip).decode()
             block_amount = block.block
             block_user = block.user
@@ -119,7 +87,7 @@ class Client:
             print(block, "BLOCK")'''
 
             for utente in self.listHealth:
-                 #if  utente["ip"]  ==  req_ip: 
+                #if  utente["ip"]  ==  req_ip: 
                 if  utente["user"]  ==  block_user:
                     utente["block"]  =  block_amount
                 #if  utente["ip"]  ==  self.ip == req_ip:
@@ -129,7 +97,7 @@ class Client:
 
 
     def __listen_for_actions(self):
-        for action in self.conn.ActionStream(chat.Empty()):
+        for action in self.myPostOffice.ActionStream():
             action_ip_sender = self.fernet.decrypt(action.ip_sender).decode()
             action_ip_reciever = self.fernet.decrypt(action.ip_reciever).decode()
             action_amount = action.amount
@@ -167,28 +135,16 @@ class Client:
             if victim["block"] > 0 and action_type == 0: #if the victim can block an attack he will do that before getting his hp hit
                 action_amount = action_amount + int(victim["block"])
                 action_amount = 0 if action_amount > 0 else action_amount
-                b = chat.Block()
-                b.ip =  self.fernet.encrypt(victim["ip"].encode())
-                b.block = 0
-                b.user = victim["user"]
-                self.conn.SendBlock(b)
+                self.myPostOffice.SendBlock(actionType = 0, victimUser = victim["user"], victimIp = victim["ip"])
             
             if action_type < 2:
-                m = chat.Health()
-                m.ip =  self.fernet.encrypt(victim["ip"].encode())
-                m.hp = int(victim["hp"]) + action_amount
-                m.user = victim["user"]
-                self.conn.SendHealth(m)
+                self.myPostOffice.SendHealth(victimUser = victim["user"], victimIp = victim["ip"], victimHp = victim["hp"], action_amount = action_amount)
             else:
-                b = chat.Block()
-                b.ip =  self.fernet.encrypt(user["ip"].encode())
-                b.block = action_amount
-                b.user = user["user"]
-                self.conn.SendBlock(b)
+                self.myPostOffice.SendBlock(actionType = 1, victimUser = victim["user"], victimIp = victim["ip"], action_amount = action_amount)
 
     def __listen_for_turns(self):
         time.sleep(0.5) #some wait time before running to ensure that the ui gets created in time 
-        for turn in self.conn.TurnStream(chat.Empty()):
+        for turn in self.myPostOffice.TurnStream():
             if turn.user == self.username: #for testing use this line
             #if self.fernet.decrypt(turn.ip).decode() == self.ip:   
                 print("Mio turno: " + self.username)
@@ -204,6 +160,10 @@ class Client:
                         self.send_end_turn()
                 #TODO start the turn 
 
+    def CloseGame(self):
+        # TODO end game
+        pass
+
     #TODO: implement a one action per turn thing
 
     def lockButtons(self):
@@ -217,9 +177,6 @@ class Client:
         self.block_button["state"] = "normal"
 
     def send_end_turn(self):
-        info = chat.PrivateInfo()
-        info.ip = self.fernet.encrypt(self.ip.encode())
-        info.user = self.username
         print("Ending my turn: " + self.username)
         self.turn_button["state"] = "disabled"
         '''n = chat.Health()
@@ -229,7 +186,7 @@ class Client:
         self.conn.SendHealth(n)'''
         #print(self.listHealth)
         #self.lockButtons()
-        self.conn.EndTurn(info)
+        self.myPostOffice.EndTurn()
 
     def attack(self):
         # attack people that are not your same class or friends 
@@ -238,40 +195,23 @@ class Client:
         self.loadImgs()
         cancel_id = 1
         self.cancel_animation()
-       
+        
+        self.lockButtons()
         for user in self.listHealth:
             if user["player_type"] != self.myPlayerType: #i can attack my enemies only
-                n = chat.Action()
-                n.ip_sender = self.fernet.encrypt(self.ip.encode())
-                n.ip_reciever = self.fernet.encrypt(user["ip"].encode())
-                n.action_type = 0
-                n.amount = -10 + random.randint(-5,5) #TODO range of damage
-                self.conn.SendAction(n)
-        self.lockButtons()
+                self.myPostOffice.SendAction(user["ip"], actionType = 0)
 
-    
     def heal(self):
+        self.lockButtons()
         for user in self.listHealth:
             if user["player_type"] == self.myPlayerType: #i will heal my friends only
-                h = chat.Action()
-                h.ip_sender = self.fernet.encrypt(self.ip.encode())
-                h.ip_reciever = self.fernet.encrypt(user["ip"].encode())
-                h.action_type = 1
-                h.amount = 8 + random.randint(-5,5) #TODO range of damage
-                self.conn.SendAction(h)
-        self.lockButtons()
-    
+                self.myPostOffice.SendAction(user["ip"], actionType = 1)
+
     def block(self):
+        self.lockButtons()
         for user in self.listHealth:
             if user["user"] == self.username: #i will block for myself only
-                b = chat.Action()
-                b.ip_sender = self.fernet.encrypt(self.ip.encode())
-                b.ip_reciever = self.fernet.encrypt(user["ip"].encode())
-                b.action_type = 2
-                b.amount = 10 #TODO range of damage
-                self.conn.SendAction(b)
-        self.lockButtons()
-
+                self.myPostOffice.SendAction(user["ip"], actionType = 2)
 
 
     def cleanInitialList(self, mess):
@@ -283,7 +223,7 @@ class Client:
             row = row.strip("[]")  # remove the square brackets from the row string
             values = [str(x).strip().strip("'") for x in row.split(",")]  # split the row string by the ',' delimiter and convert the values to integers
             array.append(values)
-         
+        
         array_ip = mess.ip.strip("[]").strip("''").split(",") #["enc_ip","enc_ip"]
         array_role = mess.player_type.strip("[]").strip().strip("''").split(",") #[T,F,T]
 
@@ -304,14 +244,8 @@ class Client:
         message = self.entry_message.get()  # retrieve message from the UI
         if message != '':
             if message == '1': # fake starting
-                mess = self.conn.StartGame(self.p)
+                mess = self.myPostOffice.StartGame()
                 self.cleanInitialList(mess)
-            
-            n = chat.Note()  # create protobug message (called Note)
-            n.name = self.username  # set the username
-            n.message = message  # set the actual message of the note
-            #print("S[{}] {}".format(n.name, n.message))  # debugging statement
-            self.conn.SendNote(n)  # send the Note to the server
 
     def loadImgs(self):
         global pg_type
@@ -388,16 +322,16 @@ if __name__ == '__main__':
     frame.pack()
     root.withdraw()
     username = None
-    address = "localhost" #None when we deploy but for testing localhost is fine
+    serverAddress = "localhost" #None when we deploy but for testing localhost is fine
     while username is None:
         # retrieve a username so we can distinguish all the different clients
         username = simpledialog.askstring("Username", "What's your username?", parent=root)
     #address = "localhost" #None
-    while (address != "localhost") or (address is None) :
+    while (serverAddress != "localhost") or (serverAddress is None) :
         # retrieve a username so we can distinguish all the different clients
-        address = simpledialog.askstring("Game's address", "What's the address?", parent=root)
-        if re.match(r"^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$",address):
+        serverAddress = simpledialog.askstring("Game's address", "What's the address?", parent=root)
+        if re.match(r"^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$", serverAddress):
             break
         
     root.deiconify()  # don't remember why this was needed anymore...
-    c = Client(username, address, frame)  # this starts a client and thus a thread which keeps connection to server open
+    c = Client(username, serverAddress, frame)  # this starts a client and thus a thread which keeps connection to server open
