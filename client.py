@@ -224,11 +224,15 @@ class Client:
 
     def heal(self):
         self.lockButtons()
+        self.state="protect"
+        self.__after_action()
         for user in self.listHealth:
             if user["player_type"] == self.myPlayerType: #i will heal my friends only
                 self.myPostOffice.SendAction(user["ip"], actionType = 1)
 
     def block(self):
+        self.state="protect"
+        self.__after_action()
         self.lockButtons()
         for user in self.listHealth:
             if user["user"] == self.username: #i will block for myself only
