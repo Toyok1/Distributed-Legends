@@ -345,11 +345,7 @@ class Client:
     
     def __after_action(self):
         global pg_type
-        self.imgs = []
-        print("STATEEEEE--------->" + self.state)
-        path = "src/"+pg_type[0]+"/"+self.state+"/"
-        for i in os.listdir(path):
-            self.imgs.append(PhotoImage(file=path+i))
+        self.loadImgs()
         self.cancel_animation()
         self.enable_animation(self.label)
 
