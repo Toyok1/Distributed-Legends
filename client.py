@@ -128,13 +128,13 @@ class Client:
 
             match action_type:
                 case 0:
-                    mode = "attacks"
+                    mode = "attack"
                 case 1:
-                    mode = "heals"
+                    mode = "heal"
                 case 2:
-                    mode = "blocks"
+                    mode = "block"
                 case _:
-                    mode = "does something" #default
+                    mode = "idle" #default
 
             #print_message = "User "
 
@@ -149,10 +149,11 @@ class Client:
 
             print_message_array = ["User",actor["user"],mode,addendum,"for",str(abs(action_amount)),"points!"]
             print_message = " ".join(print_message_array)
-
+            self.state = mode
             print("--- MESSAGE ---")
             print(print_message)
             print("--- MESSAGE ---")
+            print(self.state)
 
             if victim["block"] > 0 and action_type == 0: #if the victim can block an attack he will do that before getting his hp hit
                 action_amount = action_amount + int(victim["block"])
@@ -208,17 +209,15 @@ class Client:
         self.conn.SendHealth(n)'''
         #print(self.listHealth)
         #self.lockButtons()
+        self.state = "idle"
         self.myPostOffice.EndTurn()
+        self.__after_action()
 
     def attack(self):
         # attack people that are not your same class or friends 
-        global cancel_id
-        self.state = "attack"
-        self.loadImgs()
-        cancel_id = 1
-        self.cancel_animation()
-        
         self.lockButtons()
+        self.state="attack"
+        self.__after_action()
         for user in self.listHealth:
             if user["player_type"] != self.myPlayerType: #i can attack my enemies only
                 self.myPostOffice.SendAction(user["ip"], actionType = 0)
@@ -340,8 +339,15 @@ class Client:
         self.turn_button["state"] = "disabled"
         self.lockButtons()
     
-    
-    
+    def __after_action(self):
+        global pg_type
+        self.imgs = []
+        print("STATEEEEE--------->" + self.state)
+        path = "src/"+pg_type[0]+"/"+self.state+"/"
+        for i in os.listdir(path):
+            self.imgs.append(PhotoImage(file=path+i))
+        self.cancel_animation()
+        self.enable_animation(self.label)
 
 
 if __name__ == '__main__':
