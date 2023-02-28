@@ -306,7 +306,7 @@ class Client:
     def enable_animation(self, animation):
         global cancel_id
         if cancel_id is None:  # Animation not started?
-            ms_delay = 500 #1000// len(self.imgs)  # Show all frames in 1000 ms.
+            ms_delay = 250 #1000// len(self.imgs)  # Show all frames in 1000 ms.
             cancel_id = root.after(
             ms_delay, self.update_label_image, animation, self.imgs, ms_delay, 0)
 
@@ -317,29 +317,98 @@ class Client:
             cancel_id = None
 
     def __setup_ui(self):
-        self.frame = Frame(self.window)
-        self.frame.pack(side=BOTTOM)
-        self.loadImgs()
-        self.label = Label(self.frame, image=self.imgs[0])
-        self.label.pack(side=LEFT)
-        self.enable_animation(self.label)
+        #self.window.resizable(False,False)
+        self.master_frame = Frame(self.window)
+        self.master_frame.pack(side=BOTTOM)
+        self.master_frame.columnconfigure(0, weight=1, minsize=960) #16:10
+        self.master_frame.rowconfigure(0, weight=1, minsize=420)
+        self.master_frame.rowconfigure(1, weight=1, minsize=180)
 
-        self.lbl_username = Label(self.window, text=self.username)
-        self.lbl_username.pack(side=LEFT)
-        '''self.entry_message = Entry(self.window, bd=5)
-        self.entry_message.bind('<Return>', self.send_message)
-        self.entry_message.focus()
-        self.entry_message.pack(side=BOTTOM)'''
-        self.start_button = Button(self.window, text = "Start Game", command = self.send_start_game)
-        self.start_button.pack()
-        self.turn_button = Button(self.window, text = "End Turn", command = self.send_end_turn)
-        self.turn_button.pack()
-        self.attack_button = Button(self.window, text = "ATTACK", command = self.attack)
-        self.attack_button.pack()
-        self.heal_button = Button(self.window, text = "HEAL", command = self.heal)
-        self.heal_button.pack()
-        self.block_button = Button(self.window, text = "BLOCK", command = self.block)
-        self.block_button.pack()
+        self.background_frame = Frame(master=self.master_frame, borderwidth=1, bg="red", padx=0, pady=0)
+        self.background_frame.grid(row=0, column=0, padx=0, pady=0, sticky=NSEW)
+
+        self.background_frame.columnconfigure(0, weight=1, minsize=480)
+        self.background_frame.columnconfigure(1, weight=1, minsize=480) 
+        self.background_frame.rowconfigure(0, weight=1, minsize=420)
+
+        self.heroes_frame = Frame(master=self.background_frame, borderwidth=1, bg="green", padx=5, pady=5)
+        self.heroes_frame.grid(row=0, column=0, padx=0, pady=0, sticky=NSEW)
+        self.moster_frame = Frame(master=self.background_frame, borderwidth=1, bg="orange", padx=5, pady=5)
+        self.moster_frame.grid(row=0, column=1, padx=0, pady=0, sticky=NSEW)
+
+        self.controls_frame = Frame(master=self.master_frame, borderwidth=1, padx=0, pady=0)
+        self.controls_frame.grid(row=1, column=0, padx=0, pady=0, sticky=NSEW)
+
+        self.controls_frame.columnconfigure(0, weight=1, minsize=288)
+        self.controls_frame.columnconfigure(1, weight=2, minsize=672) 
+        self.controls_frame.rowconfigure(0, weight=1, minsize=180)
+        
+        self.buttons_frame = Frame(master=self.controls_frame, borderwidth=1, bg="yellow", padx=0, pady=0)
+        self.buttons_frame.grid(row=0, column=0, padx=0, pady=0, sticky=SW)
+        self.text_frame = Frame(master=self.controls_frame, borderwidth=1, bg="blue", padx=0, pady=0)
+        self.text_frame.grid(row=0, column=1, padx=0, pady=0, sticky=SE)
+
+        #for x,y in range(2),range(3):
+        self.heroes_frame.columnconfigure(0, weight=1)
+        self.heroes_frame.columnconfigure(1, weight=1)
+        self.heroes_frame.rowconfigure(0, weight=1)
+        self.heroes_frame.rowconfigure(1, weight=1)
+        self.heroes_frame.rowconfigure(2, weight=1)
+
+        self.hero1_frame = Frame(master=self.heroes_frame, borderwidth=1, padx=5, pady=5,bg="green")
+        self.hero2_frame = Frame(master=self.heroes_frame, borderwidth=1, padx=5, pady=5,bg="green")
+        self.hero3_frame = Frame(master=self.heroes_frame, borderwidth=1, padx=5, pady=5,bg="green")
+        self.hero1_frame.grid(row=0, column=0, padx=0, pady=0, sticky=NSEW)
+        self.hero2_frame.grid(row=1, column=1, padx=0, pady=0, sticky=NSEW)
+        self.hero3_frame.grid(row=2, column=0, padx=0, pady=0, sticky=NSEW)
+
+        self.loadImgs()
+        self.label1 = Label(self.hero1_frame, image=self.imgs[0])
+        self.label1.pack()
+        self.enable_animation(self.label1)
+
+        self.lbl_username1 = Label(self.hero1_frame, text=self.username)
+        self.lbl_username1.pack()
+
+        ''' at this point we need to declare different labels and we can even fill them later when other people join but for right now as a proof of concept i'll use the knight'''
+        self.label2 = Label(self.hero2_frame, image=self.imgs[0])
+        self.label2.pack()
+        self.enable_animation(self.label2)
+
+        self.lbl_username2 = Label(self.hero2_frame, text=self.username)
+        self.lbl_username2.pack()
+
+        self.label3 = Label(self.hero3_frame, image=self.imgs[0])
+        self.label3.pack()
+        self.enable_animation(self.label3)
+
+        self.lbl_username3 = Label(self.hero3_frame, text=self.username)
+        self.lbl_username3.pack()
+
+        self.text_frame.columnconfigure(0, weight=1, minsize=672)
+        self.text_frame.rowconfigure(0, weight=1, minsize=180)
+
+        self.entry_message = Entry(self.text_frame, bd=5)
+        #self.entry_message.bind('<Return>', self.send_message)
+        #self.entry_message.focus()
+        self.entry_message.grid(row=0, column=0, padx=5, pady=5, sticky=NSEW)
+
+        self.start_button = Button(self.background_frame, text = "Start Game", command = self.send_start_game)
+        #self.start_button.pack()
+
+        self.buttons_frame.columnconfigure(0, weight=1, minsize=144)
+        self.buttons_frame.columnconfigure(1, weight=1, minsize=144) 
+        self.buttons_frame.rowconfigure(0, weight=1, minsize=90)
+        self.buttons_frame.rowconfigure(1, weight=1, minsize=90)
+
+        self.turn_button = Button(self.buttons_frame, text = "END TURN", command = self.send_end_turn)
+        self.turn_button.grid(row=1, column=1, padx=0, pady=0, sticky=NSEW)
+        self.attack_button = Button(self.buttons_frame, text = "ATTACK", command = self.attack)
+        self.attack_button.grid(row=0, column=0, padx=0, pady=0, sticky=NSEW)
+        self.heal_button = Button(self.buttons_frame, text = "HEAL", command = self.heal)
+        self.heal_button.grid(row=0, column=1, padx=0, pady=0, sticky=NSEW)
+        self.block_button = Button(self.buttons_frame, text = "BLOCK", command = self.block)
+        self.block_button.grid(row=1, column=0, padx=0, pady=0, sticky=NSEW)
         self.turn_button["state"] = "disabled"
         self.lockButtons()
     
@@ -351,7 +420,10 @@ class Client:
 
 
 if __name__ == '__main__':
-    root = Tk()  # I just used a very simple Tk window for the chat UI, this can be replaced by anything
+    root = Tk()
+    root.resizable(False,False)
+    root.title("RPGCombat")
+    root.iconbitmap("./src/icon/icon.ico")
     frame = Frame(root, width=300, height=300)
     frame.pack()
     root.withdraw()

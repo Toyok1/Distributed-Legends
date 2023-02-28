@@ -39,7 +39,7 @@ class ChatServer(rpc.ChatServerServicer):
     def __clean_user_list(self):
         # il tempo lo calcola il server
         while True: 
-            print("Player List", self.listUser)
+            #print("Player List", self.listUser)
             for user in self.listUser:
                 if (int(time.time()) - int(user["ping_time"])) > 5 :
                     self.listUser.remove(user)
