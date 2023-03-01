@@ -17,6 +17,7 @@ key = b'ZhDach4lH7NbH-Gy9EfN2e2HNrWRfbBFD8zeCTBgdEA='
 
 pg_type = ["knight", "mage", "archer", "monster"]
 cancel_id = None
+aniThreadPointer = []
 class Client:
 
     def __init__(self, user: str, serverAddress: str, window):
@@ -149,6 +150,7 @@ class Client:
 
             print_message_array = ["User",actor["user"],mode,addendum,"for",str(abs(action_amount)),"points!"]
             print_message = " ".join(print_message_array)
+            self.entry_message.config(text=print_message)
             self.state = mode
             print("--- MESSAGE ---")
             print(print_message)
@@ -211,13 +213,13 @@ class Client:
         #self.lockButtons()
         self.state = "idle"
         self.myPostOffice.EndTurn()
-        self.__after_action()
+        #self.__after_action()
 
     def attack(self):
         # attack people that are not your same class or friends 
         self.lockButtons()
         self.state="attack"
-        self.__after_action()
+        #self.__after_action()
         for user in self.listHealth:
             if user["player_type"] != self.myPlayerType: #i can attack my enemies only
                 self.myPostOffice.SendAction(user["ip"], actionType = 0)
@@ -225,14 +227,14 @@ class Client:
     def heal(self):
         self.lockButtons()
         self.state="protect"
-        self.__after_action()
+        #self.__after_action()
         for user in self.listHealth:
             if user["player_type"] == self.myPlayerType: #i will heal my friends only
                 self.myPostOffice.SendAction(user["ip"], actionType = 1)
 
     def block(self):
         self.state="protect"
-        self.__after_action()
+        #self.__after_action()
         self.lockButtons()
         for user in self.listHealth:
             if user["user"] == self.username: #i will block for myself only
@@ -309,12 +311,27 @@ class Client:
             ms_delay = 250 #1000// len(self.imgs)  # Show all frames in 1000 ms.
             cancel_id = root.after(
             ms_delay, self.update_label_image, animation, self.imgs, ms_delay, 0)
+    
+    def enable_animation_thread(self, animation):
+        global cancel_id
+        global aniThreadPointer
+        if cancel_id is None:
+            t = threading.Thread(target=self.enable_animation, args=(animation,),daemon=True) #create thread
+            t.start()
+            aniThreadPointer.append(t)
 
     def cancel_animation(self):
         global cancel_id
+        global aniThreadPointer
         if cancel_id is not None:  # Animation started?
             self.window.after_cancel(cancel_id)
+            while aniThreadPointer != []:   #kill all threads     
+                ttmp = aniThreadPointer.pop()
+                ttmp.join()
             cancel_id = None
+
+
+
 
     def __setup_ui(self):
         #self.window.resizable(False,False)
@@ -365,7 +382,7 @@ class Client:
         self.loadImgs()
         self.label1 = Label(self.hero1_frame, image=self.imgs[0])
         self.label1.pack()
-        self.enable_animation(self.label1)
+        #@self.enable_animation_thread(self.label1)
 
         self.lbl_username1 = Label(self.hero1_frame, text=self.username)
         self.lbl_username1.pack()
@@ -373,28 +390,35 @@ class Client:
         ''' at this point we need to declare different labels and we can even fill them later when other people join but for right now as a proof of concept i'll use the knight'''
         self.label2 = Label(self.hero2_frame, image=self.imgs[0])
         self.label2.pack()
-        self.enable_animation(self.label2)
+        #self.enable_animation_thread(self.label2)
 
         self.lbl_username2 = Label(self.hero2_frame, text=self.username)
         self.lbl_username2.pack()
 
         self.label3 = Label(self.hero3_frame, image=self.imgs[0])
         self.label3.pack()
-        self.enable_animation(self.label3)
+        #self.enable_animation_thread(self.label3)
 
         self.lbl_username3 = Label(self.hero3_frame, text=self.username)
         self.lbl_username3.pack()
 
+        self.label4 = Label(self.moster_frame, image=self.imgs[0])
+        self.label4.pack()
+        
+        self.lbl_username4 = Label(self.moster_frame, text="PDOR FIGLIO DI KMER")
+        self.lbl_username4.pack()
+
         self.text_frame.columnconfigure(0, weight=1, minsize=672)
         self.text_frame.rowconfigure(0, weight=1, minsize=180)
 
-        self.entry_message = Entry(self.text_frame, bd=5)
+        self.entry_message = Label(self.text_frame, bd=5)
         #self.entry_message.bind('<Return>', self.send_message)
         #self.entry_message.focus()
+        self.entry_message.config(text="Welcome to the game!")
         self.entry_message.grid(row=0, column=0, padx=5, pady=5, sticky=NSEW)
 
-        self.start_button = Button(self.background_frame, text = "Start Game", command = self.send_start_game)
-        #self.start_button.pack()
+        self.start_button = Button(self.moster_frame, text = "Start Game", command = self.send_start_game)
+        self.start_button.pack()
 
         self.buttons_frame.columnconfigure(0, weight=1, minsize=144)
         self.buttons_frame.columnconfigure(1, weight=1, minsize=144) 
@@ -413,10 +437,11 @@ class Client:
         self.lockButtons()
     
     def __after_action(self):
-        global pg_type
         self.loadImgs()
         self.cancel_animation()
-        self.enable_animation(self.label)
+        self.enable_animation_thread(self.label1)
+        self.enable_animation_thread(self.label2)
+        self.enable_animation_thread(self.label3)
 
 
 if __name__ == '__main__':
