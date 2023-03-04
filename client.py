@@ -6,6 +6,7 @@ from GRPCClientHelper import helper
 
 import tkinter as tk
 from tkinter import simpledialog
+from tkinter import ttk
 
 import time
 import random
@@ -24,7 +25,7 @@ class Client:
         # the frame to put ui components on
         self.GAME_STARTED = False
         self.window = window
-        self.myHp = 1
+        self.myHp = 99.9
         self.myBlock = 0
         self.myPlayerType = 0
         self.username = user
@@ -331,93 +332,100 @@ class Client:
             cancel_id = None
 
 
-
-
     def __setup_ui(self):
         #self.window.resizable(False,False)
         self.master_frame = tk.Frame(self.window)
-        self.master_frame.pack(side=tk.BOTTOM)
+        self.master_frame.grid(row=0, column=0, sticky=tk.NSEW)
         self.master_frame.columnconfigure(0, weight=1, minsize=960) #16:10
         self.master_frame.rowconfigure(0, weight=1, minsize=420)
         self.master_frame.rowconfigure(1, weight=1, minsize=180)
 
-        self.background_frame = tk.Frame(master=self.master_frame, borderwidth=1, bg="red", padx=0, pady=0)
-        self.background_frame.grid(row=0, column=0, padx=0, pady=0, sticky=tk.NSEW)
-
-        self.background_frame.columnconfigure(0, weight=1, minsize=480)
-        self.background_frame.columnconfigure(1, weight=1, minsize=480) 
+        self.background_frame = tk.Frame(self.master_frame, borderwidth=1)
+        self.background_frame.grid(row=0, column=0, sticky=tk.NSEW)
+        self.background_frame.columnconfigure([0, 1], weight=1, minsize=480)
         self.background_frame.rowconfigure(0, weight=1, minsize=420)
 
-        self.heroes_frame = tk.Frame(master=self.background_frame, borderwidth=1, bg="green", padx=5, pady=5)
-        self.heroes_frame.grid(row=0, column=0, padx=0, pady=0, sticky=tk.NSEW)
-        self.monster_frame = tk.Frame(master=self.background_frame, borderwidth=1, bg="orange", padx=5, pady=5)
-        self.monster_frame.grid(row=0, column=1, padx=0, pady=0, sticky=tk.NSEW)
+        # HEROES SETUP
+        self.heroes_frame = tk.Frame(self.background_frame, borderwidth=1, bg="brown", padx=10, pady=10)
+        self.heroes_frame.grid(row=0, column=0, sticky=tk.NSEW)
 
-        self.controls_frame = tk.Frame(master=self.master_frame, borderwidth=1, padx=0, pady=0)
-        self.controls_frame.grid(row=1, column=0, padx=0, pady=0, sticky=tk.NSEW)
-
-        self.controls_frame.columnconfigure(0, weight=1, minsize=288)
-        self.controls_frame.columnconfigure(1, weight=2, minsize=672) 
-        self.controls_frame.rowconfigure(0, weight=1, minsize=180)
-        
-        self.buttons_frame = tk.Frame(master=self.controls_frame, borderwidth=1, bg="yellow", padx=0, pady=0)
-        self.buttons_frame.grid(row=0, column=0, padx=0, pady=0, sticky=tk.SW)
-        self.text_frame = tk.Frame(master=self.controls_frame, borderwidth=1, bg="blue", padx=0, pady=0)
-        self.text_frame.grid(row=0, column=1, padx=0, pady=0, sticky=tk.SE)
-
-        #for x,y in range(2),range(3):
-        self.heroes_frame.columnconfigure(0, weight=1)
-        self.heroes_frame.columnconfigure(1, weight=1)
-        self.heroes_frame.rowconfigure(0, weight=1)
-        self.heroes_frame.rowconfigure(1, weight=1)
-        self.heroes_frame.rowconfigure(2, weight=1)
-
-        self.hero1_frame = tk.Frame(master=self.heroes_frame, borderwidth=1, padx=5, pady=5,bg="green")
-        self.hero2_frame = tk.Frame(master=self.heroes_frame, borderwidth=1, padx=5, pady=5,bg="green")
-        self.hero3_frame = tk.Frame(master=self.heroes_frame, borderwidth=1, padx=5, pady=5,bg="green")
-        self.hero1_frame.grid(row=0, column=0, padx=0, pady=0, sticky=tk.NSEW)
-        self.hero2_frame.grid(row=1, column=1, padx=0, pady=0, sticky=tk.NSEW)
-        self.hero3_frame.grid(row=2, column=0, padx=0, pady=0, sticky=tk.NSEW)
+        for i in range(2):
+            self.heroes_frame.columnconfigure(i, weight=1)
+        for j in range(3):
+            self.heroes_frame.rowconfigure(j, weight=1)
 
         self.loadImgs()
-        self.label1 = tk.Label(self.hero1_frame, image=self.imgs[0])
-        self.label1.pack()
-        #@self.enable_animation_thread(self.label1)
+        self.style = ttk.Style()
+        self.style.theme_use('clam')
+        self.style.configure("Horizontal.TProgressbar", background='green')
 
-        self.lbl_username1 = tk.Label(self.hero1_frame, text=self.username)
-        self.lbl_username1.pack()
+        self.hero1 = tk.Label(self.heroes_frame, image=self.imgs[0])
+        self.hero1.grid(row=0, column=0, padx=5, pady=5, sticky=tk.NSEW)
+        #@self.enable_animation_thread(self.label1)
+        self.hero1_username = tk.Label(self.heroes_frame, text=self.username)
+        self.hero1_username.grid(row=0, column=0, padx=5, pady=5, sticky=tk.N)
+        hero1_health = ttk.Progressbar(self.heroes_frame, style="Horizontal.TProgressbar", orient='horizontal', variable=self.myHp, mode='determinate')
+        hero1_health.step(99.9)
+        hero1_health.grid(row=0, column=0, padx=5, pady=5, sticky=tk.S)
 
         ''' at this point we need to declare different labels and we can even fill them later when other people join but for right now as a proof of concept i'll use the knight'''
-        self.label2 = tk.Label(self.hero2_frame, image=self.imgs[0])
-        self.label2.pack()
+        self.hero2 = tk.Label(self.heroes_frame, image=self.imgs[0])
+        self.hero2.grid(row=2, column=0, padx=5, pady=5, sticky=tk.NSEW)
         #self.enable_animation_thread(self.label2)
+        self.hero2_username = tk.Label(self.heroes_frame, text=self.username)
+        self.hero2_username.grid(row=2, column=0, padx=5, pady=5, sticky=tk.N)
+        hero2_health = ttk.Progressbar(self.heroes_frame, orient='horizontal', variable=self.myHp, mode='determinate')
+        hero2_health.step(99.9)
+        hero2_health.grid(row=2, column=0, padx=5, pady=5, sticky=tk.S)
 
-        self.lbl_username2 = tk.Label(self.hero2_frame, text=self.username)
-        self.lbl_username2.pack()
-
-        self.label3 = tk.Label(self.hero3_frame, image=self.imgs[0])
-        self.label3.pack()
+        self.hero3 = tk.Label(self.heroes_frame, image=self.imgs[0])
+        self.hero3.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NSEW)
         #self.enable_animation_thread(self.label3)
+        self.hero3_username = tk.Label(self.heroes_frame, text=self.username)
+        self.hero3_username.grid(row=1, column=1, padx=5, pady=5, sticky=tk.N)
+        hero3_health = ttk.Progressbar(self.heroes_frame, orient='horizontal', variable=self.myHp, mode='determinate')
+        hero3_health.step(99.9)
+        hero3_health.grid(row=1, column=1, padx=5, pady=5, sticky=tk.S)
 
-        self.lbl_username3 = tk.Label(self.hero3_frame, text=self.username)
-        self.lbl_username3.pack()
-
-        
+        # MONSTER SETUP
+        self.monster_frame = tk.Frame(self.background_frame, borderwidth=1, bg="orange", padx=5, pady=5)
+        self.monster_frame.grid(row=0, column=1, sticky=tk.NSEW)
+                
         image = Image.open("./src/monster/1.png")
         photo = ImageTk.PhotoImage(image)
         
-        self.label4 = tk.Label(self.monster_frame, image=photo)
-        self.label4.image = photo # keep a reference!
-        self.label4.pack()
+        self.monster = tk.Label(self.monster_frame, image=photo)
+        self.monster.image = photo # keep a reference!
+        self.monster.pack()
+        self.monster_label = tk.Label(self.monster_frame, text="PDOR FIGLIO DI KMER")
+        self.monster_label.pack()
 
-        '''self.label4 = tk.Label(self.monster_frame, image=ph)
-        
-        self.label4.pack()
-        #self.label4.image=ph'''
-        
-        self.lbl_username4 = tk.Label(self.monster_frame, text="PDOR FIGLIO DI KMER")
-        self.lbl_username4.pack()
+        self.controls_frame = tk.Frame(self.master_frame, borderwidth=1)
+        self.controls_frame.grid(row=1, column=0, sticky=tk.NSEW)
+        self.controls_frame.columnconfigure(0, weight=1, minsize=288)
+        self.controls_frame.columnconfigure(1, weight=2, minsize=672) 
+        self.controls_frame.rowconfigure(0, weight=1, minsize=180)
 
+        # BUTTONS SETUP
+        self.buttons_frame = tk.Frame(self.controls_frame, borderwidth=1, bg="yellow")
+        self.buttons_frame.grid(row=0, column=0, sticky=tk.NSEW)
+        self.buttons_frame.columnconfigure([0, 1], weight=1, minsize=144)
+        self.buttons_frame.rowconfigure([0, 1], weight=1, minsize=90)
+
+        self.attack_button = tk.Button(self.buttons_frame, text = "ATTACK", command = self.attack)
+        self.attack_button.grid(row=0, column=0, sticky=tk.NSEW)
+        self.heal_button = tk.Button(self.buttons_frame, text = "HEAL", command = self.heal)
+        self.heal_button.grid(row=0, column=1, sticky=tk.NSEW)
+        self.block_button = tk.Button(self.buttons_frame, text = "BLOCK", command = self.block)
+        self.block_button.grid(row=1, column=0, sticky=tk.NSEW)
+        self.turn_button = tk.Button(self.buttons_frame, text = "END TURN", command = self.send_end_turn)
+        self.turn_button.grid(row=1, column=1, sticky=tk.NSEW)
+        self.turn_button["state"] = "disabled"
+        self.lockButtons()
+
+        # TEXT MESSAGE SETUP
+        self.text_frame = tk.Frame(master=self.controls_frame, borderwidth=1, bg="blue")
+        self.text_frame.grid(row=0, column=1, sticky=tk.SE)
         self.text_frame.columnconfigure(0, weight=1, minsize=672)
         self.text_frame.rowconfigure(0, weight=1, minsize=180)
 
@@ -429,22 +437,6 @@ class Client:
 
         self.start_button = tk.Button(self.monster_frame, text = "Start Game", command = self.send_start_game)
         self.start_button.pack()
-
-        self.buttons_frame.columnconfigure(0, weight=1, minsize=144)
-        self.buttons_frame.columnconfigure(1, weight=1, minsize=144) 
-        self.buttons_frame.rowconfigure(0, weight=1, minsize=90)
-        self.buttons_frame.rowconfigure(1, weight=1, minsize=90)
-
-        self.turn_button = tk.Button(self.buttons_frame, text = "END TURN", command = self.send_end_turn)
-        self.turn_button.grid(row=1, column=1, padx=0, pady=0, sticky=tk.NSEW)
-        self.attack_button = tk.Button(self.buttons_frame, text = "ATTACK", command = self.attack)
-        self.attack_button.grid(row=0, column=0, padx=0, pady=0, sticky=tk.NSEW)
-        self.heal_button = tk.Button(self.buttons_frame, text = "HEAL", command = self.heal)
-        self.heal_button.grid(row=0, column=1, padx=0, pady=0, sticky=tk.NSEW)
-        self.block_button = tk.Button(self.buttons_frame, text = "BLOCK", command = self.block)
-        self.block_button.grid(row=1, column=0, padx=0, pady=0, sticky=tk.NSEW)
-        self.turn_button["state"] = "disabled"
-        self.lockButtons()
     
     def __after_action(self):
         self.loadImgs()
@@ -461,7 +453,7 @@ if __name__ == '__main__':
     root.iconbitmap("./src/icon/icon.ico")
     frame = tk.Frame(root, width=300, height=300)
     frame.pack()
-    root.withdraw()
+    root.withdraw() # Hides the window
     username = None
     serverAddress = "localhost" #None when we deploy but for testing localhost is fine
     while username is None:
@@ -474,5 +466,5 @@ if __name__ == '__main__':
         if re.match(r"^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$", serverAddress):
             break
         
-    root.deiconify()  # don't remember why this was needed anymore...
+    root.deiconify()  # Makes the window visible again
     c = Client(username, serverAddress, frame)  # this starts a client and thus a thread which keeps connection to server open
