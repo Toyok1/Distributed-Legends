@@ -17,10 +17,16 @@ message StartedBool{
 message PrivateInfo{
     bytes ip = 1;
     string user = 2;
+    string u_id = 3;
+}
+
+message PlayerMessage{
+    string json_str = 1;
 }
 
 message Ping {
     bytes ip = 1;
+    string id = 2;
 }
 
 message Pong {
@@ -35,26 +41,27 @@ message GameStatus {
 
 message InitialList {
     int32 length = 1;
-    string name_hp = 2; // ["utente1","utente2"][hp1, hp2]
-    string player_type = 3; //["1","0"]
-    string ip = 4; //["enc_ip","enc_ip"]
+    string json_str = 2;
+    
 }
 
+/*string name_hp = 2; // ["utente1","utente2"][hp1, hp2]
+    string player_type = 3; //["1","0"]
+    string ip = 4; //["enc_ip","enc_ip"]*/
+
 message Health{
-    bytes ip = 1;
+    string json_str = 1;
     int32 hp = 2; 
-    string user = 3;
 }
 
 message Block{
-    bytes ip = 1;
+    string json_str = 1;
     int32 block = 2; 
-    string user = 3;
 }
 
 message Action{
-    bytes ip_sender = 1;
-    bytes ip_reciever = 2;
+    string sender = 1;
+    string reciever = 2;
     int32 amount = 3;
     int32 action_type = 4; //0 = attack, 1 = heal, 2 = block etc etc
 }
@@ -74,8 +81,8 @@ service ChatServer {
     rpc ActionStream(Empty) returns(stream Action);
     rpc GetInitialList(Empty) returns(InitialList);
     rpc FinishGame(Empty) returns(Note);
-    rpc EndTurn(PrivateInfo) returns(Empty);
-    rpc TurnStream (Empty) returns(stream PrivateInfo);
+    rpc EndTurn(PlayerMessage) returns(Empty);
+    rpc TurnStream (Empty) returns(stream PlayerMessage);
     rpc ReturnStarted (Empty) returns(StartedBool);
 }
 // python3 -m grpc_tools.protoc -I=. --python_out=. --grpc_python_out=. chat.proto 

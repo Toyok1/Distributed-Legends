@@ -2,12 +2,13 @@ import threading
 import os
 from PIL import ImageTk, Image 
 
-from GRPCClientHelper import helper
+from GRPCClientHelper import helper, player
 
 import tkinter as tk
 from tkinter import simpledialog
 
 import time
+import uuid
 import random
 import re
 from cryptography.fernet import Fernet
@@ -23,22 +24,26 @@ class Client:
     def __init__(self, user: str, serverAddress: str, window):
         # the frame to put ui components on
         self.GAME_STARTED = False
+        self.myPlayer = None #quick reference to my player
+        self.otherPlayers = [] #quick reference to everyone but me
+        self.players = [] #quick refernce to every player in the game
         self.window = window
         self.myHp = 1
         self.myBlock = 0
         self.myPlayerType = 0
         self.username = user
-        self.listHealth = [] # [{"ip": ip, "hp": hp, "block": block, "user": user},{},{},{}]
+        #self.listHealth = [] # [{"ip": ip, "hp": hp, "block": block, "user": user},{},{},{}]
         self.myTurn = False
         self.state = "idle"
+        self.myUid = str(uuid.uuid4())
         
         self.fernet = Fernet(key)
         
-        self.myPostOffice = helper.PostOffice(serverAddress)
-        self.myPostOffice.Subscribe(user)
+        self.myPostOffice = helper.PostOffice(serverAddress, user, self.myUid)
+        self.myPostOffice.Subscribe()
         
         try:
-            threading.Thread(target=self.myPostOffice.Listen_for_PingPong, daemon=True).start()        
+            threading.Thread(target=self.myPostOffice.Listen_for_PingPong, args=(self.myUid,), daemon=True).start()        
         except:
             self.CloseGame()
         
@@ -67,7 +72,7 @@ class Client:
             b = self.myPostOffice.CheckStarted()
             self.GAME_STARTED = b.started
         #self.map = self.conn.GetActiveMap(chat.Empty())
-        if self.listHealth == []:
+        if self.players == []:
             mess = self.myPostOffice.GetInitialList()
             self.cleanInitialList(mess)
         self.start_button["state"] = "disabled"
@@ -75,11 +80,12 @@ class Client:
 
     def __diagnose(self):
         while True:
-            print("-------- START DIAGNOSTIC ---------")
-            print(self.username," - HP: ", self.myHp," - Block: ", self.myBlock)
-            for item in self.listHealth:
-                print(item)
-            print("-------- END DIAGNOSTIC ---------")
+            if self.myPlayer != None:
+                print("-------- START DIAGNOSTIC ---------")
+                print(self.myPlayer.getUsername()," - HP: ", self.myPlayer.getHp()," - Block: ", self.myPlayer.getBlock())
+                for item in self.players:
+                    print(item)
+                print("-------- END DIAGNOSTIC ---------")
             time.sleep(10)
         
     def __listen_for_health(self):
@@ -88,41 +94,40 @@ class Client:
         when waiting for new messages
         """
         for health in self.myPostOffice.HealthStream(): # this line will wait for new messages from the server!
-            req_ip = self.fernet.decrypt(health.ip).decode()
-
+            healed = player.transformFromJSON(health.json_str)
+            health_amount = health.hp
             '''print("------")  
             print(health, "HEALTH")'''
 
-            for  utente  in  self.listHealth:
+            for  utente in self.players:
                 #if  utente["ip"]  ==  req_ip: 
-                if  utente["user"]  ==  health.user:
-                    utente["hp"]  =  health.hp
-                if utente["user"] == self.username:
-                    self.myHp = health.hp
+                if utente.getUid() == healed.getUid():
+                    utente.setHp(health_amount)
+                '''if utente["user"] == self.username:
+                    self.myHp = health.hp'''
     
     def __listen_for_block(self):
         for block in self.myPostOffice.BlockStream():
-            req_ip = self.fernet.decrypt(block.ip).decode()
+            blocker = player.transformFromJSON(block.json_str)
             block_amount = block.block
-            block_user = block.user
 
             '''print("------")  
             print(block, "BLOCK")'''
 
-            for utente in self.listHealth:
+            for utente in self.players:
                 #if  utente["ip"]  ==  req_ip: 
-                if  utente["user"]  ==  block_user:
-                    utente["block"]  =  block_amount
+                if  utente.getUid()  ==  blocker.getUid(): #TODO change it to ip when not testing
+                    utente.setBlock(block_amount)
                 #if  utente["ip"]  ==  self.ip == req_ip:
-                if utente["user"] == self.username:
-                    self.myBlock = block_amount
+                '''if utente["user"] == self.username:
+                    self.myBlock = block_amount'''
         
 
 
     def __listen_for_actions(self):
         for action in self.myPostOffice.ActionStream():
-            action_ip_sender = self.fernet.decrypt(action.ip_sender).decode()
-            action_ip_reciever = self.fernet.decrypt(action.ip_reciever).decode()
+            action_sender = player.transformFromJSON(action.sender)
+            action_reciever = player.transformFromJSON(action.reciever)
             action_amount = action.amount
             action_type = action.action_type
             mode = ""
@@ -139,16 +144,16 @@ class Client:
 
             #print_message = "User "
 
-            for user in self.listHealth: #TODO: find a way to have this work in testing, maybe switch to username based recognition
-                if user["ip"] == action_ip_sender:
+            for user in self.players: #TODO: find a way to have this work in testing, maybe switch to username based recognition
+                if user.getUid() == action_sender.getUid(): #uid for testing TODO change it to ip
                     actor = user
-                if user["ip"] == action_ip_reciever:
+                if user.getUid() == action_reciever.getUid():
                     victim = user
             
-            addendum = (" " + victim["user"]) if action_type != 2 else ""
+            addendum = (victim.getUsername()) if action_type != 2 else ""
             #print_message = print_message + actor["user"] +" "+ mode + addendum + " for " + str(abs(action_amount)) + " points!"
 
-            print_message_array = ["User",actor["user"],mode,addendum,"for",str(abs(action_amount)),"points!"]
+            print_message_array = ["User",actor.getUsername(),mode,addendum,"for",str(abs(action_amount)),"points!"]
             print_message = " ".join(print_message_array)
             self.entry_message.config(text=print_message)
             self.state = mode
@@ -157,33 +162,37 @@ class Client:
             print("--- MESSAGE ---")
             print(self.state)
 
-            if victim["block"] > 0 and action_type == 0: #if the victim can block an attack he will do that before getting his hp hit
-                action_amount = action_amount + int(victim["block"])
+            if victim.getBlock() > 0 and action_type == 0: #if the victim can block an attack he will do that before getting his hp hit
+                action_amount = action_amount + int(victim.getBlock())
                 action_amount = 0 if action_amount > 0 else action_amount
-                self.myPostOffice.SendBlock(actionType = 0, victimUser = victim["user"], victimIp = victim["ip"])
+                self.myPostOffice.SendBlock(user=victim, amount= action_amount)
             
             if action_type < 2:
-                self.myPostOffice.SendHealth(victimUser = victim["user"], victimIp = victim["ip"], victimHp = victim["hp"], action_amount = action_amount)
+                action_amount = victim.getHp() + action_amount
+                self.myPostOffice.SendHealth(user=victim, amount= action_amount)
             else:
-                self.myPostOffice.SendBlock(actionType = 1, victimUser = victim["user"], victimIp = victim["ip"], action_amount = action_amount)
+                self.myPostOffice.SendBlock(user=victim, amount= action_amount)
 
-    def __listen_for_turns(self):
-        time.sleep(0.5) #some wait time before running to ensure that the ui gets created in time 
+    def __listen_for_turns(self): 
+        #print("TURNSSSSSSSSSSSSSSSSSSSSSS")
+        while self.myPlayer is None:
+            pass
         for turn in self.myPostOffice.TurnStream():
-            if turn.user == self.username: #for testing use this line
+            what = player.transformFromJSON(turn.json_str)
+            #print(what)
+            if what.getUsername() == self.myPlayer.getUsername() and what.getUid() == self.myPlayer.getUid(): #for testing use this line
             #if self.fernet.decrypt(turn.ip).decode() == self.ip:   
-                print("Mio turno: " + self.username)
+                print("Mio turno: " + self.myPlayer.getUsername())
                 self.turn_button["state"] = "normal"
                 self.unlockButtons() #unlock the buttons when it's my turn
                 #if miei hp <= 0 endturn + interfaccia "you died"
-                if self.myHp <= 0:
-                    if self.myPlayerType == True:
+                if self.myPlayer.getHp() <= 0:
+                    if self.myPlayer.getUsertype() == 1: #monster
                         print("THE MONSTER IS DEAD! The game will end shortly.")
                         #end the game right here
                     else:
                         print("YOU ARE DEAD! Wait for one of your allies to revive you.")
                         self.send_end_turn()
-                #TODO start the turn 
 
     def closeGame(self):
         # TODO end game
@@ -212,7 +221,8 @@ class Client:
         #print(self.listHealth)
         #self.lockButtons()
         self.state = "idle"
-        self.myPostOffice.EndTurn()
+        print("MYPLAYER INSIDE SEND_END_TURN", self.myPlayer)
+        self.myPostOffice.EndTurn(self.myPlayer)
         #self.__after_action()
 
     def attack(self):
@@ -220,29 +230,29 @@ class Client:
         self.lockButtons()
         self.state="attack"
         #self.__after_action()
-        for user in self.listHealth:
-            if user["player_type"] != self.myPlayerType: #i can attack my enemies only
-                self.myPostOffice.SendAction(user["ip"], actionType = 0)
+        for user in self.players:
+            if user.getUsertype() != self.myPlayerType: #i can attack my enemies only
+                self.myPostOffice.SendAction(self.myPlayer, user, actionType = 0)
 
     def heal(self):
         self.lockButtons()
         self.state="protect"
         #self.__after_action()
-        for user in self.listHealth:
-            if user["player_type"] == self.myPlayerType: #i will heal my friends only
-                self.myPostOffice.SendAction(user["ip"], actionType = 1)
+        for user in self.players:
+            if user.getUsertype() == self.myPlayerType: #i will heal my friends only
+                self.myPostOffice.SendAction(self.myPlayer, user, actionType = 1)
 
     def block(self):
         self.state="protect"
         #self.__after_action()
         self.lockButtons()
-        for user in self.listHealth:
-            if user["user"] == self.username: #i will block for myself only
-                self.myPostOffice.SendAction(user["ip"], actionType = 2)
+        for user in self.players:
+            if user.getUsername() == self.myPlayer.getUsername(): #i will block for myself only
+                self.myPostOffice.SendAction(self.myPlayer, user, actionType = 2)
 
 
     def cleanInitialList(self, mess):
-        string = mess.name_hp
+        '''string = mess.name_hp
         rows = string.split("][")  # split the string by the '][' delimiter
         array = []
         for row in rows:
@@ -257,15 +267,27 @@ class Client:
         self.listHealth.extend([{"ip":array_ip[i].strip().strip("'"), "hp":array[1][i], "block": 0,
                                 "user":array[0][i], "player_type": int(array_role[i].strip())} for i in range(0,len(array[0]))])
         self.genMyRole()
-        #print(self.listHealth)
+        #print(self.listHealth)'''
+        print(mess)
+        self.players = player.transformFullListFromJSON(mess.json_str)
+        print(self.players)
+        for u in self.players:
+            if u.getUsername() == self.username:
+                self.myPlayer = u
+                self.myPlayerType = u.getUsertype()
+            else:
+                self.otherPlayers.append(u)
 
-    def genMyRole(self):
+        '''if self.players[-1].getUid() == self.myPlayer.getUid():
+            self.send_end_turn()'''
+
+    '''def genMyRole(self):
         for user in self.listHealth:
             if user["user"] == self.username: #TODO change to ip
-                self.myPlayerType = user["player_type"]
+                self.myPlayerType = user["player_type"]'''
     
     def send_start_game(self):
-        #if i'm the user i can start the game  TODO: make it so that only hosts can use this button and maybe delete it after use (?)
+        #if i'm the host i can start the game  TODO: make it so that only hosts can use this button and maybe delete it after use (?)
         mess = self.myPostOffice.StartGame()
         self.cleanInitialList(mess)
 
@@ -329,9 +351,6 @@ class Client:
                 ttmp = aniThreadPointer.pop()
                 ttmp.join()
             cancel_id = None
-
-
-
 
     def __setup_ui(self):
         #self.window.resizable(False,False)

@@ -81,13 +81,13 @@ class ChatServerStub(object):
                 )
         self.EndTurn = channel.unary_unary(
                 '/grpc.ChatServer/EndTurn',
-                request_serializer=chat__pb2.PrivateInfo.SerializeToString,
+                request_serializer=chat__pb2.PlayerMessage.SerializeToString,
                 response_deserializer=chat__pb2.Empty.FromString,
                 )
         self.TurnStream = channel.unary_stream(
                 '/grpc.ChatServer/TurnStream',
                 request_serializer=chat__pb2.Empty.SerializeToString,
-                response_deserializer=chat__pb2.PrivateInfo.FromString,
+                response_deserializer=chat__pb2.PlayerMessage.FromString,
                 )
         self.ReturnStarted = channel.unary_unary(
                 '/grpc.ChatServer/ReturnStarted',
@@ -266,13 +266,13 @@ def add_ChatServerServicer_to_server(servicer, server):
             ),
             'EndTurn': grpc.unary_unary_rpc_method_handler(
                     servicer.EndTurn,
-                    request_deserializer=chat__pb2.PrivateInfo.FromString,
+                    request_deserializer=chat__pb2.PlayerMessage.FromString,
                     response_serializer=chat__pb2.Empty.SerializeToString,
             ),
             'TurnStream': grpc.unary_stream_rpc_method_handler(
                     servicer.TurnStream,
                     request_deserializer=chat__pb2.Empty.FromString,
-                    response_serializer=chat__pb2.PrivateInfo.SerializeToString,
+                    response_serializer=chat__pb2.PlayerMessage.SerializeToString,
             ),
             'ReturnStarted': grpc.unary_unary_rpc_method_handler(
                     servicer.ReturnStarted,
@@ -522,7 +522,7 @@ class ChatServer(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/grpc.ChatServer/EndTurn',
-            chat__pb2.PrivateInfo.SerializeToString,
+            chat__pb2.PlayerMessage.SerializeToString,
             chat__pb2.Empty.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
@@ -540,7 +540,7 @@ class ChatServer(object):
             metadata=None):
         return grpc.experimental.unary_stream(request, target, '/grpc.ChatServer/TurnStream',
             chat__pb2.Empty.SerializeToString,
-            chat__pb2.PrivateInfo.FromString,
+            chat__pb2.PlayerMessage.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

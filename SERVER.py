@@ -1,9 +1,10 @@
-from concurrent import futures
 import grpc
 import time
 import random
 import threading
 from concurrent import futures
+import uuid
+from GRPCClientHelper import player
 
 import chat_pb2 as chat
 import chat_pb2_grpc as rpc
@@ -28,20 +29,21 @@ class ChatServer(rpc.ChatServerServicer):
         threading.Thread(target=self.__clean_user_list, daemon=True).start()
 
         self.initialList = chat.InitialList()
-        self.initialList.name_hp = ""
+        self.initialList.json_str = ""
         self.isStartedGame = False
 
-    def  __updateUserList(self, req_ip):
-        for  utente  in  self.listUser:
-            if  utente["ip"]  ==  req_ip: 
-                utente["ping_time"]  =  time.time()
+    def  __updateUserList(self, req_ip, req_id):
+        for  usr  in  self.listUser:
+            if  usr.getIp()  ==  req_ip and usr.getUid() == req_id: 
+                #print("pinged", usr)
+                usr.setPingTime(time.time())
 
     def __clean_user_list(self):
         # il tempo lo calcola il server
         while True: 
             #print("Player List", self.listUser)
             for user in self.listUser:
-                if (int(time.time()) - int(user["ping_time"])) > 5 :
+                if (int(time.time()) - int(user.getPingTime())) > 5 :
                     self.listUser.remove(user)
             time.sleep(2.5) 
     
@@ -50,16 +52,18 @@ class ChatServer(rpc.ChatServerServicer):
         self.activeMap.board =  str(random.choices(range(0,  8), k = self.activeMap.length))'''
 
     def __distributeHealth(self):
-        random.choice(self.listUser)["player_type"] = 1
+        self.listUser[random.randint(0,len(self.listUser))].setUsertype(1) 
         for user in self.listUser:
-            if user["player_type"] == 1:
-                self.hp.append({"ip": user["ip"], "hp": 100, "block": 0, "user": user["user"], "player_type": 1}) #TODO tweak values
+            #print(user)
+            if user.getUsertype() == 1:
+                #self.hp.append({"ip": user["ip"], "hp": 100, "block": 0, "user": user["user"], "player_type": 1}) #TODO tweak values
+                user.setHp(100)
             else:
-                self.hp.append({"ip": user["ip"], "hp": 50, "block": 0, "user": user["user"], "player_type": 0}) #TODO tweak values
+                #self.hp.append({"ip": user["ip"], "hp": 50, "block": 0, "user": user["user"], "player_type": 0}) #TODO tweak values
+                user.setUsertype(2)
+                user.setHp(50)
         
-        length = len(self.hp)
-
-        values = []
+        '''values = []
         values2 = []
         values3 = []
         values4 = []
@@ -74,7 +78,11 @@ class ChatServer(rpc.ChatServerServicer):
         mmmap.length = length
         mmmap.name_hp = name_hp
         mmmap.player_type = str(values3)
-        mmmap.ip = str(values4)
+        mmmap.ip = str(values4)'''
+
+        mmmap = chat.InitialList()
+        mmmap.length = len(self.listUser)
+        mmmap.json_str = player.tranformFullListIntoJSON(self.listUser)
         print(mmmap)
         self.initialList = mmmap
     
@@ -104,12 +112,12 @@ class ChatServer(rpc.ChatServerServicer):
         return chat.Empty()  # something needs to be returned required by protobuf language, we just return empty msg
 
     def SendHealth(self, request: chat.Health, context):
-        new_h = {"ip": self.fernet.decrypt(request.ip).decode(), "hp": request.hp, "user": str(request.user)}
-        self.hp.append(new_h)
+        #new_h = {"ip": self.fernet.decrypt(request.ip).decode(), "hp": request.hp, "user": str(request.user)}
+        self.hp.append(request)
         #print(new_h)
         return chat.Empty()
 
-    def SendBlock(self, request: chat.Health, context):
+    def SendBlock(self, request: chat.Block, context):
         #new_h = {"ip": self.fernet.decrypt(request.ip).decode(), "hp": request.hp, "user": str(request.user)}
         self.listBlock.append(request)
         print(request)
@@ -135,10 +143,7 @@ class ChatServer(rpc.ChatServerServicer):
         while True:
             # Check if there are any new messages
             while len(self.hp) > lastindex:
-                n = chat.Health()
-                n.ip = self.fernet.encrypt(self.hp[lastindex]["ip"].encode())
-                n.hp = self.hp[lastindex]["hp"]
-                n.user = self.hp[lastindex]["user"]
+                n = self.hp[lastindex]
                 #print(n)
                 lastindex += 1
                 yield n
@@ -178,32 +183,40 @@ class ChatServer(rpc.ChatServerServicer):
         encMessage = request.ip
         user = request.user
         decMessage = self.fernet.decrypt(encMessage).decode()
+        u_id = request.u_id
         
-        new_user  =  {"user":  user,  "ip":  decMessage,  "ping_time":  time.time(), "player_type": 0}
+        #new_user  =  {"user":  user,  "ip":  decMessage,  "ping_time":  time.time(), "player_type": 0}
+        
+        new_user = player.Player(ip= decMessage, unique_id= u_id, username= user, ping_time=time.time())
         if len(self.listUser) == 0:
-            self.turns.append(request)
+            b = chat.PlayerMessage()
+            b.json_str = player.transformIntoJSON(new_user)
+            self.turns.append(b)
         self.listUser.append(new_user)
         return chat.Empty()  # something needs to be returned required by protobuf language, we just return empty msg
 
     def SendPing(self, request: chat.Ping, context):
         """ Fulfills SendPing RPC defined in ping.proto """
-        self.__updateUserList(self.fernet.decrypt(request.ip).decode()) 
+        self.__updateUserList(self.fernet.decrypt(request.ip).decode(), request.id) 
         return chat.Pong(message="Thanks, friend!")
     
-    def EndTurn(self, request: chat.PrivateInfo, context):
-        ipLast = self.fernet.decrypt(request.ip).decode()
+    def EndTurn(self, request: chat.PlayerMessage, context):
+        '''ipLast = self.fernet.decrypt(request.ip).decode()
         userLast = request.user
-        ipNext = self.listUser[0]["ip"] #if i can't find the ip we default to the first person in the list
-        userNext = self.listUser[0]["ip"]
+        ipNext = self.listUser[0].getIp() #if i can't find the ip we default to the first person in the list
+        userNext = self.listUser[0].getIp()'''
+        userLast = player.transformFromJSON(request.json_str)
 
         for i in range(0,len(self.listUser)):
             #if self.listUser[i]["ip"] == ipLast:
-            if userLast == self.listUser[i]["user"]:
-                ipNext = self.listUser[(i+1)%len(self.listUser)]["ip"]
-                userNext = self.listUser[(i+1)%len(self.listUser)]["user"]
-        r = chat.PrivateInfo() #create the return message, encrypt the ip and send it in broadcast to everyone.
-        r.ip = self.fernet.encrypt(ipNext.encode()) #TODO: create the methods to recieve the broadcast
-        r.user = userNext
+            if userLast.getUid() == self.listUser[i].getUid():
+                '''ipNext = self.listUser[(i+1)%len(self.listUser)]["ip"]
+                userNext = self.listUser[(i+1)%len(self.listUser)]["user"]'''
+                userNext = self.listUser[(i+1)%len(self.listUser)]
+        r = chat.PlayerMessage() #create the return message, encrypt the ip and send it in broadcast to everyone.
+        '''r.ip = self.fernet.encrypt(ipNext.encode()) #TODO: create the methods to recieve the broadcast
+        r.user = userNext'''
+        r.json_str = player.transformIntoJSON(userNext)
         self.turns.append(r)
 
         return chat.Empty()
@@ -213,6 +226,7 @@ class ChatServer(rpc.ChatServerServicer):
         while True:
             while len(self.turns) > lastindex:
                 n = self.turns[lastindex]
+                print(n)
                 lastindex += 1
                 yield n
                 
@@ -229,11 +243,14 @@ class ChatServer(rpc.ChatServerServicer):
         print('StartGame', self.listUser)
         ip = self.fernet.decrypt(request.ip).decode()
         #if self.listUser[0]["ip"] == ip:    #TODO quando si testa su macchine diverse usare l'ip
-        if self.listUser[0]["user"] == request.user:
-            #print("L'host è onnipotente")
+        '''n = chat.PlayerMessage()
+        n.json_str = player.transformIntoJSON(self.listUser[0])'''
+        if self.listUser[0].getUsername() == request.user:
+            print("L'host è onnipotente")
             self.isStartedGame = True
             self.__distributeHealth()
             #self.__createBoard()
+        #self.turns.append(n)
         return self.initialList
     
     def FinishGame(self, request_iterator, context):

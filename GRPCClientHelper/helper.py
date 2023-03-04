@@ -8,33 +8,36 @@ import random
 import grpc
 import chat_pb2 as chat
 import chat_pb2_grpc as rpc
+from GRPCClientHelper import player
 
 port = 11912 # decide if we have to change this port
 key = b'ZhDach4lH7NbH-Gy9EfN2e2HNrWRfbBFD8zeCTBgdEA='
 
 class PostOffice:
 
-    def __init__(self, address: str):
+    def __init__(self, address: str, user, u_id):
         self.ip = get('https://api.ipify.org').content.decode('utf8')
         self.fernet = Fernet(key)
         self.encIp = self.fernet.encrypt(self.ip.encode())
         
         channel = grpc.insecure_channel(address + ':' + str(port))
         self.conn = rpc.ChatServerStub(channel)
-
-    def Listen_for_PingPong(self):
-        while True:
-            ping = chat.Ping()  # create protobug message (called Ping)
-            ping.ip = self.encIp
-            pong = self.conn.SendPing(ping)
-            time.sleep(5)
-            if pong.message != "Thanks, friend!":
-                raise Exception("Disconnect to the server!")
-
-    def Subscribe(self, user):
         self.privateInfo = chat.PrivateInfo()  # create protobug message (called Note)
         self.privateInfo.ip = self.encIp
         self.privateInfo.user = user
+        self.privateInfo.u_id = u_id
+
+    def Listen_for_PingPong(self, my_id):
+        while True:
+            ping = chat.Ping()  # create protobug message (called Ping)
+            ping.ip = self.encIp
+            ping.id = my_id
+            pong = self.conn.SendPing(ping)
+            time.sleep(2.5)
+            if pong.message != "Thanks, friend!":
+                raise Exception("Disconnect to the server!")
+
+    def Subscribe(self):
         self.conn.SendPrivateInfo(self.privateInfo)  # send the Note to the server
 
     def CheckStarted(self):
@@ -58,13 +61,16 @@ class PostOffice:
     def TurnStream(self):
         return self.conn.TurnStream(chat.Empty())
 
-    def EndTurn(self):
-        self.conn.EndTurn(self.privateInfo)
+    def EndTurn(self, last_turn: player.Player):
+        mess_et = chat.PlayerMessage()
+        print(last_turn, "last_turn")
+        mess_et.json_str = player.transformIntoJSON(last_turn)
+        self.conn.EndTurn(mess_et)
 
-    def SendAction(self, user: str, actionType: int):
+    def SendAction(self, send: str, recieve: str, actionType: int):
         n = chat.Action()
-        n.ip_sender = self.encIp
-        n.ip_reciever = self.fernet.encrypt(user.encode())
+        n.sender = player.transformIntoJSON(send)
+        n.reciever = player.transformIntoJSON(recieve)
         
         match actionType:
             case 0: # attack
@@ -78,11 +84,11 @@ class PostOffice:
                 n.amount = 10 #TODO range of damage
             case _: # TODO check how do you wont insert like default
                 pass
-        
+
         self.conn.SendAction(n)
 
-    def SendBlock(self, actionType: int, victimUser: str = '', victimIp: str = '', action_amount: int = None):
-        b = chat.Block()
+    def SendBlock(self, user: player.Player, amount: int ):
+        '''b = chat.Block()
         b.ip =  self.fernet.encrypt(victimIp.encode())
         
         match actionType:
@@ -95,11 +101,15 @@ class PostOffice:
             case _:
                 pass
         
-        self.conn.SendBlock(b)
+        self.conn.SendBlock(b)'''
+        b = chat.Block()
+        b.json_str = player.transformIntoJSON(user)
+        b.block = amount
+        self.conn.SendBlock(b) 
 
-    def SendHealth(self, victimUser: str = '', victimIp: str = '', victimHp: int = None, action_amount: int = None):
+
+    def SendHealth(self, user: player.Player, amount: int = None):
         m = chat.Health()
-        m.ip =  self.fernet.encrypt(victimIp.encode())
-        m.hp = int(victimHp) + action_amount
-        m.user = victimUser
+        m.json_str = player.transformIntoJSON(user)
+        m.hp = amount
         self.conn.SendHealth(m)
