@@ -269,9 +269,9 @@ class Client:
                                 "user":array[0][i], "player_type": int(array_role[i].strip())} for i in range(0,len(array[0]))])
         self.genMyRole()
         #print(self.listHealth)'''
-        print(mess)
+        #print(mess)
         self.players = player.transformFullListFromJSON(mess.json_str)
-        print(self.players)
+        #print(self.players)
         for u in self.players:
             if u.getUsername() == self.username:
                 self.myPlayer = u
@@ -385,9 +385,9 @@ class Client:
         #@self.enable_animation_thread(self.label1)
         self.hero1_username = tk.Label(self.heroes_frame, text=self.username)
         self.hero1_username.grid(row=0, column=0, padx=5, pady=5, sticky=tk.N)
-        hero1_health = ttk.Progressbar(self.heroes_frame, style="Horizontal.TProgressbar", orient='horizontal', variable=self.myHp, mode='determinate')
-        hero1_health.step(99.9)
-        hero1_health.grid(row=0, column=0, padx=5, pady=5, sticky=tk.S)
+        self.hero1_health = ttk.Progressbar(self.heroes_frame, style="Horizontal.TProgressbar", orient='horizontal', variable=self.myHp, mode='determinate')
+        self.hero1_health.step(99.9)
+        self.hero1_health.grid(row=0, column=0, padx=5, pady=5, sticky=tk.S)
 
         ''' at this point we need to declare different labels and we can even fill them later when other people join but for right now as a proof of concept i'll use the knight'''
         self.hero2 = tk.Label(self.heroes_frame, image=self.imgs[0])
@@ -395,18 +395,18 @@ class Client:
         #self.enable_animation_thread(self.label2)
         self.hero2_username = tk.Label(self.heroes_frame, text=self.username)
         self.hero2_username.grid(row=2, column=0, padx=5, pady=5, sticky=tk.N)
-        hero2_health = ttk.Progressbar(self.heroes_frame, orient='horizontal', variable=self.myHp, mode='determinate')
-        hero2_health.step(99.9)
-        hero2_health.grid(row=2, column=0, padx=5, pady=5, sticky=tk.S)
+        self.hero2_health = ttk.Progressbar(self.heroes_frame, orient='horizontal', variable=self.myHp, mode='determinate')
+        self.hero2_health.step(99.9)
+        self.hero2_health.grid(row=2, column=0, padx=5, pady=5, sticky=tk.S)
 
         self.hero3 = tk.Label(self.heroes_frame, image=self.imgs[0])
         self.hero3.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NSEW)
         #self.enable_animation_thread(self.label3)
         self.hero3_username = tk.Label(self.heroes_frame, text=self.username)
         self.hero3_username.grid(row=1, column=1, padx=5, pady=5, sticky=tk.N)
-        hero3_health = ttk.Progressbar(self.heroes_frame, orient='horizontal', variable=self.myHp, mode='determinate')
-        hero3_health.step(99.9)
-        hero3_health.grid(row=1, column=1, padx=5, pady=5, sticky=tk.S)
+        self.hero3_health = ttk.Progressbar(self.heroes_frame, orient='horizontal', variable=self.myHp, mode='determinate')
+        self.hero3_health.step(99.9)
+        self.hero3_health.grid(row=1, column=1, padx=5, pady=5, sticky=tk.S)
 
         # MONSTER SETUP
         self.monster_frame = tk.Frame(self.background_frame, borderwidth=1, bg="orange", padx=5, pady=5)
@@ -420,6 +420,10 @@ class Client:
         self.monster.pack()
         self.monster_label = tk.Label(self.monster_frame, text="PDOR FIGLIO DI KMER")
         self.monster_label.pack()
+
+        self.monster_health = ttk.Progressbar(self.monster_frame, orient='horizontal', variable=self.myHp, mode='determinate')
+        self.monster_health.step(99.9)
+        self.monster_health.pack()
 
         self.controls_frame = tk.Frame(self.master_frame, borderwidth=1)
         self.controls_frame.grid(row=1, column=0, sticky=tk.NSEW)
