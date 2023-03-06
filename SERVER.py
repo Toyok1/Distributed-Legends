@@ -144,8 +144,8 @@ class ChatServer(rpc.ChatServerServicer):
             # Check if there are any new messages
             while len(self.hp) > lastindex:
                 n = self.hp[lastindex]
-                #print(n)
-                lastindex += 1
+                print(self.hp)
+                lastindex += 2
                 yield n
     
     def BlockStream(self, request_iterator, context):

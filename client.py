@@ -29,7 +29,7 @@ class Client:
         self.otherPlayers = [] #quick reference to everyone but me
         self.players = [] #quick refernce to every player in the game
         self.window = window
-        self.myHp = 99.9
+        self.myHp = [tk.IntVar(),tk.IntVar(),tk.IntVar(),tk.IntVar()]
         self.myBlock = 0
         self.myPlayerType = 0
         self.username = user
@@ -79,7 +79,6 @@ class Client:
             self.cleanInitialList(mess)
         self.start_button["state"] = "disabled"
 
-
     def __diagnose(self):
         while True:
             if self.myPlayer != None:
@@ -95,25 +94,23 @@ class Client:
         This method will be ran in a separate thread as the main/ui thread, because the for-in call is blocking
         when waiting for new messages
         """
-        for health in self.myPostOffice.HealthStream(): # this line will wait for new messages from the server!
+        for health in self.myPostOffice.HealthStream():
+            print("UNA CHIAMATA AD HEALTH") # this line will wait for new messages from the server!
             healed = player.transformFromJSON(health.json_str)
             health_amount = health.hp
-            '''print("------")  
-            print(health, "HEALTH")'''
+
             for  utente in self.players:
-                #if  utente["ip"]  ==  req_ip: 
                 if utente.getUid() == healed.getUid():
                     utente.setHp(health_amount)
+
                     if utente.getUsername() in [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))]:
                         ind = [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))].index(utente.getUsername())
-                        print("AAAAAAAAAATTTEEENNNNZZZZZIOOOOOONEEEEEEEEE:         ------> ", ind, " <------")
+                        print("AAAAAAAAAATTTEEENNNNZZZZZIOOOOOONEEEEEEEEE:         ------> ", ind, utente.getUsername(), " <------")
                         if utente.getUsertype() == 1:
                             self.labelrefs[1][ind].step(health_amount)
                         else:
                             self.labelrefs[1][ind].step((health_amount*50)/100)
-        
-                '''if utente["user"] == self.username:
-                    self.myHp = health.hp'''
+
     
     def __listen_for_block(self):
         for block in self.myPostOffice.BlockStream():
@@ -135,8 +132,8 @@ class Client:
 
     def __listen_for_actions(self):
         for action in self.myPostOffice.ActionStream():
-            action_sender = player.transformFromJSON(action.sender)
-            action_reciever = player.transformFromJSON(action.reciever)
+            actor = player.transformFromJSON(action.sender)
+            victim = player.transformFromJSON(action.reciever)
             action_amount = action.amount
             action_type = action.action_type
             mode = ""
@@ -153,11 +150,11 @@ class Client:
 
             #print_message = "User "
 
-            for user in self.players: #TODO: find a way to have this work in testing, maybe switch to username based recognition
+            '''for user in self.players: #TODO: find a way to have this work in testing, maybe switch to username based recognition
                 if user.getUid() == action_sender.getUid(): #uid for testing TODO change it to ip
                     actor = user
                 if user.getUid() == action_reciever.getUid():
-                    victim = user
+                    victim = user'''
             
             addendum = (victim.getUsername()) if action_type != 2 else ""
             #print_message = print_message + actor["user"] +" "+ mode + addendum + " for " + str(abs(action_amount)) + " points!"
@@ -241,6 +238,7 @@ class Client:
         #self.__after_action()
         for user in self.players:
             if user.getUsertype() != self.myPlayerType: #i can attack my enemies only
+                print("MESSAGGIO CREATO")
                 self.myPostOffice.SendAction(self.myPlayer, user, actionType = 0)
 
     def heal(self):
@@ -278,12 +276,14 @@ class Client:
                     self.labelrefs[0].append(self.monster_label)
                     self.labelrefs[1].append(self.monster_health)
                     self.labelrefs[2].append(self.monster)
+                    self.myHp[0].set(u.getHp())
                 else:
                     self.party.append(u)
                     v[i].config(text=u.getUsername()) 
                     self.labelrefs[0].append(v[i])
                     self.labelrefs[1].append(v2[i])
                     self.labelrefs[2].append(v3[i])
+                    self.myHp[i+1].set(u.getHp())
                     i+=1
             else:
                 if u.getUsertype()==1:
@@ -292,12 +292,14 @@ class Client:
                     self.labelrefs[0].append(self.monster_label)
                     self.labelrefs[1].append(self.monster_health)
                     self.labelrefs[2].append(self.monster)
+                    self.myHp[0].set(u.getHp())
                 else:
                     self.party.append(u)
                     v[i].config(text=u.getUsername())
                     self.labelrefs[0].append(v[i])
                     self.labelrefs[1].append(v2[i])
                     self.labelrefs[2].append(v3[i])
+                    self.myHp[i+1].set(u.getHp())
                     i+=1
         
         while i<3:
@@ -311,14 +313,6 @@ class Client:
         #if i'm the host i can start the game  TODO: make it so that only hosts can use this button and maybe delete it after use (?)
         mess = self.myPostOffice.StartGame()
         self.cleanInitialList(mess)
-
-    '''def send_message(self, event):
-        """
-        This method is called when user enters something into the textbox
-        """
-        message = self.entry_message.get()  # retrieve message from the UI
-        if message != '':
-            if message == '1': # fake starting'''
                 
 
     def loadImgs(self):
@@ -405,8 +399,8 @@ class Client:
         #@self.enable_animation_thread(self.label1)
         self.hero1_username = tk.Label(self.heroes_frame, text="")
         self.hero1_username.grid(row=0, column=0, padx=5, pady=5, sticky=tk.N)
-        self.hero1_health = ttk.Progressbar(self.heroes_frame, style="Horizontal.TProgressbar", orient='horizontal', variable=self.myHp, mode='determinate')
-        self.hero1_health.step(99.9)
+        self.hero1_health = ttk.Progressbar(self.heroes_frame, style="Horizontal.TProgressbar", orient='horizontal', variable=self.myHp[1], mode='determinate')
+        #self.hero1_health.step(99.9)
         self.hero1_health.grid(row=0, column=0, padx=5, pady=5, sticky=tk.S)
 
         ''' at this point we need to declare different labels and we can even fill them later when other people join but for right now as a proof of concept i'll use the knight'''
@@ -415,8 +409,8 @@ class Client:
         #self.enable_animation_thread(self.label2)
         self.hero2_username = tk.Label(self.heroes_frame, text="")
         self.hero2_username.grid(row=2, column=0, padx=5, pady=5, sticky=tk.N)
-        self.hero2_health = ttk.Progressbar(self.heroes_frame, orient='horizontal', variable=self.myHp, mode='determinate')
-        self.hero2_health.step(99.9)
+        self.hero2_health = ttk.Progressbar(self.heroes_frame, orient='horizontal', variable=self.myHp[2], mode='determinate')
+        #self.hero2_health.step(99.9)
         self.hero2_health.grid(row=2, column=0, padx=5, pady=5, sticky=tk.S)
 
         self.hero3 = tk.Label(self.heroes_frame, image=self.imgs[0])
@@ -424,8 +418,8 @@ class Client:
         #self.enable_animation_thread(self.label3)
         self.hero3_username = tk.Label(self.heroes_frame, text="")
         self.hero3_username.grid(row=1, column=1, padx=5, pady=5, sticky=tk.N)
-        self.hero3_health = ttk.Progressbar(self.heroes_frame, orient='horizontal', variable=self.myHp, mode='determinate')
-        self.hero3_health.step(99.9)
+        self.hero3_health = ttk.Progressbar(self.heroes_frame, orient='horizontal', variable=self.myHp[3], mode='determinate')
+        #self.hero3_health.step(99.9)
         self.hero3_health.grid(row=1, column=1, padx=5, pady=5, sticky=tk.S)
 
         # MONSTER SETUP
@@ -441,7 +435,7 @@ class Client:
         self.monster_label = tk.Label(self.monster_frame, text="")
         self.monster_label.pack()
 
-        self.monster_health = ttk.Progressbar(self.monster_frame, orient='horizontal', variable=self.myHp, mode='determinate')
+        self.monster_health = ttk.Progressbar(self.monster_frame, orient='horizontal', variable=self.myHp[0], mode='determinate')
         self.monster_health.step(99.9)
         self.monster_health.pack()
 
@@ -494,7 +488,7 @@ class Client:
 if __name__ == '__main__':
     root = tk.Tk()
     root.resizable(False,False)
-    root.title("RPGCombat")
+    
     root.iconbitmap("./src/icon/icon.ico")
     frame = tk.Frame(root, width=300, height=300)
     frame.pack()
@@ -505,6 +499,7 @@ if __name__ == '__main__':
         # retrieve a username so we can distinguish all the different clients
         username = simpledialog.askstring("Username", "What's your username?", parent=root)
     #address = "localhost" #None
+    root.title("RPGCombat - " + username)
     while (serverAddress != "localhost") or (serverAddress is None) :
         # retrieve a username so we can distinguish all the different clients
         serverAddress = simpledialog.askstring("Game's address", "What's the address?", parent=root)
