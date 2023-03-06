@@ -33,11 +33,12 @@ class Client:
         self.myBlock = 0
         self.myPlayerType = 0
         self.username = user
+        self.party = []
         #self.listHealth = [] # [{"ip": ip, "hp": hp, "block": block, "user": user},{},{},{}]
         self.myTurn = False
         self.state = "idle"
         self.myUid = str(uuid.uuid4())
-        
+        self.labelrefs = [[],[],[]]
         self.fernet = Fernet(key)
         
         self.myPostOffice = helper.PostOffice(serverAddress, user, self.myUid)
@@ -99,11 +100,18 @@ class Client:
             health_amount = health.hp
             '''print("------")  
             print(health, "HEALTH")'''
-
             for  utente in self.players:
                 #if  utente["ip"]  ==  req_ip: 
                 if utente.getUid() == healed.getUid():
                     utente.setHp(health_amount)
+                    if utente.getUsername() in [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))]:
+                        ind = [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))].index(utente.getUsername())
+                        print("AAAAAAAAAATTTEEENNNNZZZZZIOOOOOONEEEEEEEEE:         ------> ", ind, " <------")
+                        if utente.getUsertype() == 1:
+                            self.labelrefs[1][ind].step(health_amount)
+                        else:
+                            self.labelrefs[1][ind].step((health_amount*50)/100)
+        
                 '''if utente["user"] == self.username:
                     self.myHp = health.hp'''
     
@@ -253,39 +261,51 @@ class Client:
 
 
     def cleanInitialList(self, mess):
-        '''string = mess.name_hp
-        rows = string.split("][")  # split the string by the '][' delimiter
-        array = []
-        for row in rows:
-            #print(row, " ROW")
-            row = row.strip("[]")  # remove the square brackets from the row string
-            values = [str(x).strip().strip("'") for x in row.split(",")]  # split the row string by the ',' delimiter and convert the values to integers
-            array.append(values)
-        
-        array_ip = mess.ip.strip("[]").strip("''").split(",") #["enc_ip","enc_ip"]
-        array_role = mess.player_type.strip("[]").strip().strip("''").split(",") #[T,F,T]
-
-        self.listHealth.extend([{"ip":array_ip[i].strip().strip("'"), "hp":array[1][i], "block": 0,
-                                "user":array[0][i], "player_type": int(array_role[i].strip())} for i in range(0,len(array[0]))])
-        self.genMyRole()
-        #print(self.listHealth)'''
         #print(mess)
         self.players = player.transformFullListFromJSON(mess.json_str)
         #print(self.players)
+        i=0
+        v=[self.hero1_username, self.hero2_username, self.hero3_username]
+        v2=[self.hero1_health, self.hero2_health, self.hero3_health]
+        v3=[self.hero1, self.hero2, self.hero3]
         for u in self.players:
             if u.getUsername() == self.username:
                 self.myPlayer = u
                 self.myPlayerType = u.getUsertype()
+                if self.myPlayerType==1:
+                    self.monster_label.config(text=u.getUsername())
+                    self.monsterRef=u
+                    self.labelrefs[0].append(self.monster_label)
+                    self.labelrefs[1].append(self.monster_health)
+                    self.labelrefs[2].append(self.monster)
+                else:
+                    self.party.append(u)
+                    v[i].config(text=u.getUsername()) 
+                    self.labelrefs[0].append(v[i])
+                    self.labelrefs[1].append(v2[i])
+                    self.labelrefs[2].append(v3[i])
+                    i+=1
             else:
-                self.otherPlayers.append(u)
+                if u.getUsertype()==1:
+                    self.monster_label.config(text=u.getUsername())
+                    self.monsterRef=u
+                    self.labelrefs[0].append(self.monster_label)
+                    self.labelrefs[1].append(self.monster_health)
+                    self.labelrefs[2].append(self.monster)
+                else:
+                    self.party.append(u)
+                    v[i].config(text=u.getUsername())
+                    self.labelrefs[0].append(v[i])
+                    self.labelrefs[1].append(v2[i])
+                    self.labelrefs[2].append(v3[i])
+                    i+=1
+        
+        while i<3:
+            v[i].destroy()
+            v2[i].destroy()
+            v3[i].destroy()
+            i+=1
 
-        '''if self.players[-1].getUid() == self.myPlayer.getUid():
-            self.send_end_turn()'''
-
-    '''def genMyRole(self):
-        for user in self.listHealth:
-            if user["user"] == self.username: #TODO change to ip
-                self.myPlayerType = user["player_type"]'''
     
     def send_start_game(self):
         #if i'm the host i can start the game  TODO: make it so that only hosts can use this button and maybe delete it after use (?)
@@ -383,7 +403,7 @@ class Client:
         self.hero1 = tk.Label(self.heroes_frame, image=self.imgs[0])
         self.hero1.grid(row=0, column=0, padx=5, pady=5, sticky=tk.NSEW)
         #@self.enable_animation_thread(self.label1)
-        self.hero1_username = tk.Label(self.heroes_frame, text=self.username)
+        self.hero1_username = tk.Label(self.heroes_frame, text="")
         self.hero1_username.grid(row=0, column=0, padx=5, pady=5, sticky=tk.N)
         self.hero1_health = ttk.Progressbar(self.heroes_frame, style="Horizontal.TProgressbar", orient='horizontal', variable=self.myHp, mode='determinate')
         self.hero1_health.step(99.9)
@@ -393,7 +413,7 @@ class Client:
         self.hero2 = tk.Label(self.heroes_frame, image=self.imgs[0])
         self.hero2.grid(row=2, column=0, padx=5, pady=5, sticky=tk.NSEW)
         #self.enable_animation_thread(self.label2)
-        self.hero2_username = tk.Label(self.heroes_frame, text=self.username)
+        self.hero2_username = tk.Label(self.heroes_frame, text="")
         self.hero2_username.grid(row=2, column=0, padx=5, pady=5, sticky=tk.N)
         self.hero2_health = ttk.Progressbar(self.heroes_frame, orient='horizontal', variable=self.myHp, mode='determinate')
         self.hero2_health.step(99.9)
@@ -402,7 +422,7 @@ class Client:
         self.hero3 = tk.Label(self.heroes_frame, image=self.imgs[0])
         self.hero3.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NSEW)
         #self.enable_animation_thread(self.label3)
-        self.hero3_username = tk.Label(self.heroes_frame, text=self.username)
+        self.hero3_username = tk.Label(self.heroes_frame, text="")
         self.hero3_username.grid(row=1, column=1, padx=5, pady=5, sticky=tk.N)
         self.hero3_health = ttk.Progressbar(self.heroes_frame, orient='horizontal', variable=self.myHp, mode='determinate')
         self.hero3_health.step(99.9)
@@ -418,7 +438,7 @@ class Client:
         self.monster = tk.Label(self.monster_frame, image=photo)
         self.monster.image = photo # keep a reference!
         self.monster.pack()
-        self.monster_label = tk.Label(self.monster_frame, text="PDOR FIGLIO DI KMER")
+        self.monster_label = tk.Label(self.monster_frame, text="")
         self.monster_label.pack()
 
         self.monster_health = ttk.Progressbar(self.monster_frame, orient='horizontal', variable=self.myHp, mode='determinate')
