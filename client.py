@@ -7,7 +7,7 @@ import random
 import re
 
 from PIL import ImageTk, Image
-from GRPCClientHelper import ClassPicker, Hero_Frame, helper, player
+from GRPCClientHelper import ClassPicker, Hero, Hero_Frame, helper, player
 from cryptography.fernet import Fernet
 from tkinter import simpledialog
 from tkinter import ttk
@@ -19,6 +19,8 @@ key = b'ZhDach4lH7NbH-Gy9EfN2e2HNrWRfbBFD8zeCTBgdEA='
 cancel_id = None
 aniThreadPointer = []
 
+pg_type = ["monster", "knight", "priest", "mage", ]
+
 
 class Client():
     def __init__(self, user: str, playerType: int, serverAddress: str, window):
@@ -28,16 +30,18 @@ class Client():
         self.otherPlayers = []  # quick reference to everyone but me
         self.players = []  # quick refernce to every player in the game
         self.window = window
-        self.myHp = 99.9
+        self.myHp = [tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar()]
         self.myBlock = 0
         self.myPlayerType = playerType
         self.username = user
         # self.listHealth = [] # [{"ip": ip, "hp": hp, "block": block, "user": user},{},{},{}]
+        self.party = []
         self.myTurn = False
         self.state = "idle"
         self.myUid = str(uuid.uuid4())
-
+        self.labelrefs = [[], [], []]
         self.fernet = Fernet(key)
+
         self.myPostOffice = helper.PostOffice(serverAddress, user, self.myUid)
         self.myPostOffice.Subscribe()
 
@@ -93,39 +97,46 @@ class Client():
         This method will be ran in a separate thread as the main/ui thread, because the for-in call is blocking
         when waiting for new messages
         """
-        for health in self.myPostOffice.HealthStream():  # this line will wait for new messages from the server!
+        for health in self.myPostOffice.HealthStream():
+            # this line will wait for new messages from the server!
+            print("UNA CHIAMATA AD HEALTH")
             healed = player.transformFromJSON(health.json_str)
             health_amount = health.hp
-            '''print("------")  
-            print(health, "HEALTH")'''
 
-            for utente in self.players:
-                # if  utente["ip"]  ==  req_ip:
-                if utente.getUid() == healed.getUid():
-                    utente.setHp(health_amount)
-                '''if utente["user"] == self.username:
-                    self.myHp = health.hp'''
+            for player in self.players:
+                if player.getUid() == healed.getUid():
+                    player.setHp(health_amount)
+
+                    if player.getUsername() in [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))]:
+                        ind = [self.labelrefs[0][i]["text"] for i in range(
+                            len(self.labelrefs[0]))].index(player.getUsername())
+                        print("AAAAAAAAAATTTEEENNNNZZZZZIOOOOOONEEEEEEEEE:         ------> ",
+                              ind, player.getUsername(), " <------")
+                        if player.getUsertype() == 1:
+                            self.labelrefs[1][ind].step(health_amount)
+                        else:
+                            self.labelrefs[1][ind].step((health_amount*50)/100)
 
     def __listen_for_block(self):
         for block in self.myPostOffice.BlockStream():
             blocker = player.transformFromJSON(block.json_str)
             block_amount = block.block
 
-            '''print("------")  
+            '''print("------")
             print(block, "BLOCK")'''
 
-            for utente in self.players:
+            for player in self.players:
                 # if  utente["ip"]  ==  req_ip:
-                if utente.getUid() == blocker.getUid():  # TODO change it to ip when not testing
-                    utente.setBlock(block_amount)
+                if player.getUid() == blocker.getUid():  # TODO change it to ip when not testing
+                    player.setBlock(block_amount)
                 # if  utente["ip"]  ==  self.ip == req_ip:
                 '''if utente["user"] == self.username:
                     self.myBlock = block_amount'''
 
     def __listen_for_actions(self):
         for action in self.myPostOffice.ActionStream():
-            action_sender = player.transformFromJSON(action.sender)
-            action_reciever = player.transformFromJSON(action.reciever)
+            actor = player.transformFromJSON(action.sender)
+            victim = player.transformFromJSON(action.reciever)
             action_amount = action.amount
             action_type = action.action_type
             mode = ""
@@ -142,11 +153,11 @@ class Client():
 
             # print_message = "User "
 
-            for user in self.players:  # TODO: find a way to have this work in testing, maybe switch to username based recognition
-                if user.getUid() == action_sender.getUid():  # uid for testing TODO change it to ip
+            '''for user in self.players: #TODO: find a way to have this work in testing, maybe switch to username based recognition
+                if user.getUid() == action_sender.getUid(): #uid for testing TODO change it to ip
                     actor = user
                 if user.getUid() == action_reciever.getUid():
-                    victim = user
+                    victim = user'''
 
             addendum = (victim.getUsername()) if action_type != 2 else ""
             # print_message = print_message + actor["user"] +" "+ mode + addendum + " for " + str(abs(action_amount)) + " points!"
@@ -231,6 +242,7 @@ class Client():
         # self.__after_action()
         for user in self.players:
             if user.getUsertype() != self.myPlayerType:  # i can attack my enemies only
+                print("MESSAGGIO CREATO")
                 self.myPostOffice.SendAction(self.myPlayer, user, actionType=0)
 
     def heal(self):
@@ -250,59 +262,64 @@ class Client():
                 self.myPostOffice.SendAction(self.myPlayer, user, actionType=2)
 
     def cleanInitialList(self, mess):
-        '''string = mess.name_hp
-        rows = string.split("][")  # split the string by the '][' delimiter
-        array = []
-        for row in rows:
-            #print(row, " ROW")
-            row = row.strip("[]")  # remove the square brackets from the row string
-            values = [str(x).strip().strip("'") for x in row.split(",")]  # split the row string by the ',' delimiter and convert the values to integers
-            array.append(values)
-
-        array_ip = mess.ip.strip("[]").strip("''").split(",") #["enc_ip","enc_ip"]
-        array_role = mess.player_type.strip("[]").strip().strip("''").split(",") #[T,F,T]
-
-        self.listHealth.extend([{"ip":array_ip[i].strip().strip("'"), "hp":array[1][i], "block": 0,
-                                "user":array[0][i], "player_type": int(array_role[i].strip())} for i in range(0,len(array[0]))])
-        self.genMyRole()
-        #print(self.listHealth)'''
-
         self.players = player.transformFullListFromJSON(mess.json_str)
-
+        i = 0
+        v = [self.hero1_username, self.hero2_username, self.hero3_username]
+        v2 = [self.hero1_health, self.hero2_health, self.hero3_health]
+        v3 = [self.hero1, self.hero2, self.hero3]
         for u in self.players:
             if u.getUsername() == self.username:
                 self.myPlayer = u
-                # self.myPlayerType = u.getUsertype()
+                self.myPlayerType = u.getUsertype()
+                if self.myPlayerType == 1:
+                    self.monster_label.config(text=u.getUsername())
+                    self.monsterRef = u
+                    self.labelrefs[0].append(self.monster_label)
+                    self.labelrefs[1].append(self.monster_health)
+                    self.labelrefs[2].append(self.monster)
+                    self.myHp[0].set(u.getHp())
+                else:
+                    self.party.append(u)
+                    v[i].config(text=u.getUsername())
+                    self.labelrefs[0].append(v[i])
+                    self.labelrefs[1].append(v2[i])
+                    self.labelrefs[2].append(v3[i])
+                    self.myHp[i+1].set(u.getHp())
+                    i += 1
             else:
-                self.otherPlayers.append(u)
+                if u.getUsertype() == 1:
+                    self.monster_label.config(text=u.getUsername())
+                    self.monsterRef = u
+                    self.labelrefs[0].append(self.monster_label)
+                    self.labelrefs[1].append(self.monster_health)
+                    self.labelrefs[2].append(self.monster)
+                    self.myHp[0].set(u.getHp())
+                else:
+                    self.party.append(u)
+                    v[i].config(text=u.getUsername())
+                    self.labelrefs[0].append(v[i])
+                    self.labelrefs[1].append(v2[i])
+                    self.labelrefs[2].append(v3[i])
+                    self.myHp[i+1].set(u.getHp())
+                    i += 1
 
-        '''if self.players[-1].getUid() == self.myPlayer.getUid():
-            self.send_end_turn()'''
-
-    '''def genMyRole(self):
-        for user in self.listHealth:
-            if user["user"] == self.username: #TODO change to ip
-                self.myPlayerType = user["player_type"]'''
+        while i < 3:
+            v[i].destroy()
+            v2[i].destroy()
+            v3[i].destroy()
+            i += 1
 
     def send_start_game(self):
         # if i'm the host i can start the game  TODO: make it so that only hosts can use this button and maybe delete it after use (?)
         mess = self.myPostOffice.StartGame()
         self.cleanInitialList(mess)
 
-    '''def send_message(self, event):
-        """
-        This method is called when user enters something into the textbox
-        """
-        message = self.entry_message.get()  # retrieve message from the UI
-        if message != '':
-            if message == '1': # fake starting'''
-
     '''
     def animate(self, label):
         global pg_type
         path = "src/"+pg_type[0]+"/"+self.state+"/"
         i=0
-        while True:   
+        while True:
             label.configure(image=self.imgs[i])
             label.update()
             time.sleep(0.2)
@@ -345,6 +362,13 @@ class Client():
                 ttmp.join()
             cancel_id = None
 
+    def loadImgs(self):
+        global pg_type
+        self.imgs = []
+        path = "src/"+pg_type[0]+"/"+"idle"+"/"
+        for i in os.listdir(path):
+            self.imgs.append(ImageTk.PhotoImage(file=path+i))
+
     def __setup_ui(self):
         # self.window.resizable(False,False)
         self.master_frame = tk.Frame(self.window)
@@ -358,30 +382,90 @@ class Client():
         self.background_frame.columnconfigure([0, 1], weight=1, minsize=480)
         self.background_frame.rowconfigure(0, weight=1, minsize=420)
 
-        self.hero_frame = Hero_Frame.Hero_Frame(
-            self.window, self.myPlayer, self.otherPlayers)
-        self.hero_frame.grid(row=0, column=0, sticky=tk.NSEW)
+        self.loadImgs()
+
+        self.heroes_frame = tk.Frame(
+            self.background_frame, borderwidth=1, bg="brown", padx=10, pady=10)
+        self.heroes_frame.grid(row=0, column=0, sticky=tk.NSEW)
+
+        for i in range(2):
+            self.columnconfigure(i, weight=1)
+        for j in range(3):
+            self.rowconfigure(j, weight=1)
+
+        for player in self.players:
+            if player.getUsertype() == 1:
+                self.monster_frame = tk.Frame(
+                    self.background_frame, borderwidth=1, bg="orange", padx=5, pady=5)
+                self.monster_frame.grid(row=0, column=1, sticky=tk.NSEW)
+                image = Image.open("./src/monster/1.png")
+                photo = ImageTk.PhotoImage(image)
+
+                self.monster = tk.Label(self.monster_frame, image=photo)
+                self.monster.image = photo  # keep a reference!
+                self.monster.pack()
+                self.monster_label = tk.Label(self.monster_frame, text="")
+                self.monster_label.pack()
+
+                self.monster_health = ttk.Progressbar(
+                    self.monster_frame, orient='horizontal', variable=self.myHp[0], mode='determinate')
+                self.monster_health.step(99.9)
+                self.monster_health.pack()
+                return
+            hero = Hero_Frame.Hero_Frame(self.heroes_frame, player)
+
+            if player in player.getUserName() == self.myPlayer.getUsername():
+                hero.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NSEW)
+            else:
+                hero.grid(row=i, column=0, padx=5, pady=5, sticky=tk.NSEW)
+
+        """
+        # HEROES SETUP
+
+
+        for i in range(2):
+            self.heroes_frame.columnconfigure(i, weight=1)
+        for j in range(3):
+            self.heroes_frame.rowconfigure(j, weight=1)
+
+        self.loadImgs()
+        self.style = ttk.Style()
+        self.style.theme_use('clam')
+        self.style.configure("Horizontal.TProgressbar", background='green')
+
+        self.hero1 = tk.Label(self.heroes_frame, image=self.imgs[0])
+        self.hero1.grid(row=0, column=0, padx=5, pady=5, sticky=tk.NSEW)
+        #@self.enable_animation_thread(self.label1)
+        self.hero1_username = tk.Label(self.heroes_frame, text="")
+        self.hero1_username.grid(row=0, column=0, padx=5, pady=5, sticky=tk.N)
+        self.hero1_health = ttk.Progressbar(
+            self.heroes_frame, style="Horizontal.TProgressbar", orient='horizontal', variable=self.myHp[1], mode='determinate')
+        #self.hero1_health.step(99.9)
+        self.hero1_health.grid(row=0, column=0, padx=5, pady=5, sticky=tk.S)
+
+        ''' at this point we need to declare different labels and we can even fill them later when other people join but for right now as a proof of concept i'll use the knight'''
+        self.hero2 = tk.Label(self.heroes_frame, image=self.imgs[0])
+        self.hero2.grid(row=2, column=0, padx=5, pady=5, sticky=tk.NSEW)
+        #self.enable_animation_thread(self.label2)
+        self.hero2_username = tk.Label(self.heroes_frame, text="")
+        self.hero2_username.grid(row=2, column=0, padx=5, pady=5, sticky=tk.N)
+        self.hero2_health = ttk.Progressbar(
+            self.heroes_frame, orient='horizontal', variable=self.myHp[2], mode='determinate')
+        #self.hero2_health.step(99.9)
+        self.hero2_health.grid(row=2, column=0, padx=5, pady=5, sticky=tk.S)
+
+        self.hero3 = tk.Label(self.heroes_frame, image=self.imgs[0])
+        self.hero3.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NSEW)
+        #self.enable_animation_thread(self.label3)
+        self.hero3_username = tk.Label(self.heroes_frame, text="")
+        self.hero3_username.grid(row=1, column=1, padx=5, pady=5, sticky=tk.N)
+        self.hero3_health = ttk.Progressbar(
+            self.heroes_frame, orient='horizontal', variable=self.myHp[3], mode='determinate')
+        #self.hero3_health.step(99.9)
+        self.hero3_health.grid(row=1, column=1, padx=5, pady=5, sticky=tk.S)
+"""
 
         # MONSTER SETUP
-        self.monster_frame = tk.Frame(
-            self.background_frame, borderwidth=1, bg="orange", padx=5, pady=5)
-        self.monster_frame.grid(row=0, column=1, sticky=tk.NSEW)
-
-        image = Image.open("./src/monster/1.png")
-        photo = ImageTk.PhotoImage(image)
-
-        self.monster = tk.Label(self.monster_frame, image=photo)
-        self.monster.image = photo  # keep a reference!
-        self.monster.pack()
-        self.monster_label = tk.Label(
-            self.monster_frame, text="PDOR FIGLIO DI KMER")
-        self.monster_label.pack()
-
-        self.monster_health = ttk.Progressbar(
-            self.monster_frame, orient='horizontal', variable=self.myHp, mode='determinate')
-        self.monster_health.step(99.9)
-        self.monster_health.pack()
-
         self.controls_frame = tk.Frame(self.master_frame, borderwidth=1)
         self.controls_frame.grid(row=1, column=0, sticky=tk.NSEW)
         self.controls_frame.columnconfigure(0, weight=1, minsize=288)
@@ -439,7 +523,6 @@ class Client():
 if __name__ == '__main__':
     root = tk.Tk()
     root.resizable(False, False)
-    root.title("RPGCombat")
     root.iconbitmap("./src/icon/icon.ico")
     MainWindow = tk.Frame(root, width=300, height=300)
     MainWindow.pack()
@@ -450,6 +533,7 @@ if __name__ == '__main__':
         # retrieve a username so we can distinguish all the different clients
         username = simpledialog.askstring(
             "Username", "What's your username?", parent=root)
+    root.title("RPGCombat - " + username)
 
     classType = ClassPicker.ClassPicker(root)
     root.wait_window(classType)
