@@ -77,8 +77,8 @@ class Player:
 
 
 def transformIntoJSON(theplayertotransform: Player): #ip input decoded
-    print(type(theplayertotransform), "THIS IS PL")
-    print(theplayertotransform, "AND THIS IS ITS VALUE")
+    '''print(type(theplayertotransform), "THIS IS PL")
+    print(theplayertotransform, "AND THIS IS ITS VALUE")'''
     obj = {
             "ip": theplayertotransform.getIp(),
             "u_id": theplayertotransform.getUid(),
@@ -106,7 +106,7 @@ def tranformFullListIntoJSON(array):
         #print("PLEASE PRINT", i)
         final_str += transformIntoJSON(i) + "#"
     final_str = final_str[:-1]
-    print(final_str, "final_str")
+    #print(final_str, "final_str")
     return final_str
 
 def transformFullListFromJSON(string_json):
@@ -114,5 +114,5 @@ def transformFullListFromJSON(string_json):
     ret_array = []
     for i in array:
         ret_array.append(transformFromJSON(i))
-    print(ret_array, "ret_array")
+    #print(ret_array, "ret_array")
     return ret_array

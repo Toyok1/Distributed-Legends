@@ -95,7 +95,7 @@ class Client:
         when waiting for new messages
         """
         for health in self.myPostOffice.HealthStream():
-            print("UNA CHIAMATA AD HEALTH") # this line will wait for new messages from the server!
+            #print("UNA CHIAMATA AD HEALTH") # this line will wait for new messages from the server!
             healed = player.transformFromJSON(health.json_str)
             health_amount = health.hp
 
@@ -105,7 +105,7 @@ class Client:
 
                     if utente.getUsername() in [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))]:
                         ind = [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))].index(utente.getUsername())
-                        print("AAAAAAAAAATTTEEENNNNZZZZZIOOOOOONEEEEEEEEE:         ------> ", ind, utente.getUsername(), " <------")
+                        #print("AAAAAAAAAATTTEEENNNNZZZZZIOOOOOONEEEEEEEEE:         ------> ", ind, utente.getUsername(), " <------")
                         if utente.getUsertype() == 1:
                             self.labelrefs[1][ind].step(health_amount)
                         else:
@@ -140,13 +140,13 @@ class Client:
 
             match action_type:
                 case 0:
-                    mode = "attack"
+                    mode = "attacks"
                 case 1:
-                    mode = "heal"
+                    mode = "heals"
                 case 2:
-                    mode = "block"
+                    mode = "blocks"
                 case _:
-                    mode = "idle" #default
+                    mode = "idles" #default
 
             #print_message = "User "
 
@@ -160,23 +160,23 @@ class Client:
             #print_message = print_message + actor["user"] +" "+ mode + addendum + " for " + str(abs(action_amount)) + " points!"
 
             print_message_array = ["User",actor.getUsername(),mode,addendum,"for",str(abs(action_amount)),"points!"]
-            print_message = " ".join(print_message_array)
+            print_message = " ".join(print_message_array).replace("  ", " ") #gets rid of the double space in addendum when action_type != 2
             self.entry_message.config(text=print_message)
             self.state = mode
             print("--- MESSAGE ---")
             print(print_message)
             print("--- MESSAGE ---")
-            print(self.state)
+            #print(self.state)
 
-            if victim.getBlock() > 0 and action_type == 0: #if the victim can block an attack he will do that before getting his hp hit
+            if victim.getBlock() > 0 and action_type == 0 and victim.getUid() == self.myPlayer.getUid(): #if the victim can block an attack he will do that before getting his hp hit
                 action_amount = action_amount + int(victim.getBlock())
                 action_amount = 0 if action_amount > 0 else action_amount
                 self.myPostOffice.SendBlock(user=victim, amount= action_amount)
             
-            if action_type < 2:
+            if action_type < 2 and victim.getUid() == self.myPlayer.getUid():
                 action_amount = victim.getHp() + action_amount
                 self.myPostOffice.SendHealth(user=victim, amount= action_amount)
-            else:
+            elif victim.getUid() == self.myPlayer.getUid():
                 self.myPostOffice.SendBlock(user=victim, amount= action_amount)
 
     def __listen_for_turns(self): 

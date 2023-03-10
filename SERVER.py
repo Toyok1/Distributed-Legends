@@ -23,7 +23,7 @@ class ChatServer(rpc.ChatServerServicer):
         self.hp = []
         self.listBlock = []
         self.turns = []
-        self.listUser = [] #  every element is a dictionary with  {"user":  username,  "ip": user public ip , "ping_time": timestamp of last pingpong , "player_type": int}
+        self.listUser = [] #  every element is a Player
         self.fernet = Fernet(key)   
 
         threading.Thread(target=self.__clean_user_list, daemon=True).start()
@@ -145,7 +145,7 @@ class ChatServer(rpc.ChatServerServicer):
             while len(self.hp) > lastindex:
                 n = self.hp[lastindex]
                 print(self.hp)
-                lastindex += 2
+                lastindex += 1
                 yield n
     
     def BlockStream(self, request_iterator, context):
