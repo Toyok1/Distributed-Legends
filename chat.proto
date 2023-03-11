@@ -18,6 +18,7 @@ message PrivateInfo{
     bytes ip = 1;
     string user = 2;
     string u_id = 3;
+    int32 user_type = 4;
 }
 
 message PlayerMessage{
