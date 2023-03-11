@@ -7,7 +7,7 @@ import random
 import re
 
 from PIL import ImageTk, Image
-from GRPCClientHelper import ClassPicker, Hero, Hero_Frame, helper, player
+from GRPCClientHelper import classPicker, helper, player, serverDialog
 from cryptography.fernet import Fernet
 from tkinter import simpledialog
 from tkinter import ttk
@@ -23,7 +23,7 @@ pg_type = ["monster", "knight", "priest", "mage", ]
 
 
 class Client():
-    def __init__(self, user: str, playerType: int, serverAddress: str, window):
+    def __init__(self, user: str, userType: int, serverAddress: str, window):
         # the frame to put ui components on
         self.GAME_STARTED = False
         self.myPlayer = None  # quick reference to my player
@@ -32,7 +32,7 @@ class Client():
         self.window = window
         self.myHp = [tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar()]
         self.myBlock = 0
-        self.myPlayerType = playerType
+        self.myPlayerType = userType
         self.username = user
         # self.listHealth = [] # [{"ip": ip, "hp": hp, "block": block, "user": user},{},{},{}]
         self.party = []
@@ -42,7 +42,8 @@ class Client():
         self.labelrefs = [[], [], []]
         self.fernet = Fernet(key)
 
-        self.myPostOffice = helper.PostOffice(serverAddress, user, self.myUid)
+        self.myPostOffice = helper.PostOffice(
+            serverAddress, user, self.myUid, userType)
         self.myPostOffice.Subscribe()
 
         try:
@@ -271,7 +272,7 @@ class Client():
             if u.getUsername() == self.username:
                 self.myPlayer = u
                 self.myPlayerType = u.getUsertype()
-                if self.myPlayerType == 1:
+                if self.myPlayerType == 0:
                     self.monster_label.config(text=u.getUsername())
                     self.monsterRef = u
                     self.labelrefs[0].append(self.monster_label)
@@ -287,7 +288,7 @@ class Client():
                     self.myHp[i+1].set(u.getHp())
                     i += 1
             else:
-                if u.getUsertype() == 1:
+                if u.getUsertype() == 0:
                     self.monster_label.config(text=u.getUsername())
                     self.monsterRef = u
                     self.labelrefs[0].append(self.monster_label)
@@ -365,7 +366,7 @@ class Client():
     def loadImgs(self):
         global pg_type
         self.imgs = []
-        path = "src/"+pg_type[0]+"/"+"idle"+"/"
+        path = "src/"+pg_type[1]+"/"+"idle"+"/"
         for i in os.listdir(path):
             self.imgs.append(ImageTk.PhotoImage(file=path+i))
 
@@ -382,46 +383,11 @@ class Client():
         self.background_frame.columnconfigure([0, 1], weight=1, minsize=480)
         self.background_frame.rowconfigure(0, weight=1, minsize=420)
 
-        self.loadImgs()
-
         self.heroes_frame = tk.Frame(
             self.background_frame, borderwidth=1, bg="brown", padx=10, pady=10)
         self.heroes_frame.grid(row=0, column=0, sticky=tk.NSEW)
 
-        for i in range(2):
-            self.columnconfigure(i, weight=1)
-        for j in range(3):
-            self.rowconfigure(j, weight=1)
-
-        for player in self.players:
-            if player.getUsertype() == 1:
-                self.monster_frame = tk.Frame(
-                    self.background_frame, borderwidth=1, bg="orange", padx=5, pady=5)
-                self.monster_frame.grid(row=0, column=1, sticky=tk.NSEW)
-                image = Image.open("./src/monster/1.png")
-                photo = ImageTk.PhotoImage(image)
-
-                self.monster = tk.Label(self.monster_frame, image=photo)
-                self.monster.image = photo  # keep a reference!
-                self.monster.pack()
-                self.monster_label = tk.Label(self.monster_frame, text="")
-                self.monster_label.pack()
-
-                self.monster_health = ttk.Progressbar(
-                    self.monster_frame, orient='horizontal', variable=self.myHp[0], mode='determinate')
-                self.monster_health.step(99.9)
-                self.monster_health.pack()
-                return
-            hero = Hero_Frame.Hero_Frame(self.heroes_frame, player)
-
-            if player in player.getUserName() == self.myPlayer.getUsername():
-                hero.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NSEW)
-            else:
-                hero.grid(row=i, column=0, padx=5, pady=5, sticky=tk.NSEW)
-
-        """
         # HEROES SETUP
-
 
         for i in range(2):
             self.heroes_frame.columnconfigure(i, weight=1)
@@ -435,37 +401,53 @@ class Client():
 
         self.hero1 = tk.Label(self.heroes_frame, image=self.imgs[0])
         self.hero1.grid(row=0, column=0, padx=5, pady=5, sticky=tk.NSEW)
-        #@self.enable_animation_thread(self.label1)
+        # @self.enable_animation_thread(self.label1)
         self.hero1_username = tk.Label(self.heroes_frame, text="")
         self.hero1_username.grid(row=0, column=0, padx=5, pady=5, sticky=tk.N)
         self.hero1_health = ttk.Progressbar(
             self.heroes_frame, style="Horizontal.TProgressbar", orient='horizontal', variable=self.myHp[1], mode='determinate')
-        #self.hero1_health.step(99.9)
+        # self.hero1_health.step(99.9)
         self.hero1_health.grid(row=0, column=0, padx=5, pady=5, sticky=tk.S)
 
         ''' at this point we need to declare different labels and we can even fill them later when other people join but for right now as a proof of concept i'll use the knight'''
         self.hero2 = tk.Label(self.heroes_frame, image=self.imgs[0])
         self.hero2.grid(row=2, column=0, padx=5, pady=5, sticky=tk.NSEW)
-        #self.enable_animation_thread(self.label2)
+        # self.enable_animation_thread(self.label2)
         self.hero2_username = tk.Label(self.heroes_frame, text="")
         self.hero2_username.grid(row=2, column=0, padx=5, pady=5, sticky=tk.N)
         self.hero2_health = ttk.Progressbar(
             self.heroes_frame, orient='horizontal', variable=self.myHp[2], mode='determinate')
-        #self.hero2_health.step(99.9)
+        # self.hero2_health.step(99.9)
         self.hero2_health.grid(row=2, column=0, padx=5, pady=5, sticky=tk.S)
 
         self.hero3 = tk.Label(self.heroes_frame, image=self.imgs[0])
         self.hero3.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NSEW)
-        #self.enable_animation_thread(self.label3)
+        # self.enable_animation_thread(self.label3)
         self.hero3_username = tk.Label(self.heroes_frame, text="")
         self.hero3_username.grid(row=1, column=1, padx=5, pady=5, sticky=tk.N)
         self.hero3_health = ttk.Progressbar(
             self.heroes_frame, orient='horizontal', variable=self.myHp[3], mode='determinate')
-        #self.hero3_health.step(99.9)
+        # self.hero3_health.step(99.9)
         self.hero3_health.grid(row=1, column=1, padx=5, pady=5, sticky=tk.S)
-"""
 
         # MONSTER SETUP
+        self.monster_frame = tk.Frame(
+            self.background_frame, borderwidth=1, bg="orange", padx=5, pady=5)
+        self.monster_frame.grid(row=0, column=1, sticky=tk.NSEW)
+
+        image = Image.open("./src/monster/1.png")
+        photo = ImageTk.PhotoImage(image)
+
+        self.monster = tk.Label(self.monster_frame, image=photo)
+        self.monster.image = photo  # keep a reference!
+        self.monster.pack()
+        self.monster_label = tk.Label(self.monster_frame, text="")
+        self.monster_label.pack()
+
+        self.monster_health = ttk.Progressbar(
+            self.monster_frame, orient='horizontal', variable=self.myHp[0], mode='determinate')
+        self.monster_health.step(99.9)
+        self.monster_health.pack()
         self.controls_frame = tk.Frame(self.master_frame, borderwidth=1)
         self.controls_frame.grid(row=1, column=0, sticky=tk.NSEW)
         self.controls_frame.columnconfigure(0, weight=1, minsize=288)
@@ -535,15 +517,20 @@ if __name__ == '__main__':
             "Username", "What's your username?", parent=root)
     root.title("RPGCombat - " + username)
 
-    classType = ClassPicker.ClassPicker(root)
+    classType = classPicker.ClassPicker(root)
     root.wait_window(classType)
 
+    isHost = serverDialog.ServerDialog(root)
+    root.wait_window(isHost)
+    # if isHost == 0:
     while (serverAddress != "localhost") or (serverAddress is None):
         # retrieve a username so we can distinguish all the different clients
         serverAddress = simpledialog.askstring(
             "Game's address", "What's the address?", parent=root)
         if re.match(r"^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$", serverAddress):
             break
+    # else:
+    # *code to start hosting server here*
 
     root.deiconify()  # Makes the window visible again
     # this starts a client and thus a thread which keeps connection to server open
