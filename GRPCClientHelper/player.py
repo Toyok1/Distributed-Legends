@@ -97,7 +97,7 @@ def transformFromJSON(json_str):  # ip output decoded
     if json_str != "":
         obj = json.loads(json_str)
         ret = Player(obj["ip"], obj["u_id"], obj["username"],
-                     obj["user_type"], obj["ping_time"])
+                    obj["user_type"], obj["ping_time"])
         ret.setHp(obj["hp"])
         ret.setBlock(obj["block"])
     return ret

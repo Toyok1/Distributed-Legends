@@ -23,9 +23,10 @@ pg_type = ["monster", "knight", "priest", "mage", ]
 
 
 class Client():
-    def __init__(self, user: str, userType: int, serverAddress: str, window):
+    def __init__(self, user: str, userType: int, serverAddress: str, window, isHost: int):
         # the frame to put ui components on
         self.GAME_STARTED = False
+        self.isHost = True if isHost == 1 else False
         self.myPlayer = None  # quick reference to my player
         self.otherPlayers = []  # quick reference to everyone but me
         self.players = []  # quick refernce to every player in the game
@@ -86,8 +87,7 @@ class Client():
         while True:
             if self.myPlayer != None:
                 print("-------- START DIAGNOSTIC ---------")
-                print(self.myPlayer.getUsername(), " - HP: ",
-                      self.myPlayer.getHp(), " - Block: ", self.myPlayer.getBlock())
+                print(self.myPlayer.getUsername(), " - HP: ", self.myPlayer.getHp(), " - Block: ", self.myPlayer.getBlock())
                 for item in self.players:
                     print(item)
                 print("-------- END DIAGNOSTIC ---------")
@@ -108,8 +108,7 @@ class Client():
                     player.setHp(health_amount)
 
                     if player.getUsername() in [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))]:
-                        ind = [self.labelrefs[0][i]["text"] for i in range(
-                            len(self.labelrefs[0]))].index(player.getUsername())
+                        ind = [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))].index(player.getUsername())
                         # print("AAAAAAAAAATTTEEENNNNZZZZZIOOOOOONEEEEEEEEE:         ------> ", ind, player.getUsername(), " <------")
                         if player.getUsertype() == 1:
                             self.labelrefs[1][ind].step(health_amount)
@@ -121,16 +120,11 @@ class Client():
             blocker = player.transformFromJSON(block.json_str)
             block_amount = block.block
 
-            '''print("------")
-            print(block, "BLOCK")'''
-
             for player in self.players:
                 # if  utente["ip"]  ==  req_ip:
                 if player.getUid() == blocker.getUid():  # TODO change it to ip when not testing
                     player.setBlock(block_amount)
                 # if  utente["ip"]  ==  self.ip == req_ip:
-                '''if utente["user"] == self.username:
-                    self.myBlock = block_amount'''
 
     def __listen_for_actions(self):
         for action in self.myPostOffice.ActionStream():
@@ -157,11 +151,11 @@ class Client():
                     actor = user
                 if user.getUid() == action_reciever.getUid():
                     victim = user'''
-
+            addendum = victim.getUsername() if action_type != 2 else ""
             print_message_array = ["User", actor.getUsername(
             ), mode, addendum, "for", str(abs(action_amount)), "points!"]
-            # gets rid of the double space in addendum when action_type != 2
-            print_message = " ".join(print_message_array).replace("  ", " ")
+            
+            print_message = " ".join(print_message_array).replace("  ", " ") # gets rid of the double space in addendum when action_type != 2
             self.entry_message.config(text=print_message)
             self.state = mode
             print("--- MESSAGE ---")
@@ -268,7 +262,7 @@ class Client():
             if u.getUsername() == self.username:
                 self.myPlayer = u
                 self.myPlayerType = u.getUsertype()
-                if self.myPlayerType == 0:
+                if self.myPlayerType == 1:
                     self.monster_label.config(text=u.getUsername())
                     self.monsterRef = u
                     self.labelrefs[0].append(self.monster_label)
@@ -284,7 +278,7 @@ class Client():
                     self.myHp[i+1].set(u.getHp())
                     i += 1
             else:
-                if u.getUsertype() == 0:
+                if u.getUsertype() == 1:
                     self.monster_label.config(text=u.getUsername())
                     self.monsterRef = u
                     self.labelrefs[0].append(self.monster_label)
@@ -489,6 +483,8 @@ class Client():
         self.start_button = tk.Button(
             self.monster_frame, text="Start Game", command=self.send_start_game)
         self.start_button.pack()
+        if not self.isHost:
+            self.start_button["state"] = "disabled"
 
     def __after_action(self):
         self.loadImgs()
@@ -513,11 +509,19 @@ if __name__ == '__main__':
             "Username", "What's your username?", parent=root)
     root.title("RPGCombat - " + username)
 
-    userType = userTypeDialog.UserTypeDialog(root)
-    root.wait_window(userType)
+    while True: #in the future this is replaced by the script that opens up the server together with the client
+            isHost = serverDialog.ServerDialog(root)
+            root.wait_window(isHost)
+            if isHost.result != 0:
+                break
 
-    isHost = serverDialog.ServerDialog(root)
-    root.wait_window(isHost)
+    while True:
+        userType = userTypeDialog.UserTypeDialog(root, isHost.result)
+        root.wait_window(userType)
+        if userType.result != 0:
+            break
+
+    
     # if isHost == 0:
     while (serverAddress != "localhost") or (serverAddress is None):
         # retrieve a username so we can distinguish all the different clients
@@ -530,4 +534,4 @@ if __name__ == '__main__':
 
     root.deiconify()  # Makes the window visible again
     # this starts a client and thus a thread which keeps connection to server open
-    c = Client(username, userType.result, serverAddress, MainWindow)
+    c = Client(username, userType.result, serverAddress, MainWindow, isHost.result)

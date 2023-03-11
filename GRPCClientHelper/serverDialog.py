@@ -4,7 +4,7 @@ import tkinter as tk
 class ServerDialog(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
-        self.result = 1
+        self.result = 0
         self.title("Server")
         classTypes = [("Host server", 1), ("Join server", 2)]
 
@@ -14,22 +14,21 @@ class ServerDialog(tk.Toplevel):
 
         # Create radio buttons
         self.var = tk.IntVar()
-        self.var.set(1)
+        self.var.set(0)
 
         tk.Label(self,
-                 text="""Will you host server or join server?""",
-                 justify=tk.LEFT,
-                 padx=20,
-                 pady=20).pack()
+                text="""Will you host server or join server?""",
+                justify=tk.LEFT,
+                padx=20,
+                pady=20).pack()
 
         for classType, val in classTypes:
             tk.Radiobutton(self,
-                           text=classType,
-                           indicatoron=0,
-                           width=20,
-                           padx=20,
-                           variable=self.var,
-                           value=val).pack()
+                        text=classType,
+                        width=20,
+                        padx=20,
+                        variable=self.var,
+                        value=val).pack()
         # Create OK button
         ok_button = tk.Button(self, text="OK", command=self.ok)
         ok_button.pack()

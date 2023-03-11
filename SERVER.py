@@ -53,7 +53,7 @@ class ChatServer(rpc.ChatServerServicer):
         self.activeMap.board =  str(random.choices(range(0,  8), k = self.activeMap.length))'''
 
     def __distributeHealth(self):
-        self.listUser[random.randint(0, len(self.listUser))].setUsertype(1)
+        #self.listUser[random.randint(0, len(self.listUser))].setUsertype(1)
         for user in self.listUser:
             # print(user)
             if user.getUsertype() == 1:
@@ -61,7 +61,7 @@ class ChatServer(rpc.ChatServerServicer):
                 user.setHp(100)
             else:
                 # self.hp.append({"ip": user["ip"], "hp": 50, "block": 0, "user": user["user"], "player_type": 0}) #TODO tweak values
-                user.setUsertype(2)
+                #user.setUsertype(2)
                 user.setHp(50)
 
         '''values = []

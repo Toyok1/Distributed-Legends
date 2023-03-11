@@ -2,12 +2,13 @@ import tkinter as tk
 
 
 class UserTypeDialog(tk.Toplevel):
-    def __init__(self, parent):
+    def __init__(self, parent, isHost):
         super().__init__(parent)
-        self.result = 1
+        self.result = 0
         self.title("Pick your class")
-        classTypes = [("monster", 1), ("knight", 2),
-                      ("priest", 3), ("mage", 4)]
+        classTypes = [("knight", 2),
+                    ("priest", 3), ("mage", 4)]
+        classHost = [("monster", 1)]
 
         # Set window size and position
         self.geometry("200x150")
@@ -15,19 +16,19 @@ class UserTypeDialog(tk.Toplevel):
 
         # Create radio buttons
         self.var = tk.IntVar()
-        self.var.set(1)
+        self.var.set(0)
 
         tk.Label(self,
-                 text="""Choose your class:""",
-                 justify=tk.LEFT,
-                 padx=20).pack()
+                text="""Choose your class:""",
+                justify=tk.LEFT,
+                padx=20).pack()
 
-        for classType, val in classTypes:
+        for classType, val in (classHost if isHost == 1 else classTypes):
             tk.Radiobutton(self,
-                           text=classType,
-                           padx=20,
-                           variable=self.var,
-                           value=val).pack()
+                        text=classType,
+                        padx=20,
+                        variable=self.var,
+                        value=val).pack()
         # Create OK button
         ok_button = tk.Button(self, text="OK", command=self.ok)
         ok_button.pack()
