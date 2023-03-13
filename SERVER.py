@@ -17,6 +17,7 @@ key = b'ZhDach4lH7NbH-Gy9EfN2e2HNrWRfbBFD8zeCTBgdEA='
 
 class ChatServer(rpc.ChatServerServicer):
     def __init__(self):
+        self.finish = []
         self.clients = []
         # List with all the chat history
         self.chats = []
@@ -206,6 +207,7 @@ class ChatServer(rpc.ChatServerServicer):
         return chat.Pong(message="Thanks, friend!")
 
     def EndTurn(self, request: chat.PlayerMessage, context):
+        print("end turn")
         '''ipLast = self.fernet.decrypt(request.ip).decode()
         userLast = request.user
         ipNext = self.listUser[0].getIp() #if i can't find the ip we default to the first person in the list
@@ -260,12 +262,33 @@ class ChatServer(rpc.ChatServerServicer):
         return self.initialList
 
     def FinishGame(self, request_iterator, context):
+        print("FinishGame called")
         self.isStartedGame = False
-        # self.initialList.name_hp = None
-        n = chat.Note()
-        n.message = "OK"
-        return n
-
+        n=chat.EndNote()
+        n.MonsterWin="YOU CAN RULE THE WORLD"
+        n.HeroesWin="YOU SAVED THE WORLD"
+        n.MonsterDefeat="THE HEROES PREVENTED YOU FROM TAKING OVER THE WORLD"    
+        n.HeroesDefeat="YOU FAILED TO SAVE THE WORLD"
+        n.fin=request_iterator.fin
+        self.finish.append(n)
+        return chat.Empty()
+    
+    def FinishStream(self, request_iterator, context):
+        print("FinishStream called")
+        
+        lastindex = 0
+        # For every client a infinite loop starts (in gRPC's own managed thread)
+        while True:
+            # Check if there are any new messages
+            while len(self.finish) > lastindex:
+                '''n = chat.Block()
+                n.ip = self.fernet.encrypt(self.blockList[lastindex]["ip"].encode())
+                n.block = self.blockList[lastindex]["block"]
+                n.user = self.blockList[lastindex]["user"]'''
+                n = self.finish[lastindex]
+                print(n)
+                lastindex += 1
+                yield n
 
 if __name__ == '__main__':
     port = 11912  # a random port for the server to run on

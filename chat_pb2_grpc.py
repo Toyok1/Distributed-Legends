@@ -76,8 +76,13 @@ class ChatServerStub(object):
                 )
         self.FinishGame = channel.unary_unary(
                 '/grpc.ChatServer/FinishGame',
+                request_serializer=chat__pb2.FinishedBool.SerializeToString,
+                response_deserializer=chat__pb2.Empty.FromString,
+                )
+        self.FinishStream = channel.unary_stream(
+                '/grpc.ChatServer/FinishStream',
                 request_serializer=chat__pb2.Empty.SerializeToString,
-                response_deserializer=chat__pb2.Note.FromString,
+                response_deserializer=chat__pb2.EndNote.FromString,
                 )
         self.EndTurn = channel.unary_unary(
                 '/grpc.ChatServer/EndTurn',
@@ -178,6 +183,12 @@ class ChatServerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def FinishStream(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def EndTurn(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -261,8 +272,13 @@ def add_ChatServerServicer_to_server(servicer, server):
             ),
             'FinishGame': grpc.unary_unary_rpc_method_handler(
                     servicer.FinishGame,
+                    request_deserializer=chat__pb2.FinishedBool.FromString,
+                    response_serializer=chat__pb2.Empty.SerializeToString,
+            ),
+            'FinishStream': grpc.unary_stream_rpc_method_handler(
+                    servicer.FinishStream,
                     request_deserializer=chat__pb2.Empty.FromString,
-                    response_serializer=chat__pb2.Note.SerializeToString,
+                    response_serializer=chat__pb2.EndNote.SerializeToString,
             ),
             'EndTurn': grpc.unary_unary_rpc_method_handler(
                     servicer.EndTurn,
@@ -505,8 +521,25 @@ class ChatServer(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/grpc.ChatServer/FinishGame',
+            chat__pb2.FinishedBool.SerializeToString,
+            chat__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def FinishStream(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(request, target, '/grpc.ChatServer/FinishStream',
             chat__pb2.Empty.SerializeToString,
-            chat__pb2.Note.FromString,
+            chat__pb2.EndNote.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

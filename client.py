@@ -40,7 +40,7 @@ class Client():
         self.myTurn = False
         self.state = "idle"
         self.myUid = str(uuid.uuid4())
-        self.labelrefs = [[], [], []]
+        self.labelrefs = [[], [], [], []]
         self.fernet = Fernet(key)
 
         self.myPostOffice = helper.PostOffice(
@@ -60,17 +60,10 @@ class Client():
         threading.Thread(target=self.__listen_for_actions, daemon=True).start()
         threading.Thread(target=self.__listen_for_block, daemon=True).start()
         threading.Thread(target=self.__diagnose, daemon=True).start()
+        threading.Thread(target=self.__listen_for_finish, daemon=True).start()
 
         # probably the host won't need to run this thread so TODO when we have a way to distinguish them: get rid of it for the host.
         threading.Thread(target=self.__check_for_start, daemon=True).start()
-
-        '''
-        if self.p.user != 'a': # host TODO change this line
-            while self.map.length == 0:
-                self.map = self.conn.GetActiveMap(chat.Empty())
-                time.sleep(2)
-                print(self.map)
-                '''
         self.window.mainloop()
 
     def __check_for_start(self):
@@ -99,31 +92,32 @@ class Client():
         when waiting for new messages
         """
         for health in self.myPostOffice.HealthStream():
-            # print("UNA CHIAMATA AD HEALTH") # this line will wait for new messages from the server!
             healed = player.transformFromJSON(health.json_str)
             health_amount = health.hp
 
-            for player in self.players:
-                if player.getUid() == healed.getUid():
-                    player.setHp(health_amount)
+            for pl in self.players:
+                if pl.getUid() == healed.getUid():
+                    pl.setHp(health_amount)
+                    
 
-                    if player.getUsername() in [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))]:
-                        ind = [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))].index(player.getUsername())
-                        # print("AAAAAAAAAATTTEEENNNNZZZZZIOOOOOONEEEEEEEEE:         ------> ", ind, player.getUsername(), " <------")
-                        if player.getUsertype() == 1:
-                            self.labelrefs[1][ind].step(health_amount)
+                    if pl.getUsername() in [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))]:
+                        ind = [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))].index(pl.getUsername())
+                        if pl.getUsertype() == 1:
+                            
+                            self.labelrefs[1][ind].config(text=str(pl.getHp()))
                         else:
-                            self.labelrefs[1][ind].step((health_amount*50)/100)
+                            
+                            self.labelrefs[1][ind].config(text=str(pl.getHp()))
 
     def __listen_for_block(self):
         for block in self.myPostOffice.BlockStream():
             blocker = player.transformFromJSON(block.json_str)
             block_amount = block.block
 
-            for player in self.players:
+            for pl in self.players:
                 # if  utente["ip"]  ==  req_ip:
-                if player.getUid() == blocker.getUid():  # TODO change it to ip when not testing
-                    player.setBlock(block_amount)
+                if pl.getUid() == blocker.getUid():  # TODO change it to ip when not testing
+                    pl.setBlock(block_amount)
                 # if  utente["ip"]  ==  self.ip == req_ip:
 
     def __listen_for_actions(self):
@@ -144,16 +138,11 @@ class Client():
                 case _:
                     mode = "idles"  # default
 
-            # print_message = "User "
-
-            '''for user in self.players: #TODO: find a way to have this work in testing, maybe switch to username based recognition
-                if user.getUid() == action_sender.getUid(): #uid for testing TODO change it to ip
-                    actor = user
-                if user.getUid() == action_reciever.getUid():
-                    victim = user'''
             addendum = victim.getUsername() if action_type != 2 else ""
-            print_message_array = ["User", actor.getUsername(
-            ), mode, addendum, "for", str(abs(action_amount)), "points!"]
+            if action_type == 2:
+                print_message_array = ["User", actor.getUsername(),"prepares to block!"]
+            else:
+                print_message_array = ["User", actor.getUsername(), mode, addendum, "for", str(abs(action_amount)), "points!"]
             
             print_message = " ".join(print_message_array).replace("  ", " ") # gets rid of the double space in addendum when action_type != 2
             self.entry_message.config(text=print_message)
@@ -161,8 +150,6 @@ class Client():
             print("--- MESSAGE ---")
             print(print_message)
             print("--- MESSAGE ---")
-            # print(self.state)
-
             # if the victim can block an attack he will do that before getting his hp hit
             if victim.getBlock() > 0 and action_type == 0 and victim.getUid() == self.myPlayer.getUid():
                 action_amount = action_amount + int(victim.getBlock())
@@ -172,6 +159,7 @@ class Client():
             if action_type < 2 and victim.getUid() == self.myPlayer.getUid():
                 action_amount = victim.getHp() + action_amount
                 self.myPostOffice.SendHealth(user=victim, amount=action_amount)
+            
             elif victim.getUid() == self.myPlayer.getUid():
                 self.myPostOffice.SendBlock(user=victim, amount=action_amount)
 
@@ -180,25 +168,59 @@ class Client():
             pass
         for turn in self.myPostOffice.TurnStream():
             what = player.transformFromJSON(turn.json_str)
+            '''
+            if self.GAME_STARTED:
+                counter = 0
+                for p in self.players:
+                    print("Player " + p.getUsername() + "has"+ str(p.getHp()) + " hp")
+                    if p.getHp() <= 0:
+                        counter += 1
+                if counter == len(self.players) - 1:
+                    self.myPostOffice.SendFinishGame()
+                    # end the game right here
+            '''
             if what.getUsername() == self.myPlayer.getUsername() and what.getUid() == self.myPlayer.getUid():  # for testing use this line
                 # if self.fernet.decrypt(turn.ip).decode() == self.ip:
                 print("Mio turno: " + self.myPlayer.getUsername())
                 self.turn_button["state"] = "normal"
                 self.unlockButtons()  # unlock the buttons when it's my turn
                 # if miei hp <= 0 endturn + interfaccia "you died"
+                
+                
                 if self.myPlayer.getHp() <= 0:
                     if self.myPlayer.getUsertype() == 1:  # monster
-                        print("THE MONSTER IS DEAD! The game will end shortly.")
+                        self.entry_message.config(text="THE MONSTER IS DEAD! The game will end shortly.")
                         # end the game right here
                     else:
-                        print(
-                            "YOU ARE DEAD! Wait for one of your allies to revive you.")
+                        self.entry_message.config(text="YOU ARE DEAD! Wait for one of your allies to revive you.")
+                        self.lockButtons()
                         self.send_end_turn()
+
+    def __listen_for_finish(self):
+        #for finish in self.myPostOffice.FinishStream():
+        #    if finish.fin == True:
+        #            if self.myPlayer.getUsertype() == 1:
+        #                self.entry_message.config(text=finish.MonsterWin)
+        #            else:
+        #                self.entry_message.config(text=finish.HeroesDefeat)
+        #    else:
+        #            if self.myPlayer.getUsertype() == 1:
+        #                self.entry_message.config(text=finish.MonsterDefeat)
+        #            else:
+        #                self.entry_message.config(text=finish.HeroesWin)
+        #    #self.closeGame()
+            print("Game would have finished")
 
     def closeGame(self):
         # TODO end game
         pass
-
+        self.lockButtons()
+        self.turn_button["state"] = "disabled"
+        self.state = "idle"
+        self.myPostOffice.Close()
+        self.myPostOffice = None
+        self.myPlayer = None
+        self.players = []
     # TODO: implement a one action per turn thing
 
     def lockButtons(self):
@@ -214,18 +236,10 @@ class Client():
     def send_end_turn(self):
         print("Ending my turn: " + self.username)
         self.turn_button["state"] = "disabled"
-        '''n = chat.Health()
-        n.ip = info.ip
-        n.hp = random.randint(-10, 10)
-        n.user = self.username
-        self.conn.SendHealth(n)'''
-        # print(self.listHealth)
-        # self.lockButtons()
+        self.lockButtons()
         self.state = "idle"
-        print("MYPLAYER INSIDE SEND_END_TURN", self.myPlayer)
         self.myPostOffice.EndTurn(self.myPlayer)
-        # self.__after_action()
-
+        
     def attack(self):
         # attack people that are not your same class or friends
         self.lockButtons()
@@ -256,7 +270,7 @@ class Client():
         self.players = player.transformFullListFromJSON(mess.json_str)
         i = 0
         v = [self.hero1_username, self.hero2_username, self.hero3_username]
-        v2 = [self.hero1_health, self.hero2_health, self.hero3_health]
+        v2 = [self.hero1_healthLabel, self.hero2_healthLabel, self.hero3_healthLabel]
         v3 = [self.hero1, self.hero2, self.hero3]
         for u in self.players:
             if u.getUsername() == self.username:
@@ -266,7 +280,7 @@ class Client():
                     self.monster_label.config(text=u.getUsername())
                     self.monsterRef = u
                     self.labelrefs[0].append(self.monster_label)
-                    self.labelrefs[1].append(self.monster_health)
+                    self.labelrefs[1].append(self.monster_healthLabel)
                     self.labelrefs[2].append(self.monster)
                     self.myHp[0].set(u.getHp())
                 else:
@@ -282,7 +296,7 @@ class Client():
                     self.monster_label.config(text=u.getUsername())
                     self.monsterRef = u
                     self.labelrefs[0].append(self.monster_label)
-                    self.labelrefs[1].append(self.monster_health)
+                    self.labelrefs[1].append(self.monster_healthLabel)
                     self.labelrefs[2].append(self.monster)
                     self.myHp[0].set(u.getHp())
                 else:
@@ -394,10 +408,9 @@ class Client():
         # @self.enable_animation_thread(self.label1)
         self.hero1_username = tk.Label(self.heroes_frame, text="")
         self.hero1_username.grid(row=0, column=0, padx=5, pady=5, sticky=tk.N)
-        self.hero1_health = ttk.Progressbar(
-            self.heroes_frame, style="Horizontal.TProgressbar", orient='horizontal', variable=self.myHp[1], mode='determinate')
+        self.hero1_healthLabel = tk.Label(self.heroes_frame, text=str(self.myHp[1]))
+        self.hero1_healthLabel.grid(row=0, column=0, padx=5, pady=5, sticky=tk.S)
         # self.hero1_health.step(99.9)
-        self.hero1_health.grid(row=0, column=0, padx=5, pady=5, sticky=tk.S)
 
         ''' at this point we need to declare different labels and we can even fill them later when other people join but for right now as a proof of concept i'll use the knight'''
         self.hero2 = tk.Label(self.heroes_frame, image=self.imgs[0])
@@ -405,20 +418,18 @@ class Client():
         # self.enable_animation_thread(self.label2)
         self.hero2_username = tk.Label(self.heroes_frame, text="")
         self.hero2_username.grid(row=2, column=0, padx=5, pady=5, sticky=tk.N)
-        self.hero2_health = ttk.Progressbar(
-            self.heroes_frame, orient='horizontal', variable=self.myHp[2], mode='determinate')
+        self.hero2_healthLabel = tk.Label(self.heroes_frame, text=str(self.myHp[2]))
+        self.hero2_healthLabel.grid(row=2, column=0, padx=5, pady=5, sticky=tk.S)
         # self.hero2_health.step(99.9)
-        self.hero2_health.grid(row=2, column=0, padx=5, pady=5, sticky=tk.S)
-
+       
         self.hero3 = tk.Label(self.heroes_frame, image=self.imgs[0])
         self.hero3.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NSEW)
         # self.enable_animation_thread(self.label3)
         self.hero3_username = tk.Label(self.heroes_frame, text="")
         self.hero3_username.grid(row=1, column=1, padx=5, pady=5, sticky=tk.N)
-        self.hero3_health = ttk.Progressbar(
-            self.heroes_frame, orient='horizontal', variable=self.myHp[3], mode='determinate')
+        self.hero3_healthLabel = tk.Label(self.heroes_frame, text=str(self.myHp[3]))
+        self.hero3_healthLabel.grid(row=1, column=1, padx=5, pady=5, sticky=tk.S)
         # self.hero3_health.step(99.9)
-        self.hero3_health.grid(row=1, column=1, padx=5, pady=5, sticky=tk.S)
 
         # MONSTER SETUP
         self.monster_frame = tk.Frame(
@@ -434,10 +445,9 @@ class Client():
         self.monster_label = tk.Label(self.monster_frame, text="")
         self.monster_label.pack()
 
-        self.monster_health = ttk.Progressbar(
-            self.monster_frame, orient='horizontal', variable=self.myHp[0], mode='determinate')
-        self.monster_health.step(99.9)
-        self.monster_health.pack()
+
+        self.monster_healthLabel = tk.Label(self.monster_frame, text=str(self.myHp[0]))
+        self.monster_healthLabel.pack()
         self.controls_frame = tk.Frame(self.master_frame, borderwidth=1)
         self.controls_frame.grid(row=1, column=0, sticky=tk.NSEW)
         self.controls_frame.columnconfigure(0, weight=1, minsize=288)

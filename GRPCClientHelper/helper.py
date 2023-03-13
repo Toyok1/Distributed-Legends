@@ -115,3 +115,9 @@ class PostOffice:
         m.json_str = player.transformIntoJSON(user)
         m.hp = amount
         self.conn.SendHealth(m)
+
+    def SendFinishGame(self):
+        self.conn.FinishGame(chat.Empty())
+
+    def FinishStream(self):
+        return self.conn.FinishStream(chat.Empty())
