@@ -109,7 +109,7 @@ def tranformFullListIntoJSON(array):
         # print("PLEASE PRINT", i)
         final_str += transformIntoJSON(i) + "#"
     final_str = final_str[:-1]
-    # print(final_str, "final_str")
+    print(final_str, "final_str")
     return final_str
 
 

@@ -5,18 +5,24 @@ import threading
 from concurrent import futures
 import uuid
 from GRPCClientHelper import player
+import os
 
 import chat_pb2 as chat
 import chat_pb2_grpc as rpc
 
+import signal
+
+ 
+
 from cryptography.fernet import Fernet
+from requests import get
 
 port = 11912  # decide if we have to change this port
 key = b'ZhDach4lH7NbH-Gy9EfN2e2HNrWRfbBFD8zeCTBgdEA='
 
 
 class ChatServer(rpc.ChatServerServicer):
-    def __init__(self):
+    def __init__(self,pId):
         self.finish = []
         self.clients = []
         # List with all the chat history
@@ -27,8 +33,10 @@ class ChatServer(rpc.ChatServerServicer):
         self.turns = []
         self.listUser = []  # every element is a Player
         self.fernet = Fernet(key)
+        self.processId = pId
 
         threading.Thread(target=self.__clean_user_list, daemon=True).start()
+        threading.Thread(target=self.__keep_alive, daemon=True).start()
 
         self.initialList = chat.InitialList()
         self.initialList.json_str = ""
@@ -39,6 +47,12 @@ class ChatServer(rpc.ChatServerServicer):
             if usr.getIp() == req_ip and usr.getUid() == req_id:
                 # print("pinged", usr)
                 usr.setPingTime(time.time())
+    
+    def __keep_alive(self):
+        while True:
+            time.sleep(30)  #TODO change number of seconds of inactivity
+            if len(self.listUser) == 0:
+                os.kill(self.processId, signal.SIGTERM)
 
     def __clean_user_list(self):
         # il tempo lo calcola il server
@@ -294,12 +308,11 @@ if __name__ == '__main__':
     port = 11912  # a random port for the server to run on
     # the workers is like the amount of threads that can be opened at the same time, when there are 10 clients connected
     # then no more clients able to connect to the server.
-    server = grpc.server(futures.ThreadPoolExecutor(
-        max_workers=10))  # create a gRPC server
-    rpc.add_ChatServerServicer_to_server(
-        ChatServer(), server)  # register the server to gRPC
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))  # create a gRPC server
+    rpc.add_ChatServerServicer_to_server(ChatServer(os.getpid()), server)  # register the server to gRPC
     # gRPC basically manages all the threading and server responding logic, which is perfect!
     print('Starting server. Listening...')
+    print("Connect to: " + str(get('https://api.ipify.org').content.decode('utf8')))
     server.add_insecure_port('[::]:' + str(port))
     server.start()
     try:

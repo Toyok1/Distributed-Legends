@@ -3,7 +3,7 @@ import os
 import tkinter as tk
 import time
 import uuid
-import random
+import sys
 import re
 
 from PIL import ImageTk, Image
@@ -224,8 +224,6 @@ class Client():
         self.turn_button["state"] = "disabled"
         self.state = "idle"
         self.myPostOffice = None
-        self.myPlayer = None
-        self.players = []
     # TODO: implement a one action per turn thing
 
     def lockButtons(self):
@@ -426,7 +424,7 @@ class Client():
         self.hero2_healthLabel = tk.Label(self.heroes_frame,bg="cyan", text='50/50')
         self.hero2_healthLabel.grid(row=2, column=0, padx=5, pady=5, sticky=tk.S)
         # self.hero2_health.step(99.9)
-       
+        
         self.hero3 = tk.Label(self.heroes_frame, bg="cyan",image=self.imgs[0])
         self.hero3.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NSEW)
         # self.enable_animation_thread(self.label3)
@@ -496,7 +494,7 @@ class Client():
                                 pady=5, sticky=tk.NSEW)
 
         self.start_button = tk.Button(
-            self.monster_frame, text="Start Game", borderwidth=0, background='cyan', command=self.send_start_game)
+            self.monster_frame, text="Start Game", borderwidth=1, command=self.send_start_game)
         self.start_button.pack()
         if not self.isHost:
             self.start_button["state"] = "disabled"
@@ -517,21 +515,22 @@ if __name__ == '__main__':
     MainWindow.pack()
     root.withdraw()  # Hides the window
     username = None
-    serverAddress = "localhost"  # None when we deploy but for testing localhost is fine
+    serverAddress = None #"localhost"  # None when we deploy but for testing localhost is fine
     while username is None:
         # retrieve a username so we can distinguish all the different clients
         username = simpledialog.askstring(
             "Username", "What's your username?", parent=root)
     root.title("RPGCombat - " + username)
+    isHost = int(list(sys.argv)[1]) if len(list(sys.argv)) > 1 else 2
 
-    while True: #in the future this is replaced by the script that opens up the server together with the client
+    '''while True: #in the future this is replaced by the script that opens up the server together with the client
             isHost = serverDialog.ServerDialog(root)
             root.wait_window(isHost)
             if isHost.result != 0:
-                break
+                break'''
 
     while True:
-        userType = userTypeDialog.UserTypeDialog(root, isHost.result)
+        userType = userTypeDialog.UserTypeDialog(root, isHost)
         root.wait_window(userType)
         if userType.result != 0:
             break
@@ -549,4 +548,4 @@ if __name__ == '__main__':
 
     root.deiconify()  # Makes the window visible again
     # this starts a client and thus a thread which keeps connection to server open
-    c = Client(username, userType.result, serverAddress, MainWindow, isHost.result)
+    c = Client(username, userType.result, serverAddress, MainWindow, isHost)

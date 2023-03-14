@@ -5,7 +5,7 @@ class ServerDialog(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.result = 0
-        self.title("Server")
+        self.title("HOST CHOICE")
         classTypes = [("Host server", 1), ("Join server", 2)]
 
         # Set window size and position
