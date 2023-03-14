@@ -74,7 +74,7 @@ class Client():
         if self.players == []:
             mess = self.myPostOffice.GetInitialList()
             self.cleanInitialList(mess)
-        self.start_button["state"] = "disabled"
+        self.start_button.destroy()
 
     def __diagnose(self):
         while True:
@@ -104,10 +104,10 @@ class Client():
                         ind = [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))].index(pl.getUsername())
                         if pl.getUsertype() == 1:
                             
-                            self.labelrefs[1][ind].config(text=str(pl.getHp()))
+                            self.labelrefs[1][ind].config(text=str(pl.getHp())+'/100')
                         else:
                             
-                            self.labelrefs[1][ind].config(text=str(pl.getHp()))
+                            self.labelrefs[1][ind].config(text=str(pl.getHp())+'/50')
 
     def __listen_for_block(self):
         for block in self.myPostOffice.BlockStream():
@@ -198,12 +198,9 @@ class Client():
                         self.send_end_turn()
 
     def __listen_for_finish(self):
-        printer = 0
         while self.isFinished==False:
-            printer += 1
-            if printer == 1000:
-                print('isFinished is False')
-                printer = 0
+            #doNothing
+            pass
         print("Game is finished")
         for finish in self.myPostOffice.FinishStream():
             if finish.fin == True:
@@ -226,7 +223,6 @@ class Client():
         self.lockButtons()
         self.turn_button["state"] = "disabled"
         self.state = "idle"
-        self.myPostOffice.Close()
         self.myPostOffice = None
         self.myPlayer = None
         self.players = []
@@ -397,7 +393,7 @@ class Client():
         self.background_frame.rowconfigure(0, weight=1, minsize=420)
 
         self.heroes_frame = tk.Frame(
-            self.background_frame, borderwidth=1, bg="brown", padx=10, pady=10)
+            self.background_frame, borderwidth=1, bg="cyan", padx=10, pady=10)
         self.heroes_frame.grid(row=0, column=0, sticky=tk.NSEW)
 
         # HEROES SETUP
@@ -412,50 +408,50 @@ class Client():
         self.style.theme_use('clam')
         self.style.configure("Horizontal.TProgressbar", background='green')
 
-        self.hero1 = tk.Label(self.heroes_frame, image=self.imgs[0])
+        self.hero1 = tk.Label(self.heroes_frame,bg="cyan", image=self.imgs[0])
         self.hero1.grid(row=0, column=0, padx=5, pady=5, sticky=tk.NSEW)
         # @self.enable_animation_thread(self.label1)
-        self.hero1_username = tk.Label(self.heroes_frame, text="")
+        self.hero1_username = tk.Label(self.heroes_frame, bg="cyan", text="")
         self.hero1_username.grid(row=0, column=0, padx=5, pady=5, sticky=tk.N)
-        self.hero1_healthLabel = tk.Label(self.heroes_frame, text=str(self.myHp[1]))
+        self.hero1_healthLabel = tk.Label(self.heroes_frame, bg="cyan",text='50/50')
         self.hero1_healthLabel.grid(row=0, column=0, padx=5, pady=5, sticky=tk.S)
         # self.hero1_health.step(99.9)
 
         ''' at this point we need to declare different labels and we can even fill them later when other people join but for right now as a proof of concept i'll use the knight'''
-        self.hero2 = tk.Label(self.heroes_frame, image=self.imgs[0])
+        self.hero2 = tk.Label(self.heroes_frame,bg="cyan", image=self.imgs[0])
         self.hero2.grid(row=2, column=0, padx=5, pady=5, sticky=tk.NSEW)
         # self.enable_animation_thread(self.label2)
-        self.hero2_username = tk.Label(self.heroes_frame, text="")
+        self.hero2_username = tk.Label(self.heroes_frame,bg="cyan", text="")
         self.hero2_username.grid(row=2, column=0, padx=5, pady=5, sticky=tk.N)
-        self.hero2_healthLabel = tk.Label(self.heroes_frame, text=str(self.myHp[2]))
+        self.hero2_healthLabel = tk.Label(self.heroes_frame,bg="cyan", text='50/50')
         self.hero2_healthLabel.grid(row=2, column=0, padx=5, pady=5, sticky=tk.S)
         # self.hero2_health.step(99.9)
        
-        self.hero3 = tk.Label(self.heroes_frame, image=self.imgs[0])
+        self.hero3 = tk.Label(self.heroes_frame, bg="cyan",image=self.imgs[0])
         self.hero3.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NSEW)
         # self.enable_animation_thread(self.label3)
-        self.hero3_username = tk.Label(self.heroes_frame, text="")
+        self.hero3_username = tk.Label(self.heroes_frame,bg="cyan", text="")
         self.hero3_username.grid(row=1, column=1, padx=5, pady=5, sticky=tk.N)
-        self.hero3_healthLabel = tk.Label(self.heroes_frame, text=str(self.myHp[3]))
+        self.hero3_healthLabel = tk.Label(self.heroes_frame, bg="cyan",text='50/50')
         self.hero3_healthLabel.grid(row=1, column=1, padx=5, pady=5, sticky=tk.S)
         # self.hero3_health.step(99.9)
 
         # MONSTER SETUP
         self.monster_frame = tk.Frame(
-            self.background_frame, borderwidth=1, bg="orange", padx=5, pady=5)
+            self.background_frame, borderwidth=1, bg="cyan", padx=5, pady=5)
         self.monster_frame.grid(row=0, column=1, sticky=tk.NSEW)
 
         image = Image.open("./src/monster/1.png")
         photo = ImageTk.PhotoImage(image)
 
-        self.monster = tk.Label(self.monster_frame, image=photo)
+        self.monster = tk.Label(self.monster_frame,bg="cyan", image=photo)
         self.monster.image = photo  # keep a reference!
         self.monster.pack()
-        self.monster_label = tk.Label(self.monster_frame, text="")
+        self.monster_label = tk.Label(self.monster_frame, bg="cyan",text="")
         self.monster_label.pack()
 
 
-        self.monster_healthLabel = tk.Label(self.monster_frame, text=str(self.myHp[0]))
+        self.monster_healthLabel = tk.Label(self.monster_frame, bg="cyan",text='100/100')
         self.monster_healthLabel.pack()
         self.controls_frame = tk.Frame(self.master_frame, borderwidth=1)
         self.controls_frame.grid(row=1, column=0, sticky=tk.NSEW)
@@ -465,7 +461,7 @@ class Client():
 
         # BUTTONS SETUP
         self.buttons_frame = tk.Frame(
-            self.controls_frame, borderwidth=1, bg="yellow")
+            self.controls_frame, borderwidth=1, bg="red")
         self.buttons_frame.grid(row=0, column=0, sticky=tk.NSEW)
         self.buttons_frame.columnconfigure([0, 1], weight=1, minsize=144)
         self.buttons_frame.rowconfigure([0, 1], weight=1, minsize=90)
@@ -487,7 +483,7 @@ class Client():
 
         # TEXT MESSAGE SETUP
         self.text_frame = tk.Frame(
-            master=self.controls_frame, borderwidth=1, bg="blue")
+            master=self.controls_frame, borderwidth=1, bg="red")
         self.text_frame.grid(row=0, column=1, sticky=tk.SE)
         self.text_frame.columnconfigure(0, weight=1, minsize=672)
         self.text_frame.rowconfigure(0, weight=1, minsize=180)
@@ -500,7 +496,7 @@ class Client():
                                 pady=5, sticky=tk.NSEW)
 
         self.start_button = tk.Button(
-            self.monster_frame, text="Start Game", command=self.send_start_game)
+            self.monster_frame, text="Start Game", borderwidth=0, background='cyan', command=self.send_start_game)
         self.start_button.pack()
         if not self.isHost:
             self.start_button["state"] = "disabled"
