@@ -12,7 +12,7 @@ import chat_pb2_grpc as rpc
 
 import signal
 
- 
+
 
 from cryptography.fernet import Fernet
 from requests import get
@@ -63,10 +63,6 @@ class ChatServer(rpc.ChatServerServicer):
                     self.listUser.remove(user)
             time.sleep(2.5)
 
-    '''def __createBoard(self):
-        self.activeMap.length = random.randint(40,90)
-        self.activeMap.board =  str(random.choices(range(0,  8), k = self.activeMap.length))'''
-
     def __distributeHealth(self):
         #self.listUser[random.randint(0, len(self.listUser))].setUsertype(1)
         for user in self.listUser:
@@ -79,23 +75,6 @@ class ChatServer(rpc.ChatServerServicer):
                 #user.setUsertype(2)
                 user.setHp(50)
 
-        '''values = []
-        values2 = []
-        values3 = []
-        values4 = []
-        for d in self.hp:
-            values.append(d["user"])
-            values2.append(d["hp"])
-            values3.append(d["player_type"])
-            values4.append(d["ip"])
-
-        name_hp = str(values) + str(values2)
-        mmmap = chat.InitialList()
-        mmmap.length = length
-        mmmap.name_hp = name_hp
-        mmmap.player_type = str(values3)
-        mmmap.ip = str(values4)'''
-
         mmmap = chat.InitialList()
         mmmap.length = len(self.listUser)
         mmmap.json_str = player.tranformFullListIntoJSON(self.listUser)
@@ -104,13 +83,6 @@ class ChatServer(rpc.ChatServerServicer):
 
     # The stream which will be used to send new messages to clients
     def ChatStream(self, request_iterator, context):
-        """
-        This is a response-stream type call. This means the server can keep sending messages
-        Every client opens this connection and waits for server to send new messages
-        :param request_iterator:
-        :param context:
-        :return:
-        """
         lastindex = 0
         # For every client a infinite loop starts (in gRPC's own managed thread)
         while True:
@@ -305,7 +277,7 @@ class ChatServer(rpc.ChatServerServicer):
                 yield n
 
 if __name__ == '__main__':
-    port = 11912  # a random port for the server to run on
+    port = 8080  # a random port for the server to run on
     # the workers is like the amount of threads that can be opened at the same time, when there are 10 clients connected
     # then no more clients able to connect to the server.
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))  # create a gRPC server

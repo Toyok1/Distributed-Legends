@@ -515,7 +515,7 @@ if __name__ == '__main__':
     MainWindow.pack()
     root.withdraw()  # Hides the window
     username = None
-    serverAddress = None #"localhost"  # None when we deploy but for testing localhost is fine
+    serverAddress = "localhost"  # None when we deploy but for testing localhost is fine
     while username is None:
         # retrieve a username so we can distinguish all the different clients
         username = simpledialog.askstring(
