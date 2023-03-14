@@ -42,7 +42,7 @@ class Client():
         self.myUid = str(uuid.uuid4())
         self.labelrefs = [[], [], [], []]
         self.fernet = Fernet(key)
-
+        self.isFinished = False
         self.myPostOffice = helper.PostOffice(
             serverAddress, user, self.myUid, userType)
         self.myPostOffice.Subscribe()
@@ -168,7 +168,7 @@ class Client():
             pass
         for turn in self.myPostOffice.TurnStream():
             what = player.transformFromJSON(turn.json_str)
-            '''
+            
             if self.GAME_STARTED:
                 counter = 0
                 for p in self.players:
@@ -176,9 +176,10 @@ class Client():
                     if p.getHp() <= 0:
                         counter += 1
                 if counter == len(self.players) - 1:
+                    self.isFinished = True
                     self.myPostOffice.SendFinishGame()
                     # end the game right here
-            '''
+            
             if what.getUsername() == self.myPlayer.getUsername() and what.getUid() == self.myPlayer.getUid():  # for testing use this line
                 # if self.fernet.decrypt(turn.ip).decode() == self.ip:
                 print("Mio turno: " + self.myPlayer.getUsername())
@@ -197,19 +198,27 @@ class Client():
                         self.send_end_turn()
 
     def __listen_for_finish(self):
-        #for finish in self.myPostOffice.FinishStream():
-        #    if finish.fin == True:
-        #            if self.myPlayer.getUsertype() == 1:
-        #                self.entry_message.config(text=finish.MonsterWin)
-        #            else:
-        #                self.entry_message.config(text=finish.HeroesDefeat)
-        #    else:
-        #            if self.myPlayer.getUsertype() == 1:
-        #                self.entry_message.config(text=finish.MonsterDefeat)
-        #            else:
-        #                self.entry_message.config(text=finish.HeroesWin)
-        #    #self.closeGame()
-            print("Game would have finished")
+        printer = 0
+        while self.isFinished==False:
+            printer += 1
+            if printer == 1000:
+                print('isFinished is False')
+                printer = 0
+        print("Game is finished")
+        for finish in self.myPostOffice.FinishStream():
+            if finish.fin == True:
+                    if self.myPlayer.getUsertype() == 1:
+                        self.entry_message.config(text=finish.MonsterWin)
+                    else:
+                        self.entry_message.config(text=finish.HeroesDefeat)
+            else:
+                    if self.myPlayer.getUsertype() == 1:
+                        self.entry_message.config(text=finish.MonsterDefeat)
+                    else:
+                        self.entry_message.config(text=finish.HeroesWin)
+            self.closeGame()
+        print("Game would have finished")
+
 
     def closeGame(self):
         # TODO end game
