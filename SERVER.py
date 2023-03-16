@@ -1,9 +1,7 @@
 import grpc
 import time
-import random
 import threading
 from concurrent import futures
-import uuid
 from GRPCClientHelper import player
 import os
 
@@ -12,13 +10,9 @@ import chat_pb2_grpc as rpc
 
 import signal
 
-
-
 from cryptography.fernet import Fernet
 from requests import get
-
-port = 11912  # decide if we have to change this port
-key = b'ZhDach4lH7NbH-Gy9EfN2e2HNrWRfbBFD8zeCTBgdEA='
+from GRPCClientHelper.config import port, key
 
 
 class ChatServer(rpc.ChatServerServicer):
@@ -50,7 +44,7 @@ class ChatServer(rpc.ChatServerServicer):
     
     def __keep_alive(self):
         while True:
-            time.sleep(30)  #TODO change number of seconds of inactivity
+            time.sleep(180)  #TODO change number of seconds of inactivity
             if len(self.listUser) == 0:
                 os.kill(self.processId, signal.SIGTERM)
 
@@ -277,7 +271,6 @@ class ChatServer(rpc.ChatServerServicer):
                 yield n
 
 if __name__ == '__main__':
-    port = 8080  # a random port for the server to run on
     # the workers is like the amount of threads that can be opened at the same time, when there are 10 clients connected
     # then no more clients able to connect to the server.
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))  # create a gRPC server

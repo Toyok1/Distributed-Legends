@@ -11,15 +11,10 @@ from GRPCClientHelper import helper, player, serverDialog, userTypeDialog
 from cryptography.fernet import Fernet
 from tkinter import simpledialog
 from tkinter import ttk
+from GRPCClientHelper.config import key,cancel_id,aniThreadPointer,pg_type
 
 
-key = b'ZhDach4lH7NbH-Gy9EfN2e2HNrWRfbBFD8zeCTBgdEA='
 
-
-cancel_id = None
-aniThreadPointer = []
-
-pg_type = ["monster", "knight", "priest", "mage", ]
 
 
 class Client():
@@ -515,7 +510,7 @@ if __name__ == '__main__':
     MainWindow.pack()
     root.withdraw()  # Hides the window
     username = None
-    serverAddress = "localhost"  # None when we deploy but for testing localhost is fine
+    serverAddress = None #"localhost"  # None when we deploy but for testing localhost is fine
     while username is None:
         # retrieve a username so we can distinguish all the different clients
         username = simpledialog.askstring(
