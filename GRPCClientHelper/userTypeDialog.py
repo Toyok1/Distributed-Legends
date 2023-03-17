@@ -6,9 +6,9 @@ class UserTypeDialog(tk.Toplevel):
         super().__init__(parent)
         self.result = 0
         self.title("Pick your class")
-        classTypes = [("knight", 2),
-                    ("priest", 3), ("mage", 4)]
-        classHost = [("monster", 1)]
+        classTypes = [("Knight", 2),
+                    ("Priest", 3), ("Mage", 4)]
+        #classHost = [("Monster", 1)]
 
         # Set window size and position
         self.geometry("200x150")
@@ -23,7 +23,7 @@ class UserTypeDialog(tk.Toplevel):
                 justify=tk.LEFT,
                 padx=20).pack()
 
-        for classType, val in (classHost if isHost == 1 else classTypes):
+        for classType, val in classTypes:
             tk.Radiobutton(self,
                         text=classType,
                         padx=20,

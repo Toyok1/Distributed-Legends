@@ -10,8 +10,7 @@ import chat_pb2 as chat
 import chat_pb2_grpc as rpc
 from GRPCClientHelper import player
 
-port = 8080  # decide if we have to change this port
-key = b'ZhDach4lH7NbH-Gy9EfN2e2HNrWRfbBFD8zeCTBgdEA='
+from GRPCClientHelper.config import port, key
 
 
 class PostOffice:

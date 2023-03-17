@@ -38,13 +38,11 @@ class Client():
         self.labelrefs = [[], [], [], []]
         self.fernet = Fernet(key)
         self.isFinished = False
-        self.myPostOffice = helper.PostOffice(
-            serverAddress, user, self.myUid, userType)
+        self.myPostOffice = helper.PostOffice(serverAddress, user, self.myUid, userType)
         self.myPostOffice.Subscribe()
 
         try:
-            threading.Thread(target=self.myPostOffice.Listen_for_PingPong, args=(
-                self.myUid,), daemon=True).start()
+            threading.Thread(target=self.myPostOffice.Listen_for_PingPong, args=(self.myUid,), daemon=True).start()
         except:
             self.CloseGame()
 
@@ -516,19 +514,19 @@ if __name__ == '__main__':
         username = simpledialog.askstring(
             "Username", "What's your username?", parent=root)
     root.title("RPGCombat - " + username)
+
     isHost = int(list(sys.argv)[1]) if len(list(sys.argv)) > 1 else 2
 
-    '''while True: #in the future this is replaced by the script that opens up the server together with the client
-            isHost = serverDialog.ServerDialog(root)
-            root.wait_window(isHost)
-            if isHost.result != 0:
-                break'''
+    userType_int = None
 
-    while True:
-        userType = userTypeDialog.UserTypeDialog(root, isHost)
-        root.wait_window(userType)
-        if userType.result != 0:
-            break
+    if isHost == 1:
+        userType_int = 1
+    else:
+        while True: #pseudo do while loop
+            userType = userTypeDialog.UserTypeDialog(root)
+            root.wait_window(userType)
+            if userType.result != 0:
+                break
 
     
     # if isHost == 0:
@@ -543,4 +541,4 @@ if __name__ == '__main__':
 
     root.deiconify()  # Makes the window visible again
     # this starts a client and thus a thread which keeps connection to server open
-    c = Client(username, userType.result, serverAddress, MainWindow, isHost)
+    c = Client(username, userType.result if userType_int is None else userType_int, serverAddress, MainWindow, isHost)
