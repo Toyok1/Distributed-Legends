@@ -70,11 +70,13 @@ class Player:
 
     def __repr__(self):
         # ip, u_id, username, user_type, hp, block, ping_time
-        return f"Player ip : {self.ip} u_id : {self.u_id} username : {self.username} user_type : {self.user_type} hp : {self.hp} block : {self.block}"
+        #return f"Player ip : {self.ip} u_id : {self.u_id} username : {self.username} user_type : {self.user_type} hp : {self.hp} block : {self.block}"
+        return  f"Player u_id : {self.u_id} username : {self.username} ping: {self.ping_time}"
 
     def __str__(self):
         # ip, u_id, username, user_type, hp, block, ping_time
-        return f"Player ip : {self.ip} u_id : {self.u_id} username : {self.username} user_type : {self.user_type} hp : {self.hp} block : {self.block}"
+        #return f"Player ip : {self.ip} u_id : {self.u_id} username : {self.username} user_type : {self.user_type} hp : {self.hp} block : {self.block}"
+        return  f"Player u_id : {self.u_id} username : {self.username} ping: {self.ping_time}"
 
 
 def transformIntoJSON(theplayertotransform: Player):  # ip input decoded

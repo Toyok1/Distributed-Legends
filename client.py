@@ -5,6 +5,7 @@ import time
 import uuid
 import sys
 import re
+from functools import partial
 
 from PIL import ImageTk, Image
 from GRPCClientHelper import helper, player, serverDialog, userTypeDialog
@@ -42,21 +43,21 @@ class Client():
         self.myPostOffice.Subscribe()
 
         try:
-            threading.Thread(target=self.myPostOffice.Listen_for_PingPong, args=(self.myUid,), daemon=True).start()
+            threading.Thread(target= self.myPostOffice.Listen_for_PingPong, args=(self.myUid,), daemon=True).start()
         except:
             self.CloseGame()
 
         self.__setup_ui()
 
-        threading.Thread(target=self.__listen_for_turns, daemon=True).start()
-        threading.Thread(target=self.__listen_for_health, daemon=True).start()
-        threading.Thread(target=self.__listen_for_actions, daemon=True).start()
-        threading.Thread(target=self.__listen_for_block, daemon=True).start()
-        threading.Thread(target=self.__diagnose, daemon=True).start()
-        threading.Thread(target=self.__listen_for_finish, daemon=True).start()
+        threading.Thread(target= self.__listen_for_turns, daemon=True).start()
+        threading.Thread(target= self.__listen_for_health, daemon=True).start()
+        threading.Thread(target= self.__listen_for_actions, daemon=True).start()
+        threading.Thread(target= self.__listen_for_block, daemon=True).start()
+        threading.Thread(target= self.__diagnose, daemon=True).start()
+        threading.Thread(target= self.__listen_for_finish, daemon=True).start()
 
         # probably the host won't need to run this thread so TODO when we have a way to distinguish them: get rid of it for the host.
-        threading.Thread(target=self.__check_for_start, daemon=True).start()
+        threading.Thread(target= self.__check_for_start, daemon=True).start()
         self.window.mainloop()
 
     def __check_for_start(self):
@@ -236,15 +237,19 @@ class Client():
         self.state = "idle"
         self.myPostOffice.EndTurn(self.myPlayer)
         
-    def attack(self):
+    def attack_single(self, attacked):
         # attack people that are not your same class or friends
+        if self.myPlayer.getUsertype() == 1:
+            self.turn_back()
         self.lockButtons()
         self.state = "attack"
         # self.__after_action()
-        for user in self.players:
+        '''for user in self.players:
             if user.getUsertype() != self.myPlayerType:  # i can attack my enemies only
                 print("MESSAGGIO CREATO")
-                self.myPostOffice.SendAction(self.myPlayer, user, actionType=0)
+                self.myPostOffice.SendAction(self.myPlayer, user, actionType=0)'''
+        print("MESSAGGIO CREATO")
+        self.myPostOffice.SendAction(self.myPlayer, attacked, actionType=0)
 
     def heal(self):
         self.lockButtons()
@@ -262,6 +267,35 @@ class Client():
             if user.getUsername() == self.myPlayer.getUsername():  # i will block for myself only
                 self.myPostOffice.SendAction(self.myPlayer, user, actionType=2)
 
+    def attack_party(self):
+        buttons = [self.attack_button, self.block_button, self.heal_button]
+        
+        for i in range(0,len(buttons)):
+            try:
+                buttons[i].configure(text = "ATTACK\n" + self.party[i].getUsername())
+                func = partial(self.attack_single, self.party[i])
+                buttons[i].configure(command = func)
+            except:
+                buttons[i].configure(text = "----")
+                buttons[i].configure(command = self.do_nothing)
+        self.turn_button.configure(text = "Back")
+        self.turn_button.configure(command= self.turn_back)
+    
+    def do_nothing(self):
+        print("Did nothing")
+        pass
+
+    def turn_back(self):
+        #buttons = [self.attack_button, self.block_button, self.heal_button, self.turn_button]
+        self.attack_button.configure(text = "ATTACK")
+        self.attack_button.configure(command = self.attack_party)
+        self.block_button.configure(text = "BLOCK")
+        self.block_button.configure(command = self.block)
+        self.heal_button.configure(text = "HEAL")
+        self.heal_button.configure(command = self.heal)
+        self.turn_button.configure(text = "END TURN")
+        self.turn_button.configure(command = self.send_end_turn)
+
     def cleanInitialList(self, mess):
         self.players = player.transformFullListFromJSON(mess.json_str)
         i = 0
@@ -275,6 +309,7 @@ class Client():
                 if self.myPlayerType == 1:
                     self.monster_label.config(text=u.getUsername())
                     self.monsterRef = u
+                    self.action_with_arg = partial(self.attack_single, self.monsterRef)
                     self.labelrefs[0].append(self.monster_label)
                     self.labelrefs[1].append(self.monster_healthLabel)
                     self.labelrefs[2].append(self.monster)
@@ -291,10 +326,12 @@ class Client():
                 if u.getUsertype() == 1:
                     self.monster_label.config(text=u.getUsername())
                     self.monsterRef = u
+                    self.action_with_arg = partial(self.attack_single, self.monsterRef)
                     self.labelrefs[0].append(self.monster_label)
                     self.labelrefs[1].append(self.monster_healthLabel)
                     self.labelrefs[2].append(self.monster)
                     self.myHp[0].set(u.getHp())
+                    #monster = u
                 else:
                     self.party.append(u)
                     v[i].config(text=u.getUsername())
@@ -309,6 +346,11 @@ class Client():
             v2[i].destroy()
             v3[i].destroy()
             i += 1
+        if self.myPlayer.getUsertype() == 1:
+            #moster
+            self.attack_button.configure(command = self.attack_party)
+        else:
+            self.attack_button.configure(command = self.action_with_arg)
 
     def send_start_game(self):
         # if i'm the host i can start the game  TODO: make it so that only hosts can use this button and maybe delete it after use (?)
@@ -458,16 +500,16 @@ class Client():
         self.buttons_frame.rowconfigure([0, 1], weight=1, minsize=90)
 
         self.attack_button = tk.Button(
-            self.buttons_frame, text="ATTACK", command=self.attack)
+            self.buttons_frame, text="ATTACK", command= lambda: self.attack_single(None))
         self.attack_button.grid(row=0, column=0, sticky=tk.NSEW)
         self.heal_button = tk.Button(
-            self.buttons_frame, text="HEAL", command=self.heal)
+            self.buttons_frame, text="HEAL", command= self.heal)
         self.heal_button.grid(row=0, column=1, sticky=tk.NSEW)
         self.block_button = tk.Button(
-            self.buttons_frame, text="BLOCK", command=self.block)
+            self.buttons_frame, text="BLOCK", command= self.block)
         self.block_button.grid(row=1, column=0, sticky=tk.NSEW)
         self.turn_button = tk.Button(
-            self.buttons_frame, text="END TURN", command=self.send_end_turn)
+            self.buttons_frame, text="END TURN", command=  self.send_end_turn)
         self.turn_button.grid(row=1, column=1, sticky=tk.NSEW)
         self.turn_button["state"] = "disabled"
         self.lockButtons()
@@ -487,7 +529,7 @@ class Client():
                                 pady=5, sticky=tk.NSEW)
 
         self.start_button = tk.Button(
-            self.monster_frame, text="Start Game", borderwidth=1, command=self.send_start_game)
+            self.monster_frame, text="Start Game", borderwidth=1, command= self.send_start_game)
         self.start_button.pack()
         if not self.isHost:
             self.start_button["state"] = "disabled"

@@ -30,11 +30,13 @@ class PostOffice:
 
     def Listen_for_PingPong(self, my_id):
         while True:
+            
             ping = chat.Ping()  # create protobug message (called Ping)
             ping.ip = self.encIp
             ping.id = my_id
             pong = self.conn.SendPing(ping)
             time.sleep(2.5)
+            #print(pong.message)
             if pong.message != "Thanks, friend!":
                 raise Exception("Disconnect to the server!")
 

@@ -2,7 +2,7 @@ import tkinter as tk
 
 
 class UserTypeDialog(tk.Toplevel):
-    def __init__(self, parent, isHost):
+    def __init__(self, parent):
         super().__init__(parent)
         self.result = 0
         self.title("Pick your class")
