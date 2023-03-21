@@ -21,7 +21,7 @@ if __name__ == "__main__":
     if isHost.result == 1:
         # host
         subprocess.run([sys.executable, "host_start.sh"])
-      # os.system("host_start.sh")
+    # os.system("host_start.sh")
     elif isHost.result == 2:
         os.system("python client.py")
     else:

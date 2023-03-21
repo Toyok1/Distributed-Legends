@@ -28,7 +28,6 @@ class Client():
         self.myBlock = 0
         self.myPlayerType = userType
         self.username = user
-        # self.listHealth = [] # [{"ip": ip, "hp": hp, "block": block, "user": user},{},{},{}]
         self.party = []
         self.myTurn = False
         self.state = "idle"
@@ -41,8 +40,7 @@ class Client():
         self.myPostOffice.Subscribe()
 
         try:
-            threading.Thread(target=self.myPostOffice.Listen_for_PingPong, args=(
-                self.myUid,), daemon=True).start()
+            threading.Thread(target=self.myPostOffice.Listen_for_PingPong, args=(self.myUid,), daemon=True).start()
         except:
             self.CloseGame()
 
@@ -75,7 +73,7 @@ class Client():
             if self.myPlayer != None:
                 print("-------- START DIAGNOSTIC ---------")
                 print(self.myPlayer.getUsername(), " - HP: ",
-                      self.myPlayer.getHp(), " - Block: ", self.myPlayer.getBlock())
+                    self.myPlayer.getHp(), " - Block: ", self.myPlayer.getBlock())
                 for item in self.players:
                     print(item)
                 print("-------- END DIAGNOSTIC ---------")
@@ -93,18 +91,7 @@ class Client():
             for pl in self.players:
                 if pl.getUid() == healed.getUid():
                     pl.setHp(health_amount)
-
-                    if pl.getUsername() in [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))]:
-                        ind = [self.labelrefs[0][i]["text"] for i in range(
-                            len(self.labelrefs[0]))].index(pl.getUsername())
-                        if pl.getUsertype() == 1:
-
-                            self.labelrefs[1][ind].config(
-                                text=str(pl.getHp())+'/100')
-                        else:
-
-                            self.labelrefs[1][ind].config(
-                                text=str(pl.getHp())+'/50')
+                    self.adjustLabels(pl)
 
     def __listen_for_block(self):
         for block in self.myPostOffice.BlockStream():
@@ -115,7 +102,7 @@ class Client():
                 # if  utente["ip"]  ==  req_ip:
                 if pl.getUid() == blocker.getUid():  # TODO change it to ip when not testing
                     pl.setBlock(block_amount)
-                # if  utente["ip"]  ==  self.ip == req_ip:
+                    self.adjustLabels(pl)
 
     def __listen_for_actions(self):
         for action in self.myPostOffice.ActionStream():
@@ -131,17 +118,16 @@ class Client():
                 case 1:
                     mode = "heals"
                 case 2:
-                    mode = "blocks"
+                    mode = "blocks for"
                 case _:
                     mode = "idles"  # default
 
-            addendum = victim.getUsername() if action_type != 2 else ""
-            if action_type == 2:
+            addendum = victim.getUsername() 
+            '''if action_type == 2:
                 print_message_array = [
                     "User", actor.getUsername(), "prepares to block!"]
-            else:
-                print_message_array = ["User", actor.getUsername(
-                ), mode, addendum, "for", str(abs(action_amount)), "points!"]
+            else:'''
+            print_message_array = ["User", actor.getUsername(), mode, addendum, "for", str(abs(action_amount)), "points!"]
 
             # gets rid of the double space in addendum when action_type != 2
             print_message = " ".join(print_message_array).replace("  ", " ")
@@ -153,11 +139,13 @@ class Client():
             # if the victim can block an attack he will do that before getting his hp hit
             if victim.getBlock() > 0 and action_type == 0 and victim.getUid() == self.myPlayer.getUid():
                 action_amount = action_amount + int(victim.getBlock())
-                action_amount = 0 if action_amount > 0 else action_amount
-                self.myPostOffice.SendBlock(user=victim, amount=action_amount)
+                new_block = 0 if action_amount < 0 else action_amount
+                self.myPostOffice.SendBlock(user=victim, amount=new_block)
 
             if action_type < 2 and victim.getUid() == self.myPlayer.getUid():
                 action_amount = victim.getHp() + action_amount
+                action_amount = 0 if action_amount < 0 else action_amount
+                action_amount = 100 if (victim.getUsertype() == 1 and action_amount > 100) else action_amount
                 self.myPostOffice.SendHealth(user=victim, amount=action_amount)
 
             elif victim.getUid() == self.myPlayer.getUid():
@@ -172,8 +160,7 @@ class Client():
             if self.GAME_STARTED:
                 counter = 0
                 for p in self.players:
-                    print("Player " + p.getUsername() +
-                          "has" + str(p.getHp()) + " hp")
+                    #print("Player " + p.getUsername() + "has" + str(p.getHp()) + " hp")
                     if p.getHp() <= 0:
                         counter += 1
                 if counter == len(self.players) - 1:
@@ -247,7 +234,8 @@ class Client():
     def attack_single(self, attacked):
         # attack people that are not your same class or friends
         if self.myPlayer.getUsertype() == 1:
-            self.turn_back()
+            self.assignButtons()
+        self.assignButtons()
         self.lockButtons()
         self.state = "attack"
         # self.__after_action()
@@ -258,58 +246,74 @@ class Client():
         print("MESSAGGIO CREATO")
         self.myPostOffice.SendAction(self.myPlayer, attacked, actionType=0)
 
-    def heal(self):
+    def heal_single(self, healed):
+        if self.myPlayer.getUsertype() != 1:
+            self.assignButtons()
+        self.assignButtons()
+        self.lockButtons()
+        self.state = "heal"
+        # self.__after_action()
+        '''for user in self.players:
+            if user.getUsertype() == self.myPlayerType: '''
+        self.myPostOffice.SendAction(self.myPlayer, healed, actionType=1)
+
+    def block_single(self, blocked):
+        # self.__after_action()
+        if self.myPlayer.getUsertype() != 1:
+            self.assignButtons()
+        self.assignButtons()
         self.lockButtons()
         self.state = "protect"
-        # self.__after_action()
-        for user in self.players:
-            if user.getUsertype() == self.myPlayerType:  # i will heal my friends only
-                self.myPostOffice.SendAction(self.myPlayer, user, actionType=1)
+        '''for user in self.players:
+            if user.getUsername() == self.myPlayer.getUsername():'''  # i will block for myself only
+        self.myPostOffice.SendAction(self.myPlayer, blocked, actionType=2)
 
-    def block(self):
-        self.state = "protect"
-        # self.__after_action()
-        self.lockButtons()
-        for user in self.players:
-            if user.getUsername() == self.myPlayer.getUsername():  # i will block for myself only
-                self.myPostOffice.SendAction(self.myPlayer, user, actionType=2)
+    def adjustLabels(self, pl):
+        if pl.getUsername() in [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))]:
+                        ind = [self.labelrefs[0][i]["text"] for i in range(
+                            len(self.labelrefs[0]))].index(pl.getUsername())
+                        if pl.getUsertype() == 1:
 
-    def attack_party(self):
+                            self.labelrefs[1][ind].config(
+                                text=str(pl.getHp())+'/100 ' + '['+str(pl.getBlock())+']')
+                        else:
+
+                            self.labelrefs[1][ind].config(
+                                text=str(pl.getHp())+'/50 ' + '['+str(pl.getBlock())+']')
+
+    def mapFuncToButtons(self, function, shout):
         buttons = [self.attack_button, self.block_button, self.heal_button]
 
-        for i in range(0, len(buttons)):
+        for i in range(0, len(self.party)):
             try:
                 buttons[i].configure(
-                    text="ATTACK\n" + self.party[i].getUsername())
-                func = partial(self.attack_single, self.party[i])
+                    text=shout + '\n' + self.party[i].getUsername())
+                func = partial(function, self.party[i])
                 buttons[i].configure(command=func)
             except:
                 buttons[i].configure(text="----")
                 buttons[i].configure(command=self.do_nothing)
-        self.turn_button.configure(text="Back")
-        self.turn_button.configure(command=self.turn_back)
+        for i in range(len(self.party),len(buttons)):
+            try:
+                buttons[i].configure(text="----")
+                buttons[i].configure(command=self.do_nothing)
+            except:
+                print("Error with buttons with index ",i)
+
+        self.turn_button.configure(text="BACK")
+        self.turn_button.configure(command=self.assignButtons)
 
     def do_nothing(self):
         print("Did nothing")
         pass
 
-    def turn_back(self):
-        # buttons = [self.attack_button, self.block_button, self.heal_button, self.turn_button]
-        self.attack_button.configure(text="ATTACK")
-        self.attack_button.configure(command=self.attack_party)
-        self.block_button.configure(text="BLOCK")
-        self.block_button.configure(command=self.block)
-        self.heal_button.configure(text="HEAL")
-        self.heal_button.configure(command=self.heal)
-        self.turn_button.configure(text="END TURN")
-        self.turn_button.configure(command=self.send_end_turn)
+        
 
     def cleanInitialList(self, mess):
         self.players = player.transformFullListFromJSON(mess.json_str)
         i = 0
         v = [self.hero1_username, self.hero2_username, self.hero3_username]
-        v2 = [self.hero1_healthLabel,
-              self.hero2_healthLabel, self.hero3_healthLabel]
+        v2 = [self.hero1_healthLabel, self.hero2_healthLabel, self.hero3_healthLabel]
         v3 = [self.hero1, self.hero2, self.hero3]
         for u in self.players:
             if u.getUsername() == self.username:
@@ -318,8 +322,6 @@ class Client():
                 if self.myPlayerType == 1:
                     self.monster_label.config(text=u.getUsername())
                     self.monsterRef = u
-                    self.action_with_arg = partial(
-                        self.attack_single, self.monsterRef)
                     self.labelrefs[0].append(self.monster_label)
                     self.labelrefs[1].append(self.monster_healthLabel)
                     self.labelrefs[2].append(self.monster)
@@ -336,8 +338,6 @@ class Client():
                 if u.getUsertype() == 1:
                     self.monster_label.config(text=u.getUsername())
                     self.monsterRef = u
-                    self.action_with_arg = partial(
-                        self.attack_single, self.monsterRef)
                     self.labelrefs[0].append(self.monster_label)
                     self.labelrefs[1].append(self.monster_healthLabel)
                     self.labelrefs[2].append(self.monster)
@@ -357,11 +357,32 @@ class Client():
             v2[i].destroy()
             v3[i].destroy()
             i += 1
+        self.assignButtons()
+
+    def assignButtons(self):
+        #print("ASSIGNING")
+        self.attack_button.configure(text="ATTACK")
+        self.block_button.configure(text="BLOCK")
+        self.heal_button.configure(text="HEAL")
+        self.turn_button.configure(text="END TURN")
+        self.turn_button.configure(command=self.send_end_turn)
         if self.myPlayer.getUsertype() == 1:
-            # moster
-            self.attack_button.configure(command=self.attack_party)
+            #print("ASSINGED MONSTER")
+            # monster
+            attack = partial(self.mapFuncToButtons, self.attack_single, "ATTACK")
+            self.attack_button.configure(command=attack)
+            block = partial(self.block_single, self.myPlayer)
+            self.block_button.configure(command=block)
+            heal = partial(self.heal_single, self.myPlayer)
+            self.heal_button.configure(command=heal)
         else:
-            self.attack_button.configure(command=self.action_with_arg)
+            #print("ASSIGNED HERO")
+            attack = partial(self.attack_single, self.monsterRef)
+            self.attack_button.configure(command=attack)
+            block = partial(self.mapFuncToButtons, self.block_single, "BLOCK FOR")
+            self.block_button.configure(command=block)
+            heal = partial(self.mapFuncToButtons, self.heal_single, "HEAL")
+            self.heal_button.configure(command=heal)
 
     def send_start_game(self):
         # if i'm the host i can start the game  TODO: make it so that only hosts can use this button and maybe delete it after use (?)
@@ -453,8 +474,7 @@ class Client():
 
         self.hero1_frame = tk.Frame(
             self.background_frame, padx=5, pady=5, bg="#5f4548")
-        self.hero1_frame.grid(row=0, column=0, padx=290,
-                              pady=80, sticky=tk.NW)
+        self.hero1_frame.grid(row=0, column=0, padx=290, pady=80, sticky=tk.NW)
         self.hero1_frame.columnconfigure(0, weight=1)
         self.hero1_frame.rowconfigure([0, 1, 2], weight=1)
         self.hero1 = tk.Label(
@@ -466,7 +486,7 @@ class Client():
         self.hero1_username.grid(
             row=1, column=0, padx=0, pady=0, sticky=tk.NSEW)
         self.hero1_healthLabel = tk.Label(
-            self.hero1_frame, bg="#5f4548", text='50/50')
+            self.hero1_frame, bg="#5f4548", text='50/50 [0]')
         self.hero1_healthLabel.grid(
             row=2, column=0, padx=0, pady=0, sticky=tk.NSEW)
 
@@ -485,7 +505,7 @@ class Client():
         self.hero2_username.grid(
             row=1, column=0, sticky=tk.NSEW)
         self.hero2_healthLabel = tk.Label(
-            self.hero2_frame, bg="#2b2735", text='50/50')
+            self.hero2_frame, bg="#2b2735", text='50/50 [0]')
         self.hero2_healthLabel.grid(
             row=2, column=0, sticky=tk.NSEW)
 
@@ -503,7 +523,7 @@ class Client():
         self.hero3_username.grid(
             row=1, column=0, sticky=tk.NSEW)
         self.hero3_healthLabel = tk.Label(
-            self.hero3_frame, bg="#5f4548", text='50/50')
+            self.hero3_frame, bg="#5f4548", text='50/50 [0]')
         self.hero3_healthLabel.grid(
             row=2, column=0, sticky=tk.NSEW)
 
@@ -522,7 +542,7 @@ class Client():
             self.monster_frame, bg="#323046", text="Monster")
         self.monster_label.pack()
         self.monster_healthLabel = tk.Label(
-            self.monster_frame, bg="#323046", text='100/100')
+            self.monster_frame, bg="#323046", text='100/100 [0]')
         self.monster_healthLabel.pack()
 
         self.controls_frame = tk.Frame(self.master_frame, borderwidth=1)
@@ -542,10 +562,10 @@ class Client():
             self.buttons_frame, text="ATTACK", command=lambda: self.attack_single(None))
         self.attack_button.grid(row=0, column=0, sticky=tk.NSEW)
         self.heal_button = tk.Button(
-            self.buttons_frame, text="HEAL", command=self.heal)
+            self.buttons_frame, text="HEAL", command=lambda: self.heal_single(None))
         self.heal_button.grid(row=0, column=1, sticky=tk.NSEW)
         self.block_button = tk.Button(
-            self.buttons_frame, text="BLOCK", command=self.block)
+            self.buttons_frame, text="BLOCK", command=lambda: self.block_single(None))
         self.block_button.grid(row=1, column=0, sticky=tk.NSEW)
         self.turn_button = tk.Button(
             self.buttons_frame, text="END TURN", command=self.send_end_turn)
@@ -567,11 +587,11 @@ class Client():
         self.entry_message.grid(row=0, column=0, padx=5,
                                 pady=5, sticky=tk.NSEW)
 
-        self.start_button = tk.Button(
-            self.monster_frame, text="Start Game", bg="#323046", command=self.send_start_game)
-        self.start_button.pack()
-        if not self.isHost:
-            self.start_button["state"] = "disabled"
+        self.start_button = tk.Button(self.monster_frame, text="Start Game", bg="#323046", command=self.send_start_game)
+        
+        if self.isHost:
+            self.start_button.pack()
+            #self.start_button["state"] = "disabled"
 
     def __after_action(self):
         self.loadImgs()
@@ -623,5 +643,4 @@ if __name__ == '__main__':
 
     root.deiconify()  # Makes the window visible again
     # this starts a client and thus a thread which keeps connection to server open
-    c = Client(username, userType.result if userType_int is None else userType_int,
-               serverAddress, MainWindow, isHost)
+    c = Client(username, userType.result if userType_int is None else userType_int, serverAddress, MainWindow, isHost)

@@ -282,13 +282,11 @@ class ChatServer(rpc.ChatServerServicer):
 if __name__ == '__main__':
     # the workers is like the amount of threads that can be opened at the same time, when there are 10 clients connected
     # then no more clients able to connect to the server.
-    server = grpc.server(futures.ThreadPoolExecutor(
-        max_workers=100))  # create a gRPC server
-    rpc.add_ChatServerServicer_to_server(ChatServer(
-        os.getpid()), server)  # register the server to gRPC
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=100))  # create a gRPC server
+    rpc.add_ChatServerServicer_to_server(ChatServer(os.getpid()), server)  # register the server to gRPC
     # gRPC basically manages all the threading and server responding logic, which is perfect!
     print('Starting server. Listening...')
-    print("Connect to: " + str(get('https://api.ipify.org').content.decode('utf8')))
+    #print("Connect to: " + str(get('https://api.ipify.org').content.decode('utf8')))
     server.add_insecure_port('[::]:' + str(port))
     server.start()
     try:
