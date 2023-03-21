@@ -12,10 +12,7 @@ from GRPCClientHelper import helper, player, serverDialog, userTypeDialog
 from cryptography.fernet import Fernet
 from tkinter import simpledialog
 from tkinter import ttk
-from GRPCClientHelper.config import key,cancel_id,aniThreadPointer,pg_type
-
-
-
+from GRPCClientHelper.config import key, cancel_id, aniThreadPointer, pg_type
 
 
 class Client():
@@ -39,25 +36,27 @@ class Client():
         self.labelrefs = [[], [], [], []]
         self.fernet = Fernet(key)
         self.isFinished = False
-        self.myPostOffice = helper.PostOffice(serverAddress, user, self.myUid, userType)
+        self.myPostOffice = helper.PostOffice(
+            serverAddress, user, self.myUid, userType)
         self.myPostOffice.Subscribe()
 
         try:
-            threading.Thread(target= self.myPostOffice.Listen_for_PingPong, args=(self.myUid,), daemon=True).start()
+            threading.Thread(target=self.myPostOffice.Listen_for_PingPong, args=(
+                self.myUid,), daemon=True).start()
         except:
             self.CloseGame()
 
         self.__setup_ui()
 
-        threading.Thread(target= self.__listen_for_turns, daemon=True).start()
-        threading.Thread(target= self.__listen_for_health, daemon=True).start()
-        threading.Thread(target= self.__listen_for_actions, daemon=True).start()
-        threading.Thread(target= self.__listen_for_block, daemon=True).start()
-        threading.Thread(target= self.__diagnose, daemon=True).start()
-        threading.Thread(target= self.__listen_for_finish, daemon=True).start()
+        threading.Thread(target=self.__listen_for_turns, daemon=True).start()
+        threading.Thread(target=self.__listen_for_health, daemon=True).start()
+        threading.Thread(target=self.__listen_for_actions, daemon=True).start()
+        threading.Thread(target=self.__listen_for_block, daemon=True).start()
+        threading.Thread(target=self.__diagnose, daemon=True).start()
+        threading.Thread(target=self.__listen_for_finish, daemon=True).start()
 
         # probably the host won't need to run this thread so TODO when we have a way to distinguish them: get rid of it for the host.
-        threading.Thread(target= self.__check_for_start, daemon=True).start()
+        threading.Thread(target=self.__check_for_start, daemon=True).start()
         self.window.mainloop()
 
     def __check_for_start(self):
@@ -66,6 +65,7 @@ class Client():
             self.GAME_STARTED = b.started
         # self.map = self.conn.GetActiveMap(chat.Empty())
         if self.players == []:
+            print("play:", self.players)
             mess = self.myPostOffice.GetInitialList()
             self.cleanInitialList(mess)
         self.start_button.destroy()
@@ -74,7 +74,8 @@ class Client():
         while True:
             if self.myPlayer != None:
                 print("-------- START DIAGNOSTIC ---------")
-                print(self.myPlayer.getUsername(), " - HP: ", self.myPlayer.getHp(), " - Block: ", self.myPlayer.getBlock())
+                print(self.myPlayer.getUsername(), " - HP: ",
+                      self.myPlayer.getHp(), " - Block: ", self.myPlayer.getBlock())
                 for item in self.players:
                     print(item)
                 print("-------- END DIAGNOSTIC ---------")
@@ -92,16 +93,18 @@ class Client():
             for pl in self.players:
                 if pl.getUid() == healed.getUid():
                     pl.setHp(health_amount)
-                    
 
                     if pl.getUsername() in [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))]:
-                        ind = [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))].index(pl.getUsername())
+                        ind = [self.labelrefs[0][i]["text"] for i in range(
+                            len(self.labelrefs[0]))].index(pl.getUsername())
                         if pl.getUsertype() == 1:
-                            
-                            self.labelrefs[1][ind].config(text=str(pl.getHp())+'/100')
+
+                            self.labelrefs[1][ind].config(
+                                text=str(pl.getHp())+'/100')
                         else:
-                            
-                            self.labelrefs[1][ind].config(text=str(pl.getHp())+'/50')
+
+                            self.labelrefs[1][ind].config(
+                                text=str(pl.getHp())+'/50')
 
     def __listen_for_block(self):
         for block in self.myPostOffice.BlockStream():
@@ -134,11 +137,14 @@ class Client():
 
             addendum = victim.getUsername() if action_type != 2 else ""
             if action_type == 2:
-                print_message_array = ["User", actor.getUsername(),"prepares to block!"]
+                print_message_array = [
+                    "User", actor.getUsername(), "prepares to block!"]
             else:
-                print_message_array = ["User", actor.getUsername(), mode, addendum, "for", str(abs(action_amount)), "points!"]
-            
-            print_message = " ".join(print_message_array).replace("  ", " ") # gets rid of the double space in addendum when action_type != 2
+                print_message_array = ["User", actor.getUsername(
+                ), mode, addendum, "for", str(abs(action_amount)), "points!"]
+
+            # gets rid of the double space in addendum when action_type != 2
+            print_message = " ".join(print_message_array).replace("  ", " ")
             self.entry_message.config(text=print_message)
             self.state = mode
             print("--- MESSAGE ---")
@@ -153,7 +159,7 @@ class Client():
             if action_type < 2 and victim.getUid() == self.myPlayer.getUid():
                 action_amount = victim.getHp() + action_amount
                 self.myPostOffice.SendHealth(user=victim, amount=action_amount)
-            
+
             elif victim.getUid() == self.myPlayer.getUid():
                 self.myPostOffice.SendBlock(user=victim, amount=action_amount)
 
@@ -162,54 +168,55 @@ class Client():
             pass
         for turn in self.myPostOffice.TurnStream():
             what = player.transformFromJSON(turn.json_str)
-            
+
             if self.GAME_STARTED:
                 counter = 0
                 for p in self.players:
-                    print("Player " + p.getUsername() + "has"+ str(p.getHp()) + " hp")
+                    print("Player " + p.getUsername() +
+                          "has" + str(p.getHp()) + " hp")
                     if p.getHp() <= 0:
                         counter += 1
                 if counter == len(self.players) - 1:
                     self.isFinished = True
                     self.myPostOffice.SendFinishGame()
                     # end the game right here
-            
+
             if what.getUsername() == self.myPlayer.getUsername() and what.getUid() == self.myPlayer.getUid():  # for testing use this line
                 # if self.fernet.decrypt(turn.ip).decode() == self.ip:
                 print("Mio turno: " + self.myPlayer.getUsername())
                 self.turn_button["state"] = "normal"
                 self.unlockButtons()  # unlock the buttons when it's my turn
                 # if miei hp <= 0 endturn + interfaccia "you died"
-                
-                
+
                 if self.myPlayer.getHp() <= 0:
                     if self.myPlayer.getUsertype() == 1:  # monster
-                        self.entry_message.config(text="THE MONSTER IS DEAD! The game will end shortly.")
+                        self.entry_message.config(
+                            text="THE MONSTER IS DEAD! The game will end shortly.")
                         # end the game right here
                     else:
-                        self.entry_message.config(text="YOU ARE DEAD! Wait for one of your allies to revive you.")
+                        self.entry_message.config(
+                            text="YOU ARE DEAD! Wait for one of your allies to revive you.")
                         self.lockButtons()
                         self.send_end_turn()
 
     def __listen_for_finish(self):
-        while self.isFinished==False:
-            #doNothing
+        while self.isFinished == False:
+            # doNothing
             pass
         print("Game is finished")
         for finish in self.myPostOffice.FinishStream():
             if finish.fin == True:
-                    if self.myPlayer.getUsertype() == 1:
-                        self.entry_message.config(text=finish.MonsterWin)
-                    else:
-                        self.entry_message.config(text=finish.HeroesDefeat)
+                if self.myPlayer.getUsertype() == 1:
+                    self.entry_message.config(text=finish.MonsterWin)
+                else:
+                    self.entry_message.config(text=finish.HeroesDefeat)
             else:
-                    if self.myPlayer.getUsertype() == 1:
-                        self.entry_message.config(text=finish.MonsterDefeat)
-                    else:
-                        self.entry_message.config(text=finish.HeroesWin)
+                if self.myPlayer.getUsertype() == 1:
+                    self.entry_message.config(text=finish.MonsterDefeat)
+                else:
+                    self.entry_message.config(text=finish.HeroesWin)
             self.closeGame()
         print("Game would have finished")
-
 
     def closeGame(self):
         # TODO end game
@@ -236,7 +243,7 @@ class Client():
         self.lockButtons()
         self.state = "idle"
         self.myPostOffice.EndTurn(self.myPlayer)
-        
+
     def attack_single(self, attacked):
         # attack people that are not your same class or friends
         if self.myPlayer.getUsertype() == 1:
@@ -269,38 +276,40 @@ class Client():
 
     def attack_party(self):
         buttons = [self.attack_button, self.block_button, self.heal_button]
-        
-        for i in range(0,len(buttons)):
+
+        for i in range(0, len(buttons)):
             try:
-                buttons[i].configure(text = "ATTACK\n" + self.party[i].getUsername())
+                buttons[i].configure(
+                    text="ATTACK\n" + self.party[i].getUsername())
                 func = partial(self.attack_single, self.party[i])
-                buttons[i].configure(command = func)
+                buttons[i].configure(command=func)
             except:
-                buttons[i].configure(text = "----")
-                buttons[i].configure(command = self.do_nothing)
-        self.turn_button.configure(text = "Back")
-        self.turn_button.configure(command= self.turn_back)
-    
+                buttons[i].configure(text="----")
+                buttons[i].configure(command=self.do_nothing)
+        self.turn_button.configure(text="Back")
+        self.turn_button.configure(command=self.turn_back)
+
     def do_nothing(self):
         print("Did nothing")
         pass
 
     def turn_back(self):
-        #buttons = [self.attack_button, self.block_button, self.heal_button, self.turn_button]
-        self.attack_button.configure(text = "ATTACK")
-        self.attack_button.configure(command = self.attack_party)
-        self.block_button.configure(text = "BLOCK")
-        self.block_button.configure(command = self.block)
-        self.heal_button.configure(text = "HEAL")
-        self.heal_button.configure(command = self.heal)
-        self.turn_button.configure(text = "END TURN")
-        self.turn_button.configure(command = self.send_end_turn)
+        # buttons = [self.attack_button, self.block_button, self.heal_button, self.turn_button]
+        self.attack_button.configure(text="ATTACK")
+        self.attack_button.configure(command=self.attack_party)
+        self.block_button.configure(text="BLOCK")
+        self.block_button.configure(command=self.block)
+        self.heal_button.configure(text="HEAL")
+        self.heal_button.configure(command=self.heal)
+        self.turn_button.configure(text="END TURN")
+        self.turn_button.configure(command=self.send_end_turn)
 
     def cleanInitialList(self, mess):
         self.players = player.transformFullListFromJSON(mess.json_str)
         i = 0
         v = [self.hero1_username, self.hero2_username, self.hero3_username]
-        v2 = [self.hero1_healthLabel, self.hero2_healthLabel, self.hero3_healthLabel]
+        v2 = [self.hero1_healthLabel,
+              self.hero2_healthLabel, self.hero3_healthLabel]
         v3 = [self.hero1, self.hero2, self.hero3]
         for u in self.players:
             if u.getUsername() == self.username:
@@ -309,7 +318,8 @@ class Client():
                 if self.myPlayerType == 1:
                     self.monster_label.config(text=u.getUsername())
                     self.monsterRef = u
-                    self.action_with_arg = partial(self.attack_single, self.monsterRef)
+                    self.action_with_arg = partial(
+                        self.attack_single, self.monsterRef)
                     self.labelrefs[0].append(self.monster_label)
                     self.labelrefs[1].append(self.monster_healthLabel)
                     self.labelrefs[2].append(self.monster)
@@ -326,12 +336,13 @@ class Client():
                 if u.getUsertype() == 1:
                     self.monster_label.config(text=u.getUsername())
                     self.monsterRef = u
-                    self.action_with_arg = partial(self.attack_single, self.monsterRef)
+                    self.action_with_arg = partial(
+                        self.attack_single, self.monsterRef)
                     self.labelrefs[0].append(self.monster_label)
                     self.labelrefs[1].append(self.monster_healthLabel)
                     self.labelrefs[2].append(self.monster)
                     self.myHp[0].set(u.getHp())
-                    #monster = u
+                    # monster = u
                 else:
                     self.party.append(u)
                     v[i].config(text=u.getUsername())
@@ -347,10 +358,10 @@ class Client():
             v3[i].destroy()
             i += 1
         if self.myPlayer.getUsertype() == 1:
-            #moster
-            self.attack_button.configure(command = self.attack_party)
+            # moster
+            self.attack_button.configure(command=self.attack_party)
         else:
-            self.attack_button.configure(command = self.action_with_arg)
+            self.attack_button.configure(command=self.action_with_arg)
 
     def send_start_game(self):
         # if i'm the host i can start the game  TODO: make it so that only hosts can use this button and maybe delete it after use (?)
@@ -413,79 +424,107 @@ class Client():
             self.imgs.append(ImageTk.PhotoImage(file=path+i))
 
     def __setup_ui(self):
-        # self.window.resizable(False,False)
         self.master_frame = tk.Frame(self.window)
         self.master_frame.grid(row=0, column=0, sticky=tk.NSEW)
         self.master_frame.columnconfigure(0, weight=1, minsize=960)  # 16:10
         self.master_frame.rowconfigure(0, weight=1, minsize=420)
         self.master_frame.rowconfigure(1, weight=1, minsize=180)
 
-        self.background_frame = tk.Frame(self.master_frame, borderwidth=1)
+        bgPhoto = ImageTk.PhotoImage(Image.open("./src/Background2.png"))
+
+        self.background_frame = tk.Frame(
+            self.master_frame, bg="", width=480, height=420)
+        self.background_frame.place(x=0, y=0, width=480, height=420)
         self.background_frame.grid(row=0, column=0, sticky=tk.NSEW)
-        self.background_frame.columnconfigure([0, 1], weight=1, minsize=480)
+        self.background_frame.columnconfigure(0, weight=1, minsize=480)
         self.background_frame.rowconfigure(0, weight=1, minsize=420)
 
-        self.heroes_frame = tk.Frame(
-            self.background_frame, borderwidth=1, bg="cyan", padx=10, pady=10)
-        self.heroes_frame.grid(row=0, column=0, sticky=tk.NSEW)
+        self.background = tk.Label(
+            self.background_frame, image=bgPhoto, width=480, height=420)
+        self.background.image = bgPhoto
+        self.background.grid(row=0, column=0, sticky=tk.NSEW)
 
         # HEROES SETUP
-
-        for i in range(2):
-            self.heroes_frame.columnconfigure(i, weight=1)
-        for j in range(3):
-            self.heroes_frame.rowconfigure(j, weight=1)
 
         self.loadImgs()
         self.style = ttk.Style()
         self.style.theme_use('clam')
         self.style.configure("Horizontal.TProgressbar", background='green')
 
-        self.hero1 = tk.Label(self.heroes_frame,bg="cyan", image=self.imgs[0])
-        self.hero1.grid(row=0, column=0, padx=5, pady=5, sticky=tk.NSEW)
-        # @self.enable_animation_thread(self.label1)
-        self.hero1_username = tk.Label(self.heroes_frame, bg="cyan", text="")
-        self.hero1_username.grid(row=0, column=0, padx=5, pady=5, sticky=tk.N)
-        self.hero1_healthLabel = tk.Label(self.heroes_frame, bg="cyan",text='50/50')
-        self.hero1_healthLabel.grid(row=0, column=0, padx=5, pady=5, sticky=tk.S)
-        # self.hero1_health.step(99.9)
+        self.hero1_frame = tk.Frame(
+            self.background_frame, padx=5, pady=5, bg="#5f4548")
+        self.hero1_frame.grid(row=0, column=0, padx=290,
+                              pady=80, sticky=tk.NW)
+        self.hero1_frame.columnconfigure(0, weight=1)
+        self.hero1_frame.rowconfigure([0, 1, 2], weight=1)
+        self.hero1 = tk.Label(
+            self.hero1_frame, bg="#5f4548", image=self.imgs[0])
+        self.hero1.grid(row=0, column=0, padx=0, pady=0, sticky=tk.NSEW)
+
+        self.hero1_username = tk.Label(
+            self.hero1_frame, bg="#5f4548", text="Hero 1")
+        self.hero1_username.grid(
+            row=1, column=0, padx=0, pady=0, sticky=tk.NSEW)
+        self.hero1_healthLabel = tk.Label(
+            self.hero1_frame, bg="#5f4548", text='50/50')
+        self.hero1_healthLabel.grid(
+            row=2, column=0, padx=0, pady=0, sticky=tk.NSEW)
 
         ''' at this point we need to declare different labels and we can even fill them later when other people join but for right now as a proof of concept i'll use the knight'''
-        self.hero2 = tk.Label(self.heroes_frame,bg="cyan", image=self.imgs[0])
-        self.hero2.grid(row=2, column=0, padx=5, pady=5, sticky=tk.NSEW)
-        # self.enable_animation_thread(self.label2)
-        self.hero2_username = tk.Label(self.heroes_frame,bg="cyan", text="")
-        self.hero2_username.grid(row=2, column=0, padx=5, pady=5, sticky=tk.N)
-        self.hero2_healthLabel = tk.Label(self.heroes_frame,bg="cyan", text='50/50')
-        self.hero2_healthLabel.grid(row=2, column=0, padx=5, pady=5, sticky=tk.S)
-        # self.hero2_health.step(99.9)
-        
-        self.hero3 = tk.Label(self.heroes_frame, bg="cyan",image=self.imgs[0])
-        self.hero3.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NSEW)
-        # self.enable_animation_thread(self.label3)
-        self.hero3_username = tk.Label(self.heroes_frame,bg="cyan", text="")
-        self.hero3_username.grid(row=1, column=1, padx=5, pady=5, sticky=tk.N)
-        self.hero3_healthLabel = tk.Label(self.heroes_frame, bg="cyan",text='50/50')
-        self.hero3_healthLabel.grid(row=1, column=1, padx=5, pady=5, sticky=tk.S)
-        # self.hero3_health.step(99.9)
+        self.hero2_frame = tk.Frame(
+            self.background_frame, padx=5, pady=5, bg="#2b2735")
+        self.hero2_frame.grid(row=0, column=0, padx=180, pady=60, sticky=tk.SW)
+        self.hero2_frame.columnconfigure(0, weight=1)
+        self.hero2_frame.rowconfigure([0, 1, 2], weight=1)
+
+        self.hero2 = tk.Label(
+            self.hero2_frame, bg="#2b2735", image=self.imgs[0])
+        self.hero2.grid(row=0, column=0, sticky=tk.NSEW)
+        self.hero2_username = tk.Label(
+            self.hero2_frame, bg="#2b2735", text="Hero 2")
+        self.hero2_username.grid(
+            row=1, column=0, sticky=tk.NSEW)
+        self.hero2_healthLabel = tk.Label(
+            self.hero2_frame, bg="#2b2735", text='50/50')
+        self.hero2_healthLabel.grid(
+            row=2, column=0, sticky=tk.NSEW)
+
+        self.hero3_frame = tk.Frame(
+            self.background_frame, padx=5, pady=5, bg="#5f4548")
+        self.hero3_frame.grid(row=0, column=0, padx=90, pady=100, sticky=tk.S)
+        self.hero3_frame.columnconfigure(0, weight=1)
+        self.hero3_frame.rowconfigure([0, 1, 2], weight=1)
+
+        self.hero3 = tk.Label(
+            self.hero3_frame, bg="#5f4548", image=self.imgs[0])
+        self.hero3.grid(row=0, column=0, sticky=tk.NSEW)
+        self.hero3_username = tk.Label(
+            self.hero3_frame, bg="#5f4548", text="Hero 3")
+        self.hero3_username.grid(
+            row=1, column=0, sticky=tk.NSEW)
+        self.hero3_healthLabel = tk.Label(
+            self.hero3_frame, bg="#5f4548", text='50/50')
+        self.hero3_healthLabel.grid(
+            row=2, column=0, sticky=tk.NSEW)
 
         # MONSTER SETUP
         self.monster_frame = tk.Frame(
-            self.background_frame, borderwidth=1, bg="cyan", padx=5, pady=5)
-        self.monster_frame.grid(row=0, column=1, sticky=tk.NSEW)
+            self.background_frame, padx=5, pady=5, bg="#323046")
+        self.monster_frame.grid(row=0, column=0, padx=60, sticky=tk.E)
 
         image = Image.open("./src/monster/1.png")
         photo = ImageTk.PhotoImage(image)
 
-        self.monster = tk.Label(self.monster_frame,bg="cyan", image=photo)
+        self.monster = tk.Label(self.monster_frame, bg="#323046", image=photo)
         self.monster.image = photo  # keep a reference!
         self.monster.pack()
-        self.monster_label = tk.Label(self.monster_frame, bg="cyan",text="")
+        self.monster_label = tk.Label(
+            self.monster_frame, bg="#323046", text="Monster")
         self.monster_label.pack()
-
-
-        self.monster_healthLabel = tk.Label(self.monster_frame, bg="cyan",text='100/100')
+        self.monster_healthLabel = tk.Label(
+            self.monster_frame, bg="#323046", text='100/100')
         self.monster_healthLabel.pack()
+
         self.controls_frame = tk.Frame(self.master_frame, borderwidth=1)
         self.controls_frame.grid(row=1, column=0, sticky=tk.NSEW)
         self.controls_frame.columnconfigure(0, weight=1, minsize=288)
@@ -500,16 +539,16 @@ class Client():
         self.buttons_frame.rowconfigure([0, 1], weight=1, minsize=90)
 
         self.attack_button = tk.Button(
-            self.buttons_frame, text="ATTACK", command= lambda: self.attack_single(None))
+            self.buttons_frame, text="ATTACK", command=lambda: self.attack_single(None))
         self.attack_button.grid(row=0, column=0, sticky=tk.NSEW)
         self.heal_button = tk.Button(
-            self.buttons_frame, text="HEAL", command= self.heal)
+            self.buttons_frame, text="HEAL", command=self.heal)
         self.heal_button.grid(row=0, column=1, sticky=tk.NSEW)
         self.block_button = tk.Button(
-            self.buttons_frame, text="BLOCK", command= self.block)
+            self.buttons_frame, text="BLOCK", command=self.block)
         self.block_button.grid(row=1, column=0, sticky=tk.NSEW)
         self.turn_button = tk.Button(
-            self.buttons_frame, text="END TURN", command=  self.send_end_turn)
+            self.buttons_frame, text="END TURN", command=self.send_end_turn)
         self.turn_button.grid(row=1, column=1, sticky=tk.NSEW)
         self.turn_button["state"] = "disabled"
         self.lockButtons()
@@ -529,7 +568,7 @@ class Client():
                                 pady=5, sticky=tk.NSEW)
 
         self.start_button = tk.Button(
-            self.monster_frame, text="Start Game", borderwidth=1, command= self.send_start_game)
+            self.monster_frame, text="Start Game", bg="#323046", command=self.send_start_game)
         self.start_button.pack()
         if not self.isHost:
             self.start_button["state"] = "disabled"
@@ -545,12 +584,14 @@ class Client():
 if __name__ == '__main__':
     root = tk.Tk()
     root.resizable(False, False)
+    root.geometry("960x600")
     root.iconbitmap("./src/icon/icon.ico")
     MainWindow = tk.Frame(root, width=300, height=300)
     MainWindow.pack()
     root.withdraw()  # Hides the window
     username = None
-    serverAddress = None #"localhost"  # None when we deploy but for testing localhost is fine
+    # "localhost"  # None when we deploy but for testing localhost is fine
+    serverAddress = None
     while username is None:
         # retrieve a username so we can distinguish all the different clients
         username = simpledialog.askstring(
@@ -564,13 +605,12 @@ if __name__ == '__main__':
     if isHost == 1:
         userType_int = 1
     else:
-        while True: #pseudo do while loop
+        while True:  # pseudo do while loop
             userType = userTypeDialog.UserTypeDialog(root)
             root.wait_window(userType)
             if userType.result != 0:
                 break
 
-    
     # if isHost == 0:
     while (serverAddress != "localhost") or (serverAddress is None):
         # retrieve a username so we can distinguish all the different clients
@@ -583,4 +623,5 @@ if __name__ == '__main__':
 
     root.deiconify()  # Makes the window visible again
     # this starts a client and thus a thread which keeps connection to server open
-    c = Client(username, userType.result if userType_int is None else userType_int, serverAddress, MainWindow, isHost)
+    c = Client(username, userType.result if userType_int is None else userType_int,
+               serverAddress, MainWindow, isHost)

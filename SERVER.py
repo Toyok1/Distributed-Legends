@@ -16,7 +16,7 @@ from GRPCClientHelper.config import port, key
 
 
 class ChatServer(rpc.ChatServerServicer):
-    def __init__(self,pId):
+    def __init__(self, pId):
         self.finish = []
         self.clients = []
         # List with all the chat history
@@ -29,8 +29,9 @@ class ChatServer(rpc.ChatServerServicer):
         self.fernet = Fernet(key)
         self.processId = pId
 
-        threading.Thread(target= lambda: self.__clean_user_list, daemon=True).start()
-        #threading.Thread(target=self.__keep_alive, daemon=True).start()
+        threading.Thread(target=lambda: self.__clean_user_list,
+                         daemon=True).start()
+        # threading.Thread(target=self.__keep_alive, daemon=True).start()
 
         self.initialList = chat.InitialList()
         self.initialList.json_str = ""
@@ -39,27 +40,27 @@ class ChatServer(rpc.ChatServerServicer):
     def __updateUserList(self, req_ip, req_id):
         for usr in self.listUser:
             if usr.getIp() == req_ip and usr.getUid() == req_id:
-                #print("pinged", usr)
+                # print("pinged", usr)
                 usr.setPingTime(time.time())
-    
+
     def __keep_alive(self):
         while True:
-            time.sleep(180)  #TODO change number of seconds of inactivity
+            time.sleep(180)  # TODO change number of seconds of inactivity
             if len(self.listUser) == 0:
                 os.kill(self.processId, signal.SIGTERM)
 
     def __clean_user_list(self):
         # il tempo lo calcola il server
         while True:
-            #print("Player List", self.listUser)
+            # print("Player List", self.listUser)
             for user in self.listUser:
                 if (int(time.time()) - int(user.getPingTime())) > 5:
-                    #self.listUser.remove(user)
+                    # self.listUser.remove(user)
                     print("lost ping with " + user.getUsername())
             time.sleep(2.5)
 
     def __distributeHealth(self):
-        #self.listUser[random.randint(0, len(self.listUser))].setUsertype(1)
+        # self.listUser[random.randint(0, len(self.listUser))].setUsertype(1)
         for user in self.listUser:
             # print(user)
             if user.getUsertype() == 1:
@@ -67,7 +68,7 @@ class ChatServer(rpc.ChatServerServicer):
                 user.setHp(100)
             else:
                 # self.hp.append({"ip": user["ip"], "hp": 50, "block": 0, "user": user["user"], "player_type": 0}) #TODO tweak values
-                #user.setUsertype(2)
+                # user.setUsertype(2)
                 user.setHp(50)
 
         mmmap = chat.InitialList()
@@ -173,9 +174,9 @@ class ChatServer(rpc.ChatServerServicer):
 
         new_user = player.Player(
             ip=decMessage, unique_id=u_id, username=user, user_type=user_type, ping_time=time.time())
-        #if new_user != None and user_type == 1:
-            #drop connection
-            
+        # if new_user != None and user_type == 1:
+        # drop connection
+
         if user_type == 1:
             self.HOST = new_user
         if len(self.listUser) == 0:
@@ -189,7 +190,8 @@ class ChatServer(rpc.ChatServerServicer):
 
     def SendPing(self, request: chat.Ping, context):
         """ Fulfills SendPing RPC defined in ping.proto """
-        self.__updateUserList(self.fernet.decrypt(request.ip).decode(), request.id)
+        self.__updateUserList(self.fernet.decrypt(
+            request.ip).decode(), request.id)
         return chat.Pong(message="Thanks, friend!")
 
     def EndTurn(self, request: chat.PlayerMessage, context):
@@ -235,7 +237,7 @@ class ChatServer(rpc.ChatServerServicer):
 
     def StartGame(self, request: chat.PrivateInfo, context):
         print('StartGame ', self.listUser)
-        #ip = self.fernet.decrypt(request.ip).decode()
+        # ip = self.fernet.decrypt(request.ip).decode()
         # if self.listUser[0]["ip"] == ip:    #TODO quando si testa su macchine diverse usare l'ip
         '''n = chat.PlayerMessage()
         n.json_str = player.transformIntoJSON(self.listUser[0])'''
@@ -250,18 +252,18 @@ class ChatServer(rpc.ChatServerServicer):
     def FinishGame(self, request_iterator, context):
         print("FinishGame called")
         self.isStartedGame = False
-        n=chat.EndNote()
-        n.MonsterWin="YOU CAN RULE THE WORLD"
-        n.HeroesWin="YOU SAVED THE WORLD"
-        n.MonsterDefeat="THE HEROES PREVENTED YOU FROM TAKING OVER THE WORLD"    
-        n.HeroesDefeat="YOU FAILED TO SAVE THE WORLD"
-        n.fin=request_iterator.fin
+        n = chat.EndNote()
+        n.MonsterWin = "YOU CAN RULE THE WORLD"
+        n.HeroesWin = "YOU SAVED THE WORLD"
+        n.MonsterDefeat = "THE HEROES PREVENTED YOU FROM TAKING OVER THE WORLD"
+        n.HeroesDefeat = "YOU FAILED TO SAVE THE WORLD"
+        n.fin = request_iterator.fin
         self.finish.append(n)
         return chat.Empty()
-    
+
     def FinishStream(self, request_iterator, context):
         print("FinishStream called")
-        
+
         lastindex = 0
         # For every client a infinite loop starts (in gRPC's own managed thread)
         while True:
@@ -276,11 +278,14 @@ class ChatServer(rpc.ChatServerServicer):
                 lastindex += 1
                 yield n
 
+
 if __name__ == '__main__':
     # the workers is like the amount of threads that can be opened at the same time, when there are 10 clients connected
     # then no more clients able to connect to the server.
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))  # create a gRPC server
-    rpc.add_ChatServerServicer_to_server(ChatServer(os.getpid()), server)  # register the server to gRPC
+    server = grpc.server(futures.ThreadPoolExecutor(
+        max_workers=100))  # create a gRPC server
+    rpc.add_ChatServerServicer_to_server(ChatServer(
+        os.getpid()), server)  # register the server to gRPC
     # gRPC basically manages all the threading and server responding logic, which is perfect!
     print('Starting server. Listening...')
     print("Connect to: " + str(get('https://api.ipify.org').content.decode('utf8')))
