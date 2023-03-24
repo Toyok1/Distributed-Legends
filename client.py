@@ -32,7 +32,7 @@ class Client():
         self.myTurn = False
         self.state = "idle"
         self.myUid = str(uuid.uuid4())
-        self.labelrefs = [[], [], [], []]
+        self.labelrefs = [[], [], []]
         self.fernet = Fernet(key)
         self.isFinished = False
         self.myPostOffice = helper.PostOffice(serverAddress, user, self.myUid, userType)
@@ -59,13 +59,9 @@ class Client():
     def __check_for_start(self):
         while not self.GAME_STARTED:
             b = self.myPostOffice.CheckStarted()
-            self.GAME_STARTED = b.started
-            print(b.started, "START GAME VALUE")
-            # self.map = self.conn.GetActiveMap(chat.Empty())
-        if self.myPostOffice.players == []:
-            print("IL GIOCO È STATO INIZIATO CORRETTAMENTE")
-            #mess = self.myPostOffice.GetInitialList()
-            self.cleanInitialList()
+            if b.started:
+                self.GAME_STARTED = b.started
+                self.cleanInitialList()
         self.start_button.destroy()
 
     def __diagnose(self):
@@ -256,18 +252,25 @@ class Client():
         self.myPostOffice.SendAction(self.myPlayer, blocked, actionType=2)
 
     def adjustLabels(self, pl):
-        if pl.getUsername() in [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))]:
-                        ind = [self.labelrefs[0][i]["text"] for i in range(len(self.labelrefs[0]))].index(pl.getUsername())
+        # TODO: remove old disconnected player from lables references for change life value by their indexs 
+        localLabelsRef = self.labelrefs
+        
+        for old_player in self.myPostOffice.disconnected_players:
+            ind = [self.labelrefs[0][i]["text"] for i in range(len(localLabelsRef[0]))].index(old_player.getUsername())
+            localLabelsRef[0].remove(localLabelsRef[0][ind])
+            localLabelsRef[1].remove(localLabelsRef[1][ind])
+            localLabelsRef[2].remove(localLabelsRef[2][ind])
+            pass
+        
+        if pl.getUsername() in [localLabelsRef[0][i]["text"] for i in range(len(localLabelsRef[0]))]:
+                        ind = [localLabelsRef[0][i]["text"] for i in range(len(localLabelsRef[0]))].index(pl.getUsername())
                         if pl.getUsertype() == 1:
 
-                            #[giocatore 1, giocatore 3]
-                            #[[img,img,img],[salute,salute,salute],[nome,nome,nome]]
-
-                            self.labelrefs[1][ind].config(
+                            localLabelsRef[1][ind].config(
                                 text=str(pl.getHp())+'/100 ' + '['+str(pl.getBlock())+']')
                         else:
 
-                            self.labelrefs[1][ind].config(
+                            localLabelsRef[1][ind].config(
                                 text=str(pl.getHp())+'/50 ' + '['+str(pl.getBlock())+']')
 
     def mapFuncToButtons(self, function, shout):
@@ -299,7 +302,6 @@ class Client():
         
 
     def cleanInitialList(self):
-        #self.myPostOffice.players = player.transformFullListFromJSON(mess.json_str)
         i = 0
         v = [self.hero1_username, self.hero2_username, self.hero3_username]
         v2 = [self.hero1_healthLabel, self.hero2_healthLabel, self.hero3_healthLabel]
@@ -600,7 +602,7 @@ if __name__ == '__main__':
     root.withdraw()  # Hides the window
     username = None
     # "localhost"  # None when we deploy but for testing localhost is fine
-    serverAddress = None
+    serverAddress = "localhost"
     while username is None:
         # retrieve a username so we can distinguish all the different clients
         username = simpledialog.askstring(

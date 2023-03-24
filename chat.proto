@@ -55,15 +55,6 @@ message GameStatus {
     string lastPlayer = 3; // sender of messge    
 }
 
-/*message InitialList {
-    int32 length = 1;
-    string json_str = 2;
-}*/
-
-/*string name_hp = 2; // ["utente1","utente2"][hp1, hp2]
-    string player_type = 3; //["1","0"]
-    string ip = 4; //["enc_ip","enc_ip"]*/
-
 message Health{
     string json_str = 1;
     int32 hp = 2; 
@@ -94,12 +85,11 @@ service ChatServer {
     rpc HealthStream(Empty) returns(stream Health);
     rpc BlockStream(Empty) returns(stream Block);
     rpc ActionStream(Empty) returns(stream Action);
-    //rpc GetInitialList(Empty) returns(InitialList);
     rpc FinishGame(FinishedBool) returns(Empty);
     rpc FinishStream(Empty) returns(stream EndNote);
     rpc EndTurn(PlayerMessage) returns(Empty);
     rpc TurnStream (Empty) returns(stream PlayerMessage);
     rpc ReturnStarted (Empty) returns(StartedBool);
 }
-// python3 -m grpc_tools.protoc -I=. --python_out=. --grpc_python_out=. chat.proto //People who do not uses Virtual Environments are very special <3
+// python3 -m grpc_tools.protoc -I=. --python_out=. --grpc_python_out=. chat.proto 
 // python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. chat.proto      

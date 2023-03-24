@@ -29,8 +29,6 @@ class ChatServer(rpc.ChatServerServicer):
         self.fernet = Fernet(key)
         self.processId = pId
         self.LAST_USER_TURN = None
-        self.initialList = chat.InitialList()
-        self.initialList.json_str = ""
         self.isStartedGame = False
 
         threading.Thread(target=self.__clean_user_list,daemon=True).start()
@@ -98,12 +96,6 @@ class ChatServer(rpc.ChatServerServicer):
                 user.setHp(100)
             else:
                 user.setHp(50)
-
-        mmmap = chat.InitialList()
-        mmmap.length = len(self.listUser)
-        mmmap.json_str = player.tranformFullListIntoJSON(self.listUser)
-        print(mmmap)
-        self.initialList = mmmap
 
     # The stream which will be used to send new messages to clients
     def ChatStream(self, request_iterator, context):
@@ -190,6 +182,7 @@ class ChatServer(rpc.ChatServerServicer):
             b = chat.PlayerMessage()
             b.json_str = player.transformIntoJSON(new_user)
             self.turns.append(b)
+            self.LAST_USER_TURN = new_user
         self.listUser.append(new_user)
         print(self.listUser)
         # something needs to be returned required by protobuf language, we just return empty msg
@@ -226,10 +219,6 @@ class ChatServer(rpc.ChatServerServicer):
                 lastindex += 1
                 yield n
 
-    def GetInitialList(self, request_iterator, context):
-        """ Create game board and send to client, if map is none client resend request"""
-        return self.initialList
-
     def ReturnStarted(self, request_iterator, context):
         b = chat.StartedBool()
         b.started = self.isStartedGame
@@ -241,7 +230,7 @@ class ChatServer(rpc.ChatServerServicer):
             print("L'host è onnipotente")
             self.isStartedGame = True
             self.__distributeHealth()
-        return self.initialList
+        return chat.Empty()
 
     def FinishGame(self, request_iterator, context):
         print("FinishGame called")

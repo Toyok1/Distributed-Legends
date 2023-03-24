@@ -29,6 +29,7 @@ class PostOffice:
         self.privateInfo.user_type = user_type
         self.players = []
         self.old_players = []
+        self.disconnected_players = []
 
     def Listen_for_PingPong(self, my_id):
         while True:
@@ -40,9 +41,9 @@ class PostOffice:
             time.sleep(2.5)
             #print(pong.message)
             self.players = player.transformFullListFromJSON(pong.list_players)
-            if self.old_players != self.players:
-                
-                pass
+            self.disconnected_players.extend(list(set(self.old_players) - set(self.players)) if len(self.old_players) > len(self.players) else [])
+            self.old_players = self.players
+            
             if pong.message != "Thanks, friend!":
                 raise Exception("Disconnect to the server!")
 
@@ -52,9 +53,6 @@ class PostOffice:
 
     def CheckStarted(self):
         return self.conn.ReturnStarted(chat.Empty())
-
-    def GetInitialList(self):
-        return self.conn.GetInitialList(chat.Empty())
 
     def StartGame(self):
         return self.conn.StartGame(self.privateInfo)
