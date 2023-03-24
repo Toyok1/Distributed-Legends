@@ -46,6 +46,7 @@ message Ping {
 
 message Pong {
     string message = 1;
+    string list_players = 2;
 }
 
 message GameStatus {
@@ -54,10 +55,10 @@ message GameStatus {
     string lastPlayer = 3; // sender of messge    
 }
 
-message InitialList {
+/*message InitialList {
     int32 length = 1;
     string json_str = 2;
-}
+}*/
 
 /*string name_hp = 2; // ["utente1","utente2"][hp1, hp2]
     string player_type = 3; //["1","0"]
@@ -86,14 +87,14 @@ service ChatServer {
     rpc SendNote (Note) returns (Empty);
     rpc SendPrivateInfo (PrivateInfo) returns (Empty);
     rpc SendPing(Ping) returns (Pong);
-    rpc StartGame(PrivateInfo) returns(InitialList);
+    rpc StartGame(PrivateInfo) returns(Empty);
     rpc SendHealth(Health) returns(Empty);
     rpc SendBlock(Block) returns(Empty);
     rpc SendAction(Action) returns(Empty);
     rpc HealthStream(Empty) returns(stream Health);
     rpc BlockStream(Empty) returns(stream Block);
     rpc ActionStream(Empty) returns(stream Action);
-    rpc GetInitialList(Empty) returns(InitialList);
+    //rpc GetInitialList(Empty) returns(InitialList);
     rpc FinishGame(FinishedBool) returns(Empty);
     rpc FinishStream(Empty) returns(stream EndNote);
     rpc EndTurn(PlayerMessage) returns(Empty);

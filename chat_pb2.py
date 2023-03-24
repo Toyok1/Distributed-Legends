@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nchat.proto\x12\x04grpc\"\x07\n\x05\x45mpty\"%\n\x04Note\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\"j\n\x07\x45ndNote\x12\x12\n\nMonsterWin\x18\x01 \x01(\t\x12\x11\n\tHeroesWin\x18\x02 \x01(\t\x12\x15\n\rMonsterDefeat\x18\x03 \x01(\t\x12\x14\n\x0cHeroesDefeat\x18\x04 \x01(\t\x12\x0b\n\x03\x66in\x18\x05 \x01(\x08\"\x1e\n\x0bStartedBool\x12\x0f\n\x07started\x18\x01 \x01(\x08\"\x1b\n\x0c\x46inishedBool\x12\x0b\n\x03\x66in\x18\x01 \x01(\x08\"H\n\x0bPrivateInfo\x12\n\n\x02ip\x18\x01 \x01(\x0c\x12\x0c\n\x04user\x18\x02 \x01(\t\x12\x0c\n\x04u_id\x18\x03 \x01(\t\x12\x11\n\tuser_type\x18\x04 \x01(\x05\"!\n\rPlayerMessage\x12\x10\n\x08json_str\x18\x01 \x01(\t\"\x1e\n\x04Ping\x12\n\n\x02ip\x18\x01 \x01(\x0c\x12\n\n\x02id\x18\x02 \x01(\t\"\x17\n\x04Pong\x12\x0f\n\x07message\x18\x01 \x01(\t\"L\n\nGameStatus\x12\x11\n\ttimeStamp\x18\x01 \x01(\t\x12\x17\n\x0fplayerPositions\x18\x02 \x01(\t\x12\x12\n\nlastPlayer\x18\x03 \x01(\t\"/\n\x0bInitialList\x12\x0e\n\x06length\x18\x01 \x01(\x05\x12\x10\n\x08json_str\x18\x02 \x01(\t\"&\n\x06Health\x12\x10\n\x08json_str\x18\x01 \x01(\t\x12\n\n\x02hp\x18\x02 \x01(\x05\"(\n\x05\x42lock\x12\x10\n\x08json_str\x18\x01 \x01(\t\x12\r\n\x05\x62lock\x18\x02 \x01(\x05\"O\n\x06\x41\x63tion\x12\x0e\n\x06sender\x18\x01 \x01(\t\x12\x10\n\x08reciever\x18\x02 \x01(\t\x12\x0e\n\x06\x61mount\x18\x03 \x01(\x05\x12\x13\n\x0b\x61\x63tion_type\x18\x04 \x01(\x05\x32\x81\x06\n\nChatServer\x12\'\n\nChatStream\x12\x0b.grpc.Empty\x1a\n.grpc.Note0\x01\x12#\n\x08SendNote\x12\n.grpc.Note\x1a\x0b.grpc.Empty\x12\x31\n\x0fSendPrivateInfo\x12\x11.grpc.PrivateInfo\x1a\x0b.grpc.Empty\x12\"\n\x08SendPing\x12\n.grpc.Ping\x1a\n.grpc.Pong\x12\x31\n\tStartGame\x12\x11.grpc.PrivateInfo\x1a\x11.grpc.InitialList\x12\'\n\nSendHealth\x12\x0c.grpc.Health\x1a\x0b.grpc.Empty\x12%\n\tSendBlock\x12\x0b.grpc.Block\x1a\x0b.grpc.Empty\x12\'\n\nSendAction\x12\x0c.grpc.Action\x1a\x0b.grpc.Empty\x12+\n\x0cHealthStream\x12\x0b.grpc.Empty\x1a\x0c.grpc.Health0\x01\x12)\n\x0b\x42lockStream\x12\x0b.grpc.Empty\x1a\x0b.grpc.Block0\x01\x12+\n\x0c\x41\x63tionStream\x12\x0b.grpc.Empty\x1a\x0c.grpc.Action0\x01\x12\x30\n\x0eGetInitialList\x12\x0b.grpc.Empty\x1a\x11.grpc.InitialList\x12-\n\nFinishGame\x12\x12.grpc.FinishedBool\x1a\x0b.grpc.Empty\x12,\n\x0c\x46inishStream\x12\x0b.grpc.Empty\x1a\r.grpc.EndNote0\x01\x12+\n\x07\x45ndTurn\x12\x13.grpc.PlayerMessage\x1a\x0b.grpc.Empty\x12\x30\n\nTurnStream\x12\x0b.grpc.Empty\x1a\x13.grpc.PlayerMessage0\x01\x12/\n\rReturnStarted\x12\x0b.grpc.Empty\x1a\x11.grpc.StartedBoolb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nchat.proto\x12\x04grpc\"\x07\n\x05\x45mpty\"%\n\x04Note\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\"j\n\x07\x45ndNote\x12\x12\n\nMonsterWin\x18\x01 \x01(\t\x12\x11\n\tHeroesWin\x18\x02 \x01(\t\x12\x15\n\rMonsterDefeat\x18\x03 \x01(\t\x12\x14\n\x0cHeroesDefeat\x18\x04 \x01(\t\x12\x0b\n\x03\x66in\x18\x05 \x01(\x08\"\x1e\n\x0bStartedBool\x12\x0f\n\x07started\x18\x01 \x01(\x08\"\x1b\n\x0c\x46inishedBool\x12\x0b\n\x03\x66in\x18\x01 \x01(\x08\"H\n\x0bPrivateInfo\x12\n\n\x02ip\x18\x01 \x01(\x0c\x12\x0c\n\x04user\x18\x02 \x01(\t\x12\x0c\n\x04u_id\x18\x03 \x01(\t\x12\x11\n\tuser_type\x18\x04 \x01(\x05\"!\n\rPlayerMessage\x12\x10\n\x08json_str\x18\x01 \x01(\t\"\x1e\n\x04Ping\x12\n\n\x02ip\x18\x01 \x01(\x0c\x12\n\n\x02id\x18\x02 \x01(\t\"-\n\x04Pong\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x14\n\x0clist_players\x18\x02 \x01(\t\"L\n\nGameStatus\x12\x11\n\ttimeStamp\x18\x01 \x01(\t\x12\x17\n\x0fplayerPositions\x18\x02 \x01(\t\x12\x12\n\nlastPlayer\x18\x03 \x01(\t\"/\n\x0bInitialList\x12\x0e\n\x06length\x18\x01 \x01(\x05\x12\x10\n\x08json_str\x18\x02 \x01(\t\"&\n\x06Health\x12\x10\n\x08json_str\x18\x01 \x01(\t\x12\n\n\x02hp\x18\x02 \x01(\x05\"(\n\x05\x42lock\x12\x10\n\x08json_str\x18\x01 \x01(\t\x12\r\n\x05\x62lock\x18\x02 \x01(\x05\"O\n\x06\x41\x63tion\x12\x0e\n\x06sender\x18\x01 \x01(\t\x12\x10\n\x08reciever\x18\x02 \x01(\t\x12\x0e\n\x06\x61mount\x18\x03 \x01(\x05\x12\x13\n\x0b\x61\x63tion_type\x18\x04 \x01(\x05\x32\x81\x06\n\nChatServer\x12\'\n\nChatStream\x12\x0b.grpc.Empty\x1a\n.grpc.Note0\x01\x12#\n\x08SendNote\x12\n.grpc.Note\x1a\x0b.grpc.Empty\x12\x31\n\x0fSendPrivateInfo\x12\x11.grpc.PrivateInfo\x1a\x0b.grpc.Empty\x12\"\n\x08SendPing\x12\n.grpc.Ping\x1a\n.grpc.Pong\x12\x31\n\tStartGame\x12\x11.grpc.PrivateInfo\x1a\x11.grpc.InitialList\x12\'\n\nSendHealth\x12\x0c.grpc.Health\x1a\x0b.grpc.Empty\x12%\n\tSendBlock\x12\x0b.grpc.Block\x1a\x0b.grpc.Empty\x12\'\n\nSendAction\x12\x0c.grpc.Action\x1a\x0b.grpc.Empty\x12+\n\x0cHealthStream\x12\x0b.grpc.Empty\x1a\x0c.grpc.Health0\x01\x12)\n\x0b\x42lockStream\x12\x0b.grpc.Empty\x1a\x0b.grpc.Block0\x01\x12+\n\x0c\x41\x63tionStream\x12\x0b.grpc.Empty\x1a\x0c.grpc.Action0\x01\x12\x30\n\x0eGetInitialList\x12\x0b.grpc.Empty\x1a\x11.grpc.InitialList\x12-\n\nFinishGame\x12\x12.grpc.FinishedBool\x1a\x0b.grpc.Empty\x12,\n\x0c\x46inishStream\x12\x0b.grpc.Empty\x1a\r.grpc.EndNote0\x01\x12+\n\x07\x45ndTurn\x12\x13.grpc.PlayerMessage\x1a\x0b.grpc.Empty\x12\x30\n\nTurnStream\x12\x0b.grpc.Empty\x1a\x13.grpc.PlayerMessage0\x01\x12/\n\rReturnStarted\x12\x0b.grpc.Empty\x1a\x11.grpc.StartedBoolb\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'chat_pb2', globals())
@@ -37,17 +37,17 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _PING._serialized_start=346
   _PING._serialized_end=376
   _PONG._serialized_start=378
-  _PONG._serialized_end=401
-  _GAMESTATUS._serialized_start=403
-  _GAMESTATUS._serialized_end=479
-  _INITIALLIST._serialized_start=481
-  _INITIALLIST._serialized_end=528
-  _HEALTH._serialized_start=530
-  _HEALTH._serialized_end=568
-  _BLOCK._serialized_start=570
-  _BLOCK._serialized_end=610
-  _ACTION._serialized_start=612
-  _ACTION._serialized_end=691
-  _CHATSERVER._serialized_start=694
-  _CHATSERVER._serialized_end=1463
+  _PONG._serialized_end=423
+  _GAMESTATUS._serialized_start=425
+  _GAMESTATUS._serialized_end=501
+  _INITIALLIST._serialized_start=503
+  _INITIALLIST._serialized_end=550
+  _HEALTH._serialized_start=552
+  _HEALTH._serialized_end=590
+  _BLOCK._serialized_start=592
+  _BLOCK._serialized_end=632
+  _ACTION._serialized_start=634
+  _ACTION._serialized_end=713
+  _CHATSERVER._serialized_start=716
+  _CHATSERVER._serialized_end=1485
 # @@protoc_insertion_point(module_scope)

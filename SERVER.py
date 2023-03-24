@@ -28,13 +28,15 @@ class ChatServer(rpc.ChatServerServicer):
         self.listUser = []  # every element is a Player
         self.fernet = Fernet(key)
         self.processId = pId
-
-        threading.Thread(target=lambda: self.__clean_user_list,daemon=True).start()
-        # threading.Thread(target=self.__keep_alive, daemon=True).start()
-
+        self.LAST_USER_TURN = None
         self.initialList = chat.InitialList()
         self.initialList.json_str = ""
         self.isStartedGame = False
+
+        threading.Thread(target=self.__clean_user_list,daemon=True).start()
+        # threading.Thread(target=self.__keep_alive, daemon=True).start()
+
+        
 
     def __updateUserList(self, req_ip, req_id):
         for usr in self.listUser:
@@ -51,14 +53,35 @@ class ChatServer(rpc.ChatServerServicer):
     def __clean_user_list(self):
         #if a user (hero) is more than 5 seconds from its last ping we count it as dead and, if it is its turn we skip it and we go to the next user.
         while True:
+            if not self.isStartedGame:
+                #print("NON STARTATO")
+                continue
             print("Player List", self.listUser)
             for user in self.listUser:
-                uref = user
                 if float(time.time()) - float(user.getPingTime()) > 5:
-                    self.listUser.remove(user)
                     print("lost ping with " + user.getUsername())
                     #if it's the turn user, pick another
-                    if uref.getUid() == self.LAST_USER_TURN.getUid():
+                    if len(self.listUser) == 1:
+                        n = chat.EndNote()
+                        n.MonsterWin = "YOU CAN RULE THE WORLD BECAUSE EVERYONE ELSE DISCONNECTED" #only two messages that should ever be displayed
+                        n.HeroesWin = "YOU SAVED THE WORLD BECAUSE EVERYONE ELSE DISCONNECTED" #only two messages that should ever be displayed
+                        n.MonsterDefeat = "How did you get here?"
+                        n.HeroesDefeat = "Looking for easter eggs?"
+                        n.fin = True if self.listUser[0].getUsertype() == 1 else False
+                        self.finish.append(n)
+                        break
+
+                    if not 1 in [int(u.getUsertype()) for u in self.listUser]:  # list of all types of users. If there is no monter the heroes win by default.
+                        n = chat.EndNote()
+                        n.MonsterWin = "Noone expects the spanish inquisition!"
+                        n.HeroesWin = "YOU SAVED THE WORLD BECAUSE THE MONSTER DISCONNECTED" #the only message to ever be displayed
+                        n.MonsterDefeat = "How did you get here?"
+                        n.HeroesDefeat = "Looking for easter eggs?"
+                        n.fin = False
+                        self.finish.append(n)
+                        break
+                        
+                    if user.getUid() == self.LAST_USER_TURN.getUid(): #disconnected while it's my turn
                         #add a turn message for the next guy
                         for i in range(0, len(self.listUser)):
                             if self.LAST_USER_TURN.getUid() == self.listUser[i].getUid():
@@ -66,6 +89,7 @@ class ChatServer(rpc.ChatServerServicer):
                                 n = chat.PlayerMessage()
                                 n.json_str = player.transformIntoJSON(userNext)
                                 self.EndTurn(n, None) #TODO get this to work
+                    self.listUser.remove(user)
             time.sleep(2.5)
 
     def __distributeHealth(self):
@@ -157,12 +181,8 @@ class ChatServer(rpc.ChatServerServicer):
         decMessage = self.fernet.decrypt(encMessage).decode()
         u_id = request.u_id
         user_type = request.user_type
-        # new_user  =  {"user":  user,  "ip":  decMessage,  "ping_time":  time.time(), "player_type": 0}
-
         new_user = player.Player(
             ip=decMessage, unique_id=u_id, username=user, user_type=user_type, ping_time=time.time())
-        # if new_user != None and user_type == 1:
-        # drop connection
 
         if user_type == 1:
             self.HOST = new_user
@@ -179,7 +199,7 @@ class ChatServer(rpc.ChatServerServicer):
         """ Fulfills SendPing RPC defined in ping.proto """
         self.__updateUserList(self.fernet.decrypt(
             request.ip).decode(), request.id)
-        return chat.Pong(message="Thanks, friend!")
+        return chat.Pong(message="Thanks, friend!",list_players=player.tranformFullListIntoJSON(self.listUser))
 
     def EndTurn(self, request: chat.PlayerMessage, context):
         print("end turn")
@@ -243,10 +263,6 @@ class ChatServer(rpc.ChatServerServicer):
         while True:
             # Check if there are any new messages
             while len(self.finish) > lastindex:
-                '''n = chat.Block()
-                n.ip = self.fernet.encrypt(self.blockList[lastindex]["ip"].encode())
-                n.block = self.blockList[lastindex]["block"]
-                n.user = self.blockList[lastindex]["user"]'''
                 n = self.finish[lastindex]
                 print(n)
                 lastindex += 1
