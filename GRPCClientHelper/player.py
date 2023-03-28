@@ -54,34 +54,61 @@ class Player:
         self.hp = hp
 
     def getHp(self):
-        return self.hp
+        return int(self.hp)
 
     def setBlock(self, block):
         self.block = block
 
     def getBlock(self):
-        return self.block
+        return int(self.block)
 
     def setPingTime(self, ping_time: float):
         self.ping_time = ping_time
 
     def getPingTime(self):
         return self.ping_time
+    
+    def takeDamage(self,amount): #all >0
+        #se ho blocco, devo togliere prima quello, altrimenti prendo danni alla salute.
+        if self.getBlock() > 0:
+            amount = amount - int(self.getBlock())    #20 hp, 10 block , attack 15     ==  15 - 10 > 0 
+            self.setBlock(0 if amount > 0 else abs(amount))
+            if amount > 0:
+                self.setHp(0 if self.getHp() - amount < 0 else self.getHp() - amount)
+        else:
+            self.setHp(0 if self.getHp() - amount < 0 else self.getHp() - amount)
+
+    def heal(self,amount):
+        n_h = int(self.getHp()) + int(amount)
+        if self.getUsertype() == 1:
+            #monster
+            if n_h > 100:
+                self.setHp(100)
+            else:
+                self.setHp(n_h)
+        else:
+            if n_h > 50:
+                self.setHp(50)
+            else:
+                self.setHp(n_h)
+            #hero
+
+    def block(self,amount):
+        new_b = self.getBlock() + amount
+        self.setBlock(new_b)
 
     def __repr__(self):
         # ip, u_id, username, user_type, hp, block, ping_time
         #return f"Player ip : {self.ip} u_id : {self.u_id} username : {self.username} user_type : {self.user_type} hp : {self.hp} block : {self.block}"
-        return  f"Player u_id : {self.u_id} username : {self.username} ping: {self.ping_time}"
+        return  f"Player hp : {self.hp} username : {self.username} ping: {self.ping_time}"
 
     def __str__(self):
         # ip, u_id, username, user_type, hp, block, ping_time
         #return f"Player ip : {self.ip} u_id : {self.u_id} username : {self.username} user_type : {self.user_type} hp : {self.hp} block : {self.block}"
-        return  f"Player u_id : {self.u_id} username : {self.username} ping: {self.ping_time}"
+        return  f"Player hp : {self.hp} username : {self.username} ping: {self.ping_time}"
 
 
 def transformIntoJSON(theplayertotransform: Player):  # ip input decoded
-    '''print(type(theplayertotransform), "THIS IS PL")
-    print(theplayertotransform, "AND THIS IS ITS VALUE")'''
     obj = {
         "ip": theplayertotransform.getIp(),
         "u_id": theplayertotransform.getUid(),
@@ -111,7 +138,7 @@ def tranformFullListIntoJSON(array):
         # print("PLEASE PRINT", i)
         final_str += transformIntoJSON(i) + "#"
     final_str = final_str[:-1]
-    print(final_str, "final_str")
+    #print(final_str, "final_str")
     return final_str
 
 
@@ -122,3 +149,4 @@ def transformFullListFromJSON(string_json):
         ret_array.append(transformFromJSON(i))
     # print(ret_array, "ret_array")
     return ret_array
+

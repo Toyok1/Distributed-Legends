@@ -55,7 +55,7 @@ message GameStatus {
     string lastPlayer = 3; // sender of messge    
 }
 
-message Health{
+message Healing{
     string json_str = 1;
     int32 hp = 2; 
 }
@@ -63,6 +63,11 @@ message Health{
 message Block{
     string json_str = 1;
     int32 block = 2; 
+}
+
+message Attack{
+    string json_str = 1;
+    int32 attack = 2;
 }
 
 message Action{
@@ -79,10 +84,12 @@ service ChatServer {
     rpc SendPrivateInfo (PrivateInfo) returns (Empty);
     rpc SendPing(Ping) returns (Pong);
     rpc StartGame(PrivateInfo) returns(Empty);
-    rpc SendHealth(Health) returns(Empty);
+    rpc SendAttack(Attack) returns(Empty);
+    rpc SendHealing(Healing) returns(Empty);
     rpc SendBlock(Block) returns(Empty);
     rpc SendAction(Action) returns(Empty);
-    rpc HealthStream(Empty) returns(stream Health);
+    rpc AttackStream(Empty) returns(stream Attack);
+    rpc HealingStream(Empty) returns(stream Healing);
     rpc BlockStream(Empty) returns(stream Block);
     rpc ActionStream(Empty) returns(stream Action);
     rpc FinishGame(FinishedBool) returns(Empty);

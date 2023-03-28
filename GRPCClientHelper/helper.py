@@ -28,12 +28,13 @@ class PostOffice:
         self.privateInfo.u_id = u_id
         self.privateInfo.user_type = user_type
         self.players = []
+        self.heroesList = []
+        self.myPlayer = None
         self.old_players = []
         self.disconnected_players = []
 
     def Listen_for_PingPong(self, my_id):
         while True:
-            
             ping = chat.Ping()  # create protobug message (called Ping)
             ping.ip = self.encIp
             ping.id = my_id
@@ -41,8 +42,15 @@ class PostOffice:
             time.sleep(2.5)
             #print(pong.message)
             self.players = player.transformFullListFromJSON(pong.list_players)
+            #print("PLAYERS : ",self.players)
+            for p in self.players:
+                if p.getUid() == self.privateInfo.u_id:
+                    self.myPlayer = p
             self.disconnected_players.extend(list(set(self.old_players) - set(self.players)) if len(self.old_players) > len(self.players) else [])
             self.old_players = self.players
+
+            self.heroesList = [u for u in self.players if u.getUsertype() != 1]
+            print("H_LIST: ",self.heroesList)
             
             if pong.message != "Thanks, friend!":
                 raise Exception("Disconnect to the server!")
@@ -57,8 +65,11 @@ class PostOffice:
     def StartGame(self):
         return self.conn.StartGame(self.privateInfo)
 
-    def HealthStream(self):
-        return self.conn.HealthStream(chat.Empty())
+    def HealingStream(self):
+        return self.conn.HealingStream(chat.Empty())
+    
+    def AttackStream(self):
+        return self.conn.AttackStream(chat.Empty())
 
     def BlockStream(self):
         return self.conn.BlockStream(chat.Empty())
@@ -83,7 +94,7 @@ class PostOffice:
         match actionType:
             case 0:  # attack
                 n.action_type = 0
-                n.amount = -10 + random.randint(-5, 5)  # TODO range of damage
+                n.amount = 10 + random.randint(-5, 5)  # TODO range of damage
             case 1:  # heal
                 n.action_type = 1
                 n.amount = 8 + random.randint(-5, 5)  # TODO range of damage
@@ -115,11 +126,17 @@ class PostOffice:
         b.block = amount
         self.conn.SendBlock(b)
 
-    def SendHealth(self, user: player.Player, amount: int = None):
-        m = chat.Health()
+    def SendHealing(self, user: player.Player, amount: int = None):
+        m = chat.Healing()
         m.json_str = player.transformIntoJSON(user)
         m.hp = amount
-        self.conn.SendHealth(m)
+        self.conn.SendHealing(m)
+    
+    def SendAttack(self, user: player.Player, amount: int = None):
+        m = chat.Attack()
+        m.json_str = player.transformIntoJSON(user)
+        m.attack = amount
+        self.conn.SendAttack(m)
 
     def SendFinishGame(self):
         self.conn.FinishGame(chat.Empty())
