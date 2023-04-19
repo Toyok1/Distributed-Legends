@@ -32,10 +32,8 @@ class ChatServer(rpc.ChatServerServicer):
         self.LAST_USER_TURN = None
         self.isStartedGame = False
 
-        threading.Thread(target=self.__clean_user_list,daemon=True).start()
+        threading.Thread(target=self.__clean_user_list, daemon=True).start()
         # threading.Thread(target=self.__keep_alive, daemon=True).start()
-
-        
 
     def __updateUserList(self, req_ip, req_id):
         for usr in self.listUser:
@@ -50,43 +48,52 @@ class ChatServer(rpc.ChatServerServicer):
                 os.kill(self.processId, signal.SIGTERM)
 
     def __clean_user_list(self):
-        #if a user (hero) is more than 5 seconds from its last ping we count it as dead and, if it is its turn we skip it and we go to the next user.
+        # if a user (hero) is more than 5 seconds from its last ping we count it as dead and, if it is its turn we skip it and we go to the next user.
         while True:
             if self.isStartedGame:
-                print("Player List", self.listUser)
+                # print("Player List", self.listUser)
                 for user in self.listUser:
                     if float(time.time()) - float(user.getPingTime()) > 10.0:
-                        print("lost ping with " , user.getUsername() , " time " , float(time.time()) - float(user.getPingTime()))
-                        #if it's the turn user, pick another
+                        print("lost ping with ", user.getUsername(), " time ", float(
+                            time.time()) - float(user.getPingTime()))
+                        # if it's the turn user, pick another
                         if len(self.listUser) == 1:
                             n = chat.EndNote()
-                            n.MonsterWin = "YOU CAN RULE THE WORLD BECAUSE EVERYONE ELSE DISCONNECTED" #only two messages that should ever be displayed
-                            n.HeroesWin = "YOU SAVED THE WORLD BECAUSE EVERYONE ELSE DISCONNECTED" #only two messages that should ever be displayed
+                            # only two messages that should ever be displayed
+                            n.MonsterWin = "YOU CAN RULE THE WORLD BECAUSE EVERYONE ELSE DISCONNECTED"
+                            # only two messages that should ever be displayed
+                            n.HeroesWin = "YOU SAVED THE WORLD BECAUSE EVERYONE ELSE DISCONNECTED"
                             n.MonsterDefeat = "How did you get here?"
                             n.HeroesDefeat = "Looking for easter eggs?"
-                            n.fin = True if self.listUser[0].getUsertype() == 1 else False
+                            n.fin = True if self.listUser[0].getUsertype(
+                            ) == 1 else False
                             self.finish.append(n)
                             break
 
-                        if not 1 in [int(u.getUsertype()) for u in self.listUser]:  # list of all types of users. If there is no monter the heroes win by default.
+                        # list of all types of users. If there is no monter the heroes win by default.
+                        if not 1 in [int(u.getUsertype()) for u in self.listUser]:
                             n = chat.EndNote()
                             n.MonsterWin = "Noone expects the spanish inquisition!"
-                            n.HeroesWin = "YOU SAVED THE WORLD BECAUSE THE MONSTER DISCONNECTED" #the only message to ever be displayed
+                            # the only message to ever be displayed
+                            n.HeroesWin = "YOU SAVED THE WORLD BECAUSE THE MONSTER DISCONNECTED"
                             n.MonsterDefeat = "How did you get here?"
                             n.HeroesDefeat = "Looking for easter eggs?"
                             n.fin = False
                             self.finish.append(n)
                             break
-                            
-                        if user.getUid() == self.LAST_USER_TURN.getUid(): #disconnected while it's my turn
-                            #add a turn message for the next guy
+
+                        if user.getUid() == self.LAST_USER_TURN.getUid():  # disconnected while it's my turn
+                            # add a turn message for the next guy
                             for i in range(0, len(self.listUser)):
                                 if self.LAST_USER_TURN.getUid() == self.listUser[i].getUid():
-                                    userNext = self.listUser[(i+1) % len(self.listUser)]
+                                    userNext = self.listUser[(
+                                        i+1) % len(self.listUser)]
                                     n = chat.PlayerMessage()
-                                    n.json_str = player.transformIntoJSON(userNext)
-                                    self.EndTurn(n, None) #TODO get this to work
-                        #self.listUser.remove(user)
+                                    n.json_str = player.transformIntoJSON(
+                                        userNext)
+                                    # TODO get this to work
+                                    self.EndTurn(n, None)
+                        # self.listUser.remove(user)
             time.sleep(2.5)
 
     def __distributeHealth(self):
@@ -120,9 +127,10 @@ class ChatServer(rpc.ChatServerServicer):
         self.hp.append(request)
         # print(new_h)
         return chat.Empty()
-    
+
     def SendAttack(self, request: chat.Attack, context):
         # new_h = {"ip": self.fernet.decrypt(request.ip).decode(), "hp": request.hp, "user": str(request.user)}
+        print(request, " - RECIEVED ATTACK")
         self.attack.append(request)
         # print(new_h)
         return chat.Empty()
@@ -147,8 +155,9 @@ class ChatServer(rpc.ChatServerServicer):
             # Check if there are any new messages
             while len(self.hp) > lastindex:
                 n = self.hp[lastindex]
-                player.transformFromJSON(n.json_str()).heal(n.hp)
-                #print(self.hp)
+                pl = player.transformFromJSON(n.json_str)
+                pl.heal(int(n.hp))
+                # print(self.hp)
                 lastindex += 1
                 yield n
 
@@ -159,11 +168,12 @@ class ChatServer(rpc.ChatServerServicer):
             # Check if there are any new messages
             while len(self.listBlock) > lastindex:
                 n = self.listBlock[lastindex]
-                player.transformFromJSON(n.json_str()).block(n.block)
+                pl = player.transformFromJSON(n.json_str)
+                pl.block(int(n.block))
                 # print(n)
                 lastindex += 1
                 yield n
-    
+
     def AttackStream(self, request_iterator, context):
         lastindex = 0
         # For every client a infinite loop starts (in gRPC's own managed thread)
@@ -171,7 +181,8 @@ class ChatServer(rpc.ChatServerServicer):
             # Check if there are any new messages
             while len(self.attack) > lastindex:
                 n = self.attack[lastindex]
-                player.transformFromJSON(n.json_str()).takeDamage(n.attack)
+                pl = player.transformFromJSON(n.json_str)
+                pl.takeDamage(int(n.attack))
                 # print(n)
                 lastindex += 1
                 yield n
@@ -211,7 +222,7 @@ class ChatServer(rpc.ChatServerServicer):
         """ Fulfills SendPing RPC defined in ping.proto """
         self.__updateUserList(self.fernet.decrypt(
             request.ip).decode(), request.id)
-        return chat.Pong(message="Thanks, friend!",list_players=player.tranformFullListIntoJSON(self.listUser))
+        return chat.Pong(message="Thanks, friend!", list_players=player.tranformFullListIntoJSON(self.listUser))
 
     def EndTurn(self, request: chat.PlayerMessage, context):
         print("end turn")
@@ -280,11 +291,13 @@ class ChatServer(rpc.ChatServerServicer):
 if __name__ == '__main__':
     # the workers is like the amount of threads that can be opened at the same time, when there are 10 clients connected
     # then no more clients able to connect to the server.
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=100))  # create a gRPC server
-    rpc.add_ChatServerServicer_to_server(ChatServer(os.getpid()), server)  # register the server to gRPC
+    server = grpc.server(futures.ThreadPoolExecutor(
+        max_workers=100))  # create a gRPC server
+    rpc.add_ChatServerServicer_to_server(ChatServer(
+        os.getpid()), server)  # register the server to gRPC
     # gRPC basically manages all the threading and server responding logic, which is perfect!
     print('Starting server. Listening...')
-    #print("Connect to: " + str(get('https://api.ipify.org').content.decode('utf8')))
+    # print("Connect to: " + str(get('https://api.ipify.org').content.decode('utf8')))
     server.add_insecure_port('[::]:' + str(port))
     server.start()
     try:

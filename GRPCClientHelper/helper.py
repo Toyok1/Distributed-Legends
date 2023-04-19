@@ -40,18 +40,19 @@ class PostOffice:
             ping.id = my_id
             pong = self.conn.SendPing(ping)
             time.sleep(2.5)
-            #print(pong.message)
+            # print(pong.message)
             self.players = player.transformFullListFromJSON(pong.list_players)
-            #print("PLAYERS : ",self.players)
+            # print("PLAYERS : ",self.players)
             for p in self.players:
                 if p.getUid() == self.privateInfo.u_id:
                     self.myPlayer = p
-            self.disconnected_players.extend(list(set(self.old_players) - set(self.players)) if len(self.old_players) > len(self.players) else [])
+            self.disconnected_players.extend(list(set(
+                self.old_players) - set(self.players)) if len(self.old_players) > len(self.players) else [])
             self.old_players = self.players
 
             self.heroesList = [u for u in self.players if u.getUsertype() != 1]
-            print("H_LIST: ",self.heroesList)
-            
+            # print("H_LIST: ", self.heroesList)
+
             if pong.message != "Thanks, friend!":
                 raise Exception("Disconnect to the server!")
 
@@ -67,7 +68,7 @@ class PostOffice:
 
     def HealingStream(self):
         return self.conn.HealingStream(chat.Empty())
-    
+
     def AttackStream(self):
         return self.conn.AttackStream(chat.Empty())
 
@@ -131,7 +132,7 @@ class PostOffice:
         m.json_str = player.transformIntoJSON(user)
         m.hp = amount
         self.conn.SendHealing(m)
-    
+
     def SendAttack(self, user: player.Player, amount: int = None):
         m = chat.Attack()
         m.json_str = player.transformIntoJSON(user)

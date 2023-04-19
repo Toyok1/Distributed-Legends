@@ -30,7 +30,9 @@ class UserTypeDialog(tk.Toplevel):
                            variable=self.var,
                            value=val).pack()
         # Create OK button
+
         ok_button = tk.Button(self, text="OK", command=self.ok)
+        ok_button.bind('<Return>', self.ok)
         ok_button.pack()
 
     def ok(self):

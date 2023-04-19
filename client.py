@@ -18,10 +18,10 @@ from GRPCClientHelper.config import key, cancel_id, aniThreadPointer, pg_type
 class Client():
     def __init__(self, user: str, userType: int, serverAddress: str, window, isHost: int):
         # the frame to put ui components on
-        #self.myPostOffice.myPlayer = None  # quick reference to my player
-        #self.otherPlayers = []  # quick reference to everyone but me
+        # self.myPostOffice.myPlayer = None  # quick reference to my player
+        # self.otherPlayers = []  # quick reference to everyone but me
         # self.myPostOffice.players = []  # quick refernce to every player in the game
-        #self.myPostOffice.heroesList = []
+        # self.myPostOffice.heroesList = []
         self.GAME_STARTED = False
         self.isHost = True if isHost == 1 else False
         self.window = window
@@ -36,11 +36,13 @@ class Client():
         self.labelrefs = {}
         self.fernet = Fernet(key)
         self.isFinished = False
-        self.myPostOffice = helper.PostOffice(serverAddress, user, self.myUid, userType)
+        self.myPostOffice = helper.PostOffice(
+            serverAddress, user, self.myUid, userType)
         self.myPostOffice.Subscribe()
 
         try:
-            threading.Thread(target=self.myPostOffice.Listen_for_PingPong, args=(self.myUid,), daemon=True).start()
+            threading.Thread(target=self.myPostOffice.Listen_for_PingPong, args=(
+                self.myUid,), daemon=True).start()
         except:
             self.CloseGame()
 
@@ -51,13 +53,14 @@ class Client():
         threading.Thread(target=self.__listen_for_attack, daemon=True).start()
         threading.Thread(target=self.__listen_for_health, daemon=True).start()
         threading.Thread(target=self.__listen_for_block, daemon=True).start()
-        #threading.Thread(target=self.__diagnose, daemon=True).start()
+        # threading.Thread(target=self.__diagnose, daemon=True).start()
         threading.Thread(target=self.__listen_for_finish, daemon=True).start()
 
         # probably the host won't need to run this thread so TODO when we have a way to distinguish them: get rid of it for the host.
 
         if userType != 1:
-            threading.Thread(target=self.__check_for_start, daemon=True).start()
+            threading.Thread(target=self.__check_for_start,
+                             daemon=True).start()
         self.window.mainloop()
 
     def __check_for_start(self):
@@ -73,7 +76,7 @@ class Client():
             if self.myPostOffice.myPlayer != None:
                 print("-------- START DIAGNOSTIC ---------")
                 print(self.myPostOffice.myPlayer.getUsername(), " - HP: ",
-                    self.myPostOffice.myPlayer.getHp(), " - Block: ", self.myPostOffice.myPlayer.getBlock())
+                      self.myPostOffice.myPlayer.getHp(), " - Block: ", self.myPostOffice.myPlayer.getBlock())
                 for item in self.myPostOffice.players:
                     print(item)
                 print("-------- END DIAGNOSTIC ---------")
@@ -81,30 +84,39 @@ class Client():
 
     def __listen_for_health(self):
         for health in self.myPostOffice.HealingStream():
-            print("HEALING: ", health , type(health.hp))
+            print("HEALING: ", health, type(health.hp))
             healed = player.transformFromJSON(health.json_str)
+            for p in self.myPostOffice.players:
+                if p.getUid() == healed.getUid():
+                    healed = p
             health_amount = int(health.hp)
 
             healed.heal(health_amount)
             self.adjustLabels(healed)
             '''for pl in self.myPostOffice.players:
                 self.adjustLabels(pl)'''
-    
+
     def __listen_for_attack(self):
-        for attack in self.myPostOffice.AttackStream():
-            print("ATTACK: ", attack , type(attack.attack))
-            attacked = player.transformFromJSON(attack.json_str)
-            attack_amount = int(attack.attack)
+        for a in self.myPostOffice.AttackStream():
+            print("ATTACK: ", a, type(a.attack))
+            attacked = player.transformFromJSON(a.json_str)
+            for p in self.myPostOffice.players:
+                if p.getUid() == attacked.getUid():
+                    attacked = p
+            attack_amount = int(a.attack)
 
             attacked.takeDamage(attack_amount)
             self.adjustLabels(attacked)
             '''for pl in self.myPostOffice.players:
-                self.adjustLabels(pl)'''
+                self.adjustLabels(pl) uid, health, block, u_type'''
 
     def __listen_for_block(self):
         for block in self.myPostOffice.BlockStream():
-            print("BLOCK: ", block , type(block.block))
+            print("BLOCK: ", block, type(block.block))
             blocked = player.transformFromJSON(block.json_str)
+            for p in self.myPostOffice.players:
+                if p.getUid() == blocked.getUid():
+                    blocked = p
             block_amount = int(block.block)
 
             blocked.block(block_amount)
@@ -135,7 +147,8 @@ class Client():
                 print_message_array = [
                     "User", actor.getUsername(), "prepares to block!"]
             else:'''
-            print_message_array = ["User", actor.getUsername(), mode, addendum, "for", str(abs(action_amount)), "points!"]
+            print_message_array = ["User", actor.getUsername(
+            ), mode, addendum, "for", str(abs(action_amount)), "points!"]
 
             # gets rid of the double space in addendum when action_type != 2
             print_message = " ".join(print_message_array).replace("  ", " ")
@@ -145,16 +158,19 @@ class Client():
             print(print_message)
             print("--- MESSAGE ---")
 
-            match action_type:
-                case 0:
-                    self.myPostOffice.SendAttack(user=victim, amount=action_amount)
-                case 1:
-                    self.myPostOffice.SendHealing(user=victim, amount=action_amount)
-                case 2:
-                    self.myPostOffice.SendBlock(user=victim, amount=action_amount)
-                case _:
-                    print("Error with the actions :(")
-            
+            if victim.getUid() == self.myPostOffice.myPlayer.getUid():
+                match action_type:
+                    case 0:
+                        self.myPostOffice.SendAttack(
+                            user=victim, amount=action_amount)
+                    case 1:
+                        self.myPostOffice.SendHealing(
+                            user=victim, amount=action_amount)
+                    case 2:
+                        self.myPostOffice.SendBlock(
+                            user=victim, amount=action_amount)
+                    case _:
+                        print("Error with the actions :(")
 
             # if the victim can block an attack he will do that before getting his hp hit
             '''if victim.getBlock() > 0 and action_type == 0 and victim.getUid() == self.myPostOffice.myPlayer.getUid():
@@ -170,7 +186,6 @@ class Client():
 
             elif victim.getUid() == self.myPostOffice.myPlayer.getUid():
                 self.myPostOffice.SendBlock(user=victim, amount=action_amount)'''
-            
 
     def __listen_for_turns(self):
         while self.myPostOffice.myPlayer is None:
@@ -262,7 +277,8 @@ class Client():
         self.state = "attack"
         # self.__after_action()
         print("MESSAGGIO CREATO")
-        self.myPostOffice.SendAction(self.myPostOffice.myPlayer, attacked, actionType=0)
+        self.myPostOffice.SendAction(
+            self.myPostOffice.myPlayer, attacked, actionType=0)
 
     def heal_single(self, healed):
         if self.myPostOffice.myPlayer.getUsertype() != 1:
@@ -270,7 +286,8 @@ class Client():
         self.assignButtons()
         self.lockButtons()
         self.state = "heal"
-        self.myPostOffice.SendAction(self.myPostOffice.myPlayer, healed, actionType=1)
+        self.myPostOffice.SendAction(
+            self.myPostOffice.myPlayer, healed, actionType=1)
 
     def block_single(self, blocked):
         # self.__after_action()
@@ -279,18 +296,21 @@ class Client():
         self.assignButtons()
         self.lockButtons()
         self.state = "protect"
-        self.myPostOffice.SendAction(self.myPostOffice.myPlayer, blocked, actionType=2)
+        self.myPostOffice.SendAction(
+            self.myPostOffice.myPlayer, blocked, actionType=2)
 
     def adjustLabels(self, pl):
-        # TODO: remove old disconnected player from labels references to change life value by their indexes        
-        if pl.getUsertype() == 1:
-            self.labelrefs[pl.getUid()]["health_label"].config(text=str(pl.getHp())+'/100 ' + '['+str(pl.getBlock())+']')
+        # TODO: remove old disconnected player from labels references to change life value by their indexes
+        if pl.getUid() == 1:
+            self.labelrefs[pl.getUid()]["health_label"].config(
+                text=str(pl.getHp())+'/100 ' + '['+str(pl.getBlock())+']')
         else:
-            self.labelrefs[pl.getUid()]["health_label"].config(text=str(pl.getHp())+'/50 ' + '['+str(pl.getBlock())+']')
+            self.labelrefs[pl.getUid()]["health_label"].config(
+                text=str(pl.getHp())+'/50 ' + '['+str(pl.getBlock())+']')
 
     def mapFuncToButtons(self, function, shout):
         buttons = [self.attack_button, self.block_button, self.heal_button]
-        #print(len(self.myPostOffice.heroesList), " ",len(buttons) )
+        # print(len(self.myPostOffice.heroesList), " ",len(buttons) )
 
         for i in range(0, len(self.myPostOffice.heroesList)):
             try:
@@ -316,12 +336,14 @@ class Client():
         pass
 
     def cleanInitialList(self):
-            #[{"uid": adsd, health_label: label},{},{},{}]
-            #{uid_1:...., uid_2....}
+        # [{"uid": adsd, health_label: label},{},{},{}]
+        # {uid_1:...., uid_2....}
         i = 0
-        v = [self.hero1_username, self.hero2_username, self.hero3_username] #labels_username
-        v2 = [self.hero1_healthLabel, self.hero2_healthLabel, self.hero3_healthLabel] #labels_health
-        v3 = [self.hero1, self.hero2, self.hero3] #labels_images
+        v = [self.hero1_username, self.hero2_username,
+             self.hero3_username]  # labels_username
+        v2 = [self.hero1_healthLabel, self.hero2_healthLabel,
+              self.hero3_healthLabel]  # labels_health
+        v3 = [self.hero1, self.hero2, self.hero3]  # labels_images
         for u in self.myPostOffice.players:
             print("Cleaning ", u)
             if u.getUsername() == self.username:
@@ -330,13 +352,15 @@ class Client():
                 if self.myPlayerType == 1:
                     self.monster_label.config(text=u.getUsername())
                     self.monsterRef = u
-                    new_el = {"health_label": self.monster_healthLabel, "image_label": self.monster, "username_label": self.monster_label}
+                    new_el = {"health_label": self.monster_healthLabel,
+                              "image_label": self.monster, "username_label": self.monster_label}
                     self.labelrefs[u.getUid()] = new_el
                     self.myHp[0].set(u.getHp())
                 else:
                     v[i].config(text=u.getUsername())
                     v3[i].config(image=self.imgs[u.getUsertype()])
-                    new_el = {"health_label": v2[i], "image_label": v3[i], "username_label": v[i]}
+                    new_el = {
+                        "health_label": v2[i], "image_label": v3[i], "username_label": v[i]}
                     self.labelrefs[u.getUid()] = new_el
                     self.myHp[i+1].set(u.getHp())
                     i += 1
@@ -344,14 +368,16 @@ class Client():
                 if u.getUsertype() == 1:
                     self.monster_label.config(text=u.getUsername())
                     self.monsterRef = u
-                    new_el = {"health_label": self.monster_healthLabel, "image_label": self.monster, "username_label": self.monster_label}
+                    new_el = {"health_label": self.monster_healthLabel,
+                              "image_label": self.monster, "username_label": self.monster_label}
                     self.labelrefs[u.getUid()] = new_el
                     self.myHp[0].set(u.getHp())
                     # monster = u
                 else:
                     v[i].config(text=u.getUsername())
                     v3[i].config(image=self.imgs[u.getUsertype()])
-                    new_el = {"health_label": v2[i], "image_label": v3[i], "username_label": v[i]}
+                    new_el = {
+                        "health_label": v2[i], "image_label": v3[i], "username_label": v[i]}
                     self.labelrefs[u.getUid()] = new_el
                     self.myHp[i+1].set(u.getHp())
                     i += 1
@@ -374,7 +400,7 @@ class Client():
             # print("ASSINGED MONSTER")
             # monster
             attack = partial(self.mapFuncToButtons,
-                            self.attack_single, "ATTACK")
+                             self.attack_single, "ATTACK")
             self.attack_button.configure(command=attack)
             block = partial(self.block_single, self.myPostOffice.myPlayer)
             self.block_button.configure(command=block)
