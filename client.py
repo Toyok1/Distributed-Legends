@@ -64,183 +64,216 @@ class Client():
         self.window.mainloop()
 
     def __check_for_start(self):
-        while not self.GAME_STARTED:
-            b = self.myPostOffice.CheckStarted()
-            if b.started:
-                self.GAME_STARTED = b.started
-                self.cleanInitialList()
-        self.start_button.destroy()
+        try:
+            while not self.GAME_STARTED:
+                b = self.myPostOffice.CheckStarted()
+                if b.started:
+                    self.GAME_STARTED = b.started
+                    self.cleanInitialList()
+            self.start_button.destroy()
+        except:
+            print("Error in __check_for_start ")
+            self.__check_for_start()
 
     def __diagnose(self):
-        while True:
-            if self.myPostOffice.myPlayer != None:
-                print("-------- START DIAGNOSTIC ---------")
-                print(self.myPostOffice.myPlayer.getUsername(), " - HP: ",
-                      self.myPostOffice.myPlayer.getHp(), " - Block: ", self.myPostOffice.myPlayer.getBlock())
-                for item in self.myPostOffice.players:
-                    print(item)
-                print("-------- END DIAGNOSTIC ---------")
-            time.sleep(10)
+        try:
+            while True:
+                if self.myPostOffice.myPlayer != None:
+                    print("-------- START DIAGNOSTIC ---------")
+                    print(self.myPostOffice.myPlayer.getUsername(), " - HP: ",
+                          self.myPostOffice.myPlayer.getHp(), " - Block: ", self.myPostOffice.myPlayer.getBlock())
+                    for item in self.myPostOffice.players:
+                        print(item)
+                    print("-------- END DIAGNOSTIC ---------")
+                time.sleep(10)
+        except:
+            print("Error in __diagnose ")
+            self.__diagnose()
 
     def __listen_for_health(self):
-        for health in self.myPostOffice.HealingStream():
-            print("HEALING: ", health, type(health.hp))
-            healed = player.transformFromJSON(health.json_str)
-            for p in self.myPostOffice.players:
-                if p.getUid() == healed.getUid():
-                    healed = p
-            health_amount = int(health.hp)
+        try:
+            for health in self.myPostOffice.HealingStream():
+                print("HEALING: ", health, type(health.hp))
+                healed = player.transformFromJSON(health.json_str)
+                for p in self.myPostOffice.players:
+                    if p.getUid() == healed.getUid():
+                        healed = p
+                health_amount = int(health.hp)
 
-            healed.heal(health_amount)
-            self.adjustLabels(healed)
-            '''for pl in self.myPostOffice.players:
-                self.adjustLabels(pl)'''
+                healed.heal(health_amount)
+                self.adjustLabels(healed)
+                '''for pl in self.myPostOffice.players:
+                    self.adjustLabels(pl)'''
+        except:
+            print("Error in __listen_for_health")
+            self.__listen_for_health()
 
     def __listen_for_attack(self):
-        for a in self.myPostOffice.AttackStream():
-            print("ATTACK: ", a, type(a.attack))
-            attacked = player.transformFromJSON(a.json_str)
-            for p in self.myPostOffice.players:
-                if p.getUid() == attacked.getUid():
-                    attacked = p
-            attack_amount = int(a.attack)
+        try:
+            for a in self.myPostOffice.AttackStream():
+                print("ATTACK: ", a, type(a.attack))
+                attacked = player.transformFromJSON(a.json_str)
+                for p in self.myPostOffice.players:
+                    if p.getUid() == attacked.getUid():
+                        attacked = p
+                attack_amount = int(a.attack)
 
-            attacked.takeDamage(attack_amount)
-            self.adjustLabels(attacked)
-            '''for pl in self.myPostOffice.players:
-                self.adjustLabels(pl) uid, health, block, u_type'''
+                attacked.takeDamage(attack_amount)
+                self.adjustLabels(attacked)
+                '''for pl in self.myPostOffice.players:
+                    self.adjustLabels(pl) uid, health, block, u_type'''
+        except:
+            print("Error in __listen_for_attack")
+            self.__listen_for_attack()
 
     def __listen_for_block(self):
-        for block in self.myPostOffice.BlockStream():
-            print("BLOCK: ", block, type(block.block))
-            blocked = player.transformFromJSON(block.json_str)
-            for p in self.myPostOffice.players:
-                if p.getUid() == blocked.getUid():
-                    blocked = p
-            block_amount = int(block.block)
+        try:
+            for block in self.myPostOffice.BlockStream():
+                print("BLOCK: ", block, type(block.block))
+                blocked = player.transformFromJSON(block.json_str)
+                for p in self.myPostOffice.players:
+                    if p.getUid() == blocked.getUid():
+                        blocked = p
+                block_amount = int(block.block)
 
-            blocked.block(block_amount)
-            self.adjustLabels(blocked)
-            '''for pl in self.myPostOffice.players:
-                self.adjustLabels(pl)'''
+                blocked.block(block_amount)
+                self.adjustLabels(blocked)
+                '''for pl in self.myPostOffice.players:
+                    self.adjustLabels(pl)'''
+        except:
+            print("Error in __listen_for_block")
+            self.__listen_for_block()
 
     def __listen_for_actions(self):
-        for action in self.myPostOffice.ActionStream():
-            actor = player.transformFromJSON(action.sender)
-            victim = player.transformFromJSON(action.reciever)
-            action_amount = action.amount
-            action_type = action.action_type
-            mode = ""
+        try:
+            for action in self.myPostOffice.ActionStream():
+                actor = player.transformFromJSON(action.sender)
+                victim = player.transformFromJSON(action.reciever)
+                action_amount = action.amount
+                action_type = action.action_type
+                mode = ""
 
-            match action_type:
-                case 0:
-                    mode = "attacks"
-                case 1:
-                    mode = "heals"
-                case 2:
-                    mode = "blocks for"
-                case _:
-                    mode = "idles"  # default
-
-            addendum = victim.getUsername()
-            '''if action_type == 2:
-                print_message_array = [
-                    "User", actor.getUsername(), "prepares to block!"]
-            else:'''
-            print_message_array = ["User", actor.getUsername(
-            ), mode, addendum, "for", str(abs(action_amount)), "points!"]
-
-            # gets rid of the double space in addendum when action_type != 2
-            print_message = " ".join(print_message_array).replace("  ", " ")
-            self.entry_message.config(text=print_message)
-            self.state = mode
-            print("--- MESSAGE ---")
-            print(print_message)
-            print("--- MESSAGE ---")
-
-            if victim.getUid() == self.myPostOffice.myPlayer.getUid():
                 match action_type:
                     case 0:
-                        self.myPostOffice.SendAttack(
-                            user=victim, amount=action_amount)
+                        mode = "attacks"
                     case 1:
-                        self.myPostOffice.SendHealing(
-                            user=victim, amount=action_amount)
+                        mode = "heals"
                     case 2:
-                        self.myPostOffice.SendBlock(
-                            user=victim, amount=action_amount)
+                        mode = "blocks for"
                     case _:
-                        print("Error with the actions :(")
+                        mode = "idles"  # default
 
-            # if the victim can block an attack he will do that before getting his hp hit
-            '''if victim.getBlock() > 0 and action_type == 0 and victim.getUid() == self.myPostOffice.myPlayer.getUid():
-                action_amount = action_amount + int(victim.getBlock()) #-5 + 8 = 3
-                #new_block = 0 if action_amount < 0 else action_amount
-                self.myPostOffice.SendBlock(user=victim, amount=action_amount)
+                addendum = victim.getUsername()
+                '''if action_type == 2:
+                    print_message_array = [
+                        "User", actor.getUsername(), "prepares to block!"]
+                else:'''
+                print_message_array = ["User", actor.getUsername(
+                ), mode, addendum, "for", str(abs(action_amount)), "points!"]
 
-            if action_type < 2 and victim.getUid() == self.myPostOffice.myPlayer.getUid():
-                action_amount = victim.getHp() + action_amount #2 + -3 = -1
-                #action_amount = 0 if action_amount < 0 else action_amount
-                #action_amount = 100 if (victim.getUsertype() == 1 and action_amount > 100) else action_amount
-                self.myPostOffice.SendHealth(user=victim, amount=action_amount)
+                # gets rid of the double space in addendum when action_type != 2
+                print_message = " ".join(
+                    print_message_array).replace("  ", " ")
+                self.entry_message.config(text=print_message)
+                self.state = mode
+                print("--- MESSAGE ---")
+                print(print_message)
+                print("--- MESSAGE ---")
 
-            elif victim.getUid() == self.myPostOffice.myPlayer.getUid():
-                self.myPostOffice.SendBlock(user=victim, amount=action_amount)'''
+                if victim.getUid() == self.myPostOffice.myPlayer.getUid():
+                    match action_type:
+                        case 0:
+                            self.myPostOffice.SendAttack(
+                                user=victim, amount=action_amount)
+                        case 1:
+                            self.myPostOffice.SendHealing(
+                                user=victim, amount=action_amount)
+                        case 2:
+                            self.myPostOffice.SendBlock(
+                                user=victim, amount=action_amount)
+                        case _:
+                            print("Error with the actions :(")
+
+                # if the victim can block an attack he will do that before getting his hp hit
+                '''if victim.getBlock() > 0 and action_type == 0 and victim.getUid() == self.myPostOffice.myPlayer.getUid():
+                    action_amount = action_amount + int(victim.getBlock()) #-5 + 8 = 3
+                    #new_block = 0 if action_amount < 0 else action_amount
+                    self.myPostOffice.SendBlock(user=victim, amount=action_amount)
+
+                if action_type < 2 and victim.getUid() == self.myPostOffice.myPlayer.getUid():
+                    action_amount = victim.getHp() + action_amount #2 + -3 = -1
+                    #action_amount = 0 if action_amount < 0 else action_amount
+                    #action_amount = 100 if (victim.getUsertype() == 1 and action_amount > 100) else action_amount
+                    self.myPostOffice.SendHealth(user=victim, amount=action_amount)
+
+                elif victim.getUid() == self.myPostOffice.myPlayer.getUid():
+                    self.myPostOffice.SendBlock(user=victim, amount=action_amount)'''
+        except:
+            print("Error in __listen_for_actions")
+            self.__listen_for_actions()
 
     def __listen_for_turns(self):
-        while self.myPostOffice.myPlayer is None:
-            pass
-        for turn in self.myPostOffice.TurnStream():
-            what = player.transformFromJSON(turn.json_str)
+        try:
+            while self.myPostOffice.myPlayer is None:
+                pass
+            for turn in self.myPostOffice.TurnStream():
+                what = player.transformFromJSON(turn.json_str)
 
-            if self.GAME_STARTED:
-                print("STARTED")
-                counter = 0
-                for p in self.myPostOffice.players:
-                    # print("Player " + p.getUsername() + "has" + str(p.getHp()) + " hp")
-                    if p.getHp() <= 0:
-                        counter += 1
-                if counter == len(self.myPostOffice.players) - 1:
-                    self.isFinished = True
-                    self.myPostOffice.SendFinishGame()
-                    # end the game right here
-
-            if what.getUsername() == self.myPostOffice.myPlayer.getUsername() and what.getUid() == self.myPostOffice.myPlayer.getUid():  # for testing use this line
-                # if self.fernet.decrypt(turn.ip).decode() == self.ip:
-                print("Mio turno: " + self.myPostOffice.myPlayer.getUsername())
-                self.turn_button["state"] = "normal"
-                self.unlockButtons()  # unlock the buttons when it's my turn
-                # if miei hp <= 0 endturn + interfaccia "you died"
-
-                if self.myPostOffice.myPlayer.getHp() <= 0:
-                    if self.myPostOffice.myPlayer.getUsertype() == 1:  # monster
-                        self.entry_message.config(
-                            text="THE MONSTER IS DEAD! The game will end shortly.")
+                if self.GAME_STARTED:
+                    print("STARTED")
+                    counter = 0
+                    for p in self.myPostOffice.players:
+                        # print("Player " + p.getUsername() + "has" + str(p.getHp()) + " hp")
+                        if p.getHp() <= 0:
+                            counter += 1
+                    if counter == len(self.myPostOffice.players) - 1:
+                        self.isFinished = True
+                        self.myPostOffice.SendFinishGame()
                         # end the game right here
-                    else:
-                        self.entry_message.config(
-                            text="YOU ARE DEAD! Wait for one of your allies to revive you.")
-                        self.lockButtons()
-                        self.send_end_turn()
+
+                if what.getUsername() == self.myPostOffice.myPlayer.getUsername() and what.getUid() == self.myPostOffice.myPlayer.getUid():  # for testing use this line
+                    # if self.fernet.decrypt(turn.ip).decode() == self.ip:
+                    print("Mio turno: " + self.myPostOffice.myPlayer.getUsername())
+                    self.turn_button["state"] = "normal"
+                    self.unlockButtons()  # unlock the buttons when it's my turn
+                    # if miei hp <= 0 endturn + interfaccia "you died"
+
+                    if self.myPostOffice.myPlayer.getHp() <= 0:
+                        if self.myPostOffice.myPlayer.getUsertype() == 1:  # monster
+                            self.entry_message.config(
+                                text="THE MONSTER IS DEAD! The game will end shortly.")
+                            # end the game right here
+                        else:
+                            self.entry_message.config(
+                                text="YOU ARE DEAD! Wait for one of your allies to revive you.")
+                            self.lockButtons()
+                            self.send_end_turn()
+        except:
+            print("Error in __listen_for_turns")
+            self.__listen_for_turns()
 
     def __listen_for_finish(self):
-        while self.isFinished == False:
-            # doNothing
-            pass
-        for finish in self.myPostOffice.FinishStream():
-            # print("Game is finished")
-            if finish.fin == True:
-                if self.myPostOffice.myPlayer.getUsertype() == 1:
-                    self.entry_message.config(text=finish.MonsterWin)
+        try:
+            while self.isFinished == False:
+                # doNothing
+                pass
+            for finish in self.myPostOffice.FinishStream():
+                # print("Game is finished")
+                if finish.fin == True:
+                    if self.myPostOffice.myPlayer.getUsertype() == 1:
+                        self.entry_message.config(text=finish.MonsterWin)
+                    else:
+                        self.entry_message.config(text=finish.HeroesDefeat)
                 else:
-                    self.entry_message.config(text=finish.HeroesDefeat)
-            else:
-                if self.myPostOffice.myPlayer.getUsertype() == 1:
-                    self.entry_message.config(text=finish.MonsterDefeat)
-                else:
-                    self.entry_message.config(text=finish.HeroesWin)
-            self.closeGame()
-        print("Game would have finished")
+                    if self.myPostOffice.myPlayer.getUsertype() == 1:
+                        self.entry_message.config(text=finish.MonsterDefeat)
+                    else:
+                        self.entry_message.config(text=finish.HeroesWin)
+                self.closeGame()
+            print("Game would have finished")
+        except:
+            print("Error in __listen_for_turns")
+            self.__listen_for_turns()
 
     def closeGame(self):
         # TODO end game
