@@ -10,7 +10,7 @@ import chat_pb2 as chat
 import chat_pb2_grpc as rpc
 from GRPCClientHelper import player
 
-from GRPCClientHelper.config import port, key
+from GRPCClientHelper.config import port, key, sentinel_list
 
 
 class PostOffice:
@@ -33,28 +33,40 @@ class PostOffice:
         self.old_players = []
         self.disconnected_players = []
 
-    def Listen_for_PingPong(self, my_id):
-        while True:
-            ping = chat.Ping()  # create protobug message (called Ping)
-            ping.ip = self.encIp
-            ping.id = my_id
-            pong = self.conn.SendPing(ping)
-            time.sleep(2.5)
-            # print(pong.message)
-            self.players = player.transformFullListFromJSON(pong.list_players)
-            # print("PLAYERS : ",self.players)
-            for p in self.players:
-                if p.getUid() == self.privateInfo.u_id:
-                    self.myPlayer = p
+    def __create_ping(self, sl_time, my_id):
+        ping = chat.Ping()  # create protobug message (called Ping)
+        ping.ip = self.encIp
+        ping.id = my_id
+        pong = self.conn.SendPing(ping)
+        time.sleep(sl_time)
+        # print(pong.list_players, "server response")
+        self.players = player.transformFullListFromJSON(pong.list_players)
+        return pong
+
+    def __set_user_list(self):
+        for p in self.players:
+            if p.getUid() == self.privateInfo.u_id:
+                self.myPlayer = p
             self.disconnected_players.extend(list(set(
                 self.old_players) - set(self.players)) if len(self.old_players) > len(self.players) else [])
             self.old_players = self.players
-
             self.heroesList = [u for u in self.players if u.getUsertype() != 1]
-            # print("H_LIST: ", self.heroesList)
 
+    def Listen_for_PingPong(self, my_id):
+        global sentinel_list
+        while True:
+            pong = self.__create_ping(2.5, my_id)
+            self.__set_user_list()
+            sentinel_list = True
+            # print(self.players)
+            '''self.myPostOffice.ManualUpdateList(
+                self.myPostOffice.myPlayer.getUid())'''
             if pong.message != "Thanks, friend!":
                 raise Exception("Disconnect to the server!")
+
+    def ManualUpdateList(self, my_id):
+        self.__create_ping(0, my_id)
+        self.__set_user_list()
 
     def Subscribe(self):
         # send the Note to the server

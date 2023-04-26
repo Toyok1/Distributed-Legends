@@ -156,7 +156,9 @@ class ChatServer(rpc.ChatServerServicer):
             while len(self.hp) > lastindex:
                 n = self.hp[lastindex]
                 pl = player.transformFromJSON(n.json_str)
-                pl.heal(int(n.hp))
+                for p in self.listUser:
+                    if p.getUid() == pl.getUid():
+                        p.heal(int(n.hp))
                 # print(self.hp)
                 lastindex += 1
                 yield n
@@ -169,7 +171,9 @@ class ChatServer(rpc.ChatServerServicer):
             while len(self.listBlock) > lastindex:
                 n = self.listBlock[lastindex]
                 pl = player.transformFromJSON(n.json_str)
-                pl.block(int(n.block))
+                for p in self.listUser:
+                    if p.getUid() == pl.getUid():
+                        p.block(int(n.block))
                 # print(n)
                 lastindex += 1
                 yield n
@@ -182,7 +186,9 @@ class ChatServer(rpc.ChatServerServicer):
             while len(self.attack) > lastindex:
                 n = self.attack[lastindex]
                 pl = player.transformFromJSON(n.json_str)
-                pl.takeDamage(int(n.attack))
+                for p in self.listUser:
+                    if p.getUid() == pl.getUid():
+                        p.takeDamage(int(n.attack))
                 # print(n)
                 lastindex += 1
                 yield n

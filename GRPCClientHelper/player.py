@@ -22,7 +22,7 @@ class Player:
         self.username = username
         # 1 = monster, 2 = knight, 3 = priest, 4 = mage TODO: make them match
         self.user_type = user_type
-        self.hp = 1
+        self.hp = 100 if user_type == 1 else 50
         self.block = 0
         self.ping_time = ping_time
 
@@ -105,12 +105,12 @@ class Player:
     def __repr__(self):
         # ip, u_id, username, user_type, hp, block, ping_time
         # return f"Player ip : {self.ip} u_id : {self.u_id} username : {self.username} user_type : {self.user_type} hp : {self.hp} block : {self.block}"
-        return f"Player hp : {self.hp} username : {self.username} ping: {self.ping_time}"
+        return f"Player hp : {self.hp} username : {self.username}"
 
     def __str__(self):
         # ip, u_id, username, user_type, hp, block, ping_time
         # return f"Player ip : {self.ip} u_id : {self.u_id} username : {self.username} user_type : {self.user_type} hp : {self.hp} block : {self.block}"
-        return f"Player hp : {self.hp} username : {self.username} ping: {self.ping_time}"
+        return f"Player hp : {self.hp} username : {self.username}"
 
 
 def transformIntoJSON(theplayertotransform: Player):  # ip input decoded

@@ -12,7 +12,7 @@ from GRPCClientHelper import helper, player, serverDialog, userTypeDialog
 from cryptography.fernet import Fernet
 from tkinter import simpledialog
 from tkinter import ttk
-from GRPCClientHelper.config import key, cancel_id, aniThreadPointer, pg_type
+from GRPCClientHelper.config import key, cancel_id, aniThreadPointer, pg_type, sentinel_list
 
 
 class Client():
@@ -53,6 +53,7 @@ class Client():
         threading.Thread(target=self.__listen_for_attack, daemon=True).start()
         threading.Thread(target=self.__listen_for_health, daemon=True).start()
         threading.Thread(target=self.__listen_for_block, daemon=True).start()
+        threading.Thread(target=self.__listen_for_labels, daemon=True).start()
         # threading.Thread(target=self.__diagnose, daemon=True).start()
         threading.Thread(target=self.__listen_for_finish, daemon=True).start()
 
@@ -76,6 +77,7 @@ class Client():
             self.__check_for_start()
 
     def __diagnose(self):
+
         try:
             while True:
                 if self.myPostOffice.myPlayer != None:
@@ -90,6 +92,16 @@ class Client():
             print("Error in __diagnose ")
             self.__diagnose()
 
+    def __listen_for_labels(self):
+        global sentinel_list
+
+        while True:
+            while not sentinel_list:
+                time.sleep(0.25)
+            sentinel_list = False
+            for p in self.myPostOffice.players:
+                self.adjustLabels(p)
+
     def __listen_for_health(self):
         try:
             for health in self.myPostOffice.HealingStream():
@@ -101,7 +113,7 @@ class Client():
                 health_amount = int(health.hp)
 
                 healed.heal(health_amount)
-                self.adjustLabels(healed)
+                # self.adjustLabels(healed)
                 '''for pl in self.myPostOffice.players:
                     self.adjustLabels(pl)'''
         except:
@@ -111,7 +123,7 @@ class Client():
     def __listen_for_attack(self):
         try:
             for a in self.myPostOffice.AttackStream():
-                print("ATTACK: ", a, type(a.attack))
+                print("ATTACK: ", a)
                 attacked = player.transformFromJSON(a.json_str)
                 for p in self.myPostOffice.players:
                     if p.getUid() == attacked.getUid():
@@ -119,7 +131,7 @@ class Client():
                 attack_amount = int(a.attack)
 
                 attacked.takeDamage(attack_amount)
-                self.adjustLabels(attacked)
+                # self.adjustLabels(attacked)
                 '''for pl in self.myPostOffice.players:
                     self.adjustLabels(pl) uid, health, block, u_type'''
         except:
@@ -137,7 +149,7 @@ class Client():
                 block_amount = int(block.block)
 
                 blocked.block(block_amount)
-                self.adjustLabels(blocked)
+                # self.adjustLabels(blocked)
                 '''for pl in self.myPostOffice.players:
                     self.adjustLabels(pl)'''
         except:
@@ -149,6 +161,9 @@ class Client():
             for action in self.myPostOffice.ActionStream():
                 actor = player.transformFromJSON(action.sender)
                 victim = player.transformFromJSON(action.reciever)
+                for p in self.myPostOffice.players:
+                    if p.getUid() == victim. getUid():
+                        victim = p
                 action_amount = action.amount
                 action_type = action.action_type
                 mode = ""
@@ -156,10 +171,13 @@ class Client():
                 match action_type:
                     case 0:
                         mode = "attacks"
+                        break
                     case 1:
                         mode = "heals"
+                        break
                     case 2:
                         mode = "blocks for"
+                        break
                     case _:
                         mode = "idles"  # default
 
@@ -179,20 +197,24 @@ class Client():
                 print("--- MESSAGE ---")
                 print(print_message)
                 print("--- MESSAGE ---")
-
+                print("MIO UID", self.myPostOffice.myPlayer.getUid())
                 if victim.getUid() == self.myPostOffice.myPlayer.getUid():
                     match action_type:
                         case 0:
                             self.myPostOffice.SendAttack(
                                 user=victim, amount=action_amount)
+                            break
                         case 1:
                             self.myPostOffice.SendHealing(
                                 user=victim, amount=action_amount)
+                            break
                         case 2:
                             self.myPostOffice.SendBlock(
                                 user=victim, amount=action_amount)
+                            break
                         case _:
                             print("Error with the actions :(")
+                            break
 
                 # if the victim can block an attack he will do that before getting his hp hit
                 '''if victim.getBlock() > 0 and action_type == 0 and victim.getUid() == self.myPostOffice.myPlayer.getUid():
@@ -299,6 +321,9 @@ class Client():
         self.turn_button["state"] = "disabled"
         self.lockButtons()
         self.state = "idle"
+        # self.myPostOffice.ManualUpdateList(self.myPostOffice.myPlayer.getUid())
+        for p in self.myPostOffice.players:
+            self.adjustLabels(p)
         self.myPostOffice.EndTurn(self.myPostOffice.myPlayer)
 
     def attack_single(self, attacked):
@@ -333,8 +358,9 @@ class Client():
             self.myPostOffice.myPlayer, blocked, actionType=2)
 
     def adjustLabels(self, pl):
+        print("CHANGING LABELS")
         # TODO: remove old disconnected player from labels references to change life value by their indexes
-        if pl.getUid() == 1:
+        if pl.getUsertype() == 1:
             self.labelrefs[pl.getUid()]["health_label"].config(
                 text=str(pl.getHp())+'/100 ' + '['+str(pl.getBlock())+']')
         else:
@@ -379,7 +405,7 @@ class Client():
         v3 = [self.hero1, self.hero2, self.hero3]  # labels_images
         for u in self.myPostOffice.players:
             print("Cleaning ", u)
-            if u.getUsername() == self.username:
+            if u.getUid() == self.myPostOffice.myPlayer.getUid():
                 self.myPostOffice.myPlayer = u
                 self.myPlayerType = u.getUsertype()
                 if self.myPlayerType == 1:
