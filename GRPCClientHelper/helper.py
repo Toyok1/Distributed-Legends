@@ -140,19 +140,28 @@ class PostOffice:
 
         self.conn.SendBlock(b)'''
         b = chat.Block()
-        b.json_str = player.transformIntoJSON(user)
+        # user = player.transformFromJSON(user)
+        for p in self.players:
+            if p.getUid() == user.getUid():
+                b.json_str = player.transformIntoJSON(p)
         b.block = amount
         self.conn.SendBlock(b)
 
     def SendHealing(self, user: player.Player, amount: int = None):
-        m = chat.Healing()
-        m.json_str = player.transformIntoJSON(user)
-        m.hp = amount
-        self.conn.SendHealing(m)
+        h = chat.Healing()
+        # user = player.transformFromJSON(user)
+        for p in self.players:
+            if p.getUid() == user.getUid():
+                h.json_str = player.transformIntoJSON(p)
+        h.hp = amount
+        self.conn.SendHealing(h)
 
     def SendAttack(self, user: player.Player, amount: int = None):
         m = chat.Attack()
-        m.json_str = player.transformIntoJSON(user)
+        # user = player.transformFromJSON(user)
+        for p in self.players:
+            if p.getUid() == user.getUid():
+                m.json_str = player.transformIntoJSON(p)
         m.attack = amount
         self.conn.SendAttack(m)
 
