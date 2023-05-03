@@ -157,82 +157,81 @@ class Client():
             self.__listen_for_block()
 
     def __listen_for_actions(self):
-        try:
-            for action in self.myPostOffice.ActionStream():
-                actor = player.transformFromJSON(action.sender)
-                victim = player.transformFromJSON(action.reciever)
-                for p in self.myPostOffice.players:
-                    if p.getUid() == victim. getUid():
-                        victim = p
-                action_amount = action.amount
-                action_type = action.action_type
-                mode = ""
+        for action in self.myPostOffice.ActionStream():
+            actor = player.transformFromJSON(action.sender)
+            victim = ""
+            for p in self.myPostOffice.players:
+                print("checking")
+                if p.getUid() == victim. getUid():
+                    victim = p
+            action_amount = action.amount
+            action_type = action.action_type
+            mode = ""
 
+            print(actor, victim, action_amount, action_type)
+
+            match action_type:
+                case 0:
+                    mode = "attacks"
+                    break
+                case 1:
+                    mode = "heals"
+                    break
+                case 2:
+                    mode = "blocks for"
+                    break
+                case _:
+                    mode = "idles"  # default
+
+            addendum = victim.getUsername()
+            '''if action_type == 2:
+                print_message_array = [
+                    "User", actor.getUsername(), "prepares to block!"]
+            else:'''
+            print_message_array = ["User", actor.getUsername(
+            ), mode, addendum, "for", str(abs(action_amount)), "points!"]
+
+            # gets rid of the double space in addendum when action_type != 2
+            print_message = " ".join(
+                print_message_array).replace("  ", " ")
+            self.entry_message.config(text=print_message)
+            self.state = mode
+            print("--- MESSAGE ---")
+            print(print_message)
+            print("--- MESSAGE ---")
+            # print("MIO UID", self.myPostOffice.myPlayer.getUid())
+            if victim.getUid() == self.myPostOffice.myPlayer.getUid():
                 match action_type:
                     case 0:
-                        mode = "attacks"
+                        self.myPostOffice.SendAttack(
+                            user=victim, amount=action_amount)
                         break
                     case 1:
-                        mode = "heals"
+                        self.myPostOffice.SendHealing(
+                            user=victim, amount=action_amount)
                         break
                     case 2:
-                        mode = "blocks for"
+                        self.myPostOffice.SendBlock(
+                            user=victim, amount=action_amount)
                         break
                     case _:
-                        mode = "idles"  # default
+                        print("Error with the actions :(")
+                        break
 
-                addendum = victim.getUsername()
-                '''if action_type == 2:
-                    print_message_array = [
-                        "User", actor.getUsername(), "prepares to block!"]
-                else:'''
-                print_message_array = ["User", actor.getUsername(
-                ), mode, addendum, "for", str(abs(action_amount)), "points!"]
+            # if the victim can block an attack he will do that before getting his hp hit
+            '''if victim.getBlock() > 0 and action_type == 0 and victim.getUid() == self.myPostOffice.myPlayer.getUid():
+                action_amount = action_amount + int(victim.getBlock()) #-5 + 8 = 3
+                #new_block = 0 if action_amount < 0 else action_amount
+                self.myPostOffice.SendBlock(user=victim, amount=action_amount)
 
-                # gets rid of the double space in addendum when action_type != 2
-                print_message = " ".join(
-                    print_message_array).replace("  ", " ")
-                self.entry_message.config(text=print_message)
-                self.state = mode
-                print("--- MESSAGE ---")
-                print(print_message)
-                print("--- MESSAGE ---")
-                print("MIO UID", self.myPostOffice.myPlayer.getUid())
-                if victim.getUid() == self.myPostOffice.myPlayer.getUid():
-                    match action_type:
-                        case 0:
-                            self.myPostOffice.SendAttack(
-                                user=victim, amount=action_amount)
-                            break
-                        case 1:
-                            self.myPostOffice.SendHealing(
-                                user=victim, amount=action_amount)
-                            break
-                        case 2:
-                            self.myPostOffice.SendBlock(
-                                user=victim, amount=action_amount)
-                            break
-                        case _:
-                            print("Error with the actions :(")
-                            break
+            if action_type < 2 and victim.getUid() == self.myPostOffice.myPlayer.getUid():
+                action_amount = victim.getHp() + action_amount #2 + -3 = -1
+                #action_amount = 0 if action_amount < 0 else action_amount
+                #action_amount = 100 if (victim.getUsertype() == 1 and action_amount > 100) else action_amount
+                self.myPostOffice.SendHealth(user=victim, amount=action_amount)
 
-                # if the victim can block an attack he will do that before getting his hp hit
-                '''if victim.getBlock() > 0 and action_type == 0 and victim.getUid() == self.myPostOffice.myPlayer.getUid():
-                    action_amount = action_amount + int(victim.getBlock()) #-5 + 8 = 3
-                    #new_block = 0 if action_amount < 0 else action_amount
-                    self.myPostOffice.SendBlock(user=victim, amount=action_amount)
-
-                if action_type < 2 and victim.getUid() == self.myPostOffice.myPlayer.getUid():
-                    action_amount = victim.getHp() + action_amount #2 + -3 = -1
-                    #action_amount = 0 if action_amount < 0 else action_amount
-                    #action_amount = 100 if (victim.getUsertype() == 1 and action_amount > 100) else action_amount
-                    self.myPostOffice.SendHealth(user=victim, amount=action_amount)
-
-                elif victim.getUid() == self.myPostOffice.myPlayer.getUid():
-                    self.myPostOffice.SendBlock(user=victim, amount=action_amount)'''
-        except:
-            print("Error in __listen_for_actions")
-            self.__listen_for_actions()
+            elif victim.getUid() == self.myPostOffice.myPlayer.getUid():
+                self.myPostOffice.SendBlock(user=victim, amount=action_amount)'''
 
     def __listen_for_turns(self):
         try:
@@ -328,8 +327,6 @@ class Client():
 
     def attack_single(self, attacked):
         # attack people that are not your same class or friends
-        if self.myPostOffice.myPlayer.getUsertype() == 1:
-            self.assignButtons()
         self.assignButtons()
         self.lockButtons()
         self.state = "attack"
@@ -719,11 +716,14 @@ if __name__ == '__main__':
     if isHost == 1:
         userType_int = 1
     else:
+        userType_int = 0
+        '''
         while True:  # pseudo do while loop
             userType = userTypeDialog.UserTypeDialog(root)
             root.wait_window(userType)
             if userType.result != None:
                 break
+        '''
 
     # if isHost == 0:
     while (serverAddress != "localhost") or (serverAddress is None):

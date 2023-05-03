@@ -99,10 +99,15 @@ class PostOffice:
         mess_et.json_str = player.transformIntoJSON(last_turn)
         self.conn.EndTurn(mess_et)
 
-    def SendAction(self, send: str, recieve: str, actionType: int):
+    def SendAction(self, send: player.Player, recieve: player.Player, actionType: int):
         n = chat.Action()
-        n.sender = player.transformIntoJSON(send)
-        n.reciever = player.transformIntoJSON(recieve)
+        n.sender = ""
+        n.reciever = ""
+        for p in self.players:
+            if p.getUid() == send.getUid():
+                n.sender = player.transformIntoJSON(p)
+            if p.getUid() == recieve.getUid():
+                n.reciever = player.transformIntoJSON(p)
 
         match actionType:
             case 0:  # attack
@@ -114,9 +119,9 @@ class PostOffice:
             case 2:  # block
                 n.action_type = 2
                 n.amount = 10  # TODO range of damage
-            case _:  # TODO check how do you wont insert like default
+            case _:  # TODO check how do you wont insert like default (????)
                 pass
-
+        print(n)
         self.conn.SendAction(n)
 
     def SendBlock(self, user: player.Player, amount: int):

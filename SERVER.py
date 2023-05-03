@@ -145,6 +145,7 @@ class ChatServer(rpc.ChatServerServicer):
     def SendAction(self, request: chat.Action, context):
         # new_a = {"ip_sender": self.fernet.decrypt(request.ip_sender).decode(), "ip_reciever": self.fernet.decrypt(request.ip_reciever).decode(), "amount": int(request.amount)}
         self.actions.append(request)
+        print("New Action = ", request)
         # manage the fact that people are attacking you
         return chat.Empty()
 
@@ -189,7 +190,7 @@ class ChatServer(rpc.ChatServerServicer):
                 for p in self.listUser:
                     if p.getUid() == pl.getUid():
                         p.takeDamage(int(n.attack))
-                # print(n)
+                print(n)
                 lastindex += 1
                 yield n
 
@@ -201,6 +202,7 @@ class ChatServer(rpc.ChatServerServicer):
             while len(self.actions) > lastindex:
                 n = self.actions[lastindex]
                 lastindex += 1
+                print("Yielding action = ", n)
                 yield n
 
     def SendPrivateInfo(self, request: chat.PrivateInfo, context):
@@ -298,7 +300,7 @@ if __name__ == '__main__':
     # the workers is like the amount of threads that can be opened at the same time, when there are 10 clients connected
     # then no more clients able to connect to the server.
     server = grpc.server(futures.ThreadPoolExecutor(
-        max_workers=100))  # create a gRPC server
+        max_workers=1000))  # create a gRPC server
     rpc.add_ChatServerServicer_to_server(ChatServer(
         os.getpid()), server)  # register the server to gRPC
     # gRPC basically manages all the threading and server responding logic, which is perfect!

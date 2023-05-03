@@ -32,7 +32,7 @@ class UserTypeDialog(tk.Toplevel):
         # Create OK button
 
         ok_button = tk.Button(self, text="OK", command=self.ok)
-        ok_button.bind('<Return>', self.ok)
+        self.bind('<Return>', self.ok)
         ok_button.pack()
 
     def ok(self):
