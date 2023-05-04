@@ -10,7 +10,7 @@ import chat_pb2 as chat
 import chat_pb2_grpc as rpc
 from GRPCClientHelper import player
 
-from GRPCClientHelper.config import port, key, sentinel_list
+from GRPCClientHelper.config import port, key
 
 
 class PostOffice:
@@ -53,14 +53,10 @@ class PostOffice:
             self.heroesList = [u for u in self.players if u.getUsertype() != 1]
 
     def Listen_for_PingPong(self, my_id):
-        global sentinel_list
         while True:
-            pong = self.__create_ping(2.5, my_id)
+            # low enough the labels become consistent TODO
+            pong = self.__create_ping(1, my_id)
             self.__set_user_list()
-            sentinel_list = True
-            # print(self.players)
-            '''self.myPostOffice.ManualUpdateList(
-                self.myPostOffice.myPlayer.getUid())'''
             if pong.message != "Thanks, friend!":
                 raise Exception("Disconnect to the server!")
 
@@ -77,15 +73,6 @@ class PostOffice:
 
     def StartGame(self):
         return self.conn.StartGame(self.privateInfo)
-
-    def HealingStream(self):
-        return self.conn.HealingStream(chat.Empty())
-
-    def AttackStream(self):
-        return self.conn.AttackStream(chat.Empty())
-
-    def BlockStream(self):
-        return self.conn.BlockStream(chat.Empty())
 
     def ActionStream(self):
         return self.conn.ActionStream(chat.Empty())
@@ -123,47 +110,6 @@ class PostOffice:
                 pass
         print(n)
         self.conn.SendAction(n)
-
-    def SendBlock(self, user: player.Player, amount: int):
-        '''b = chat.Block()
-        b.ip =  self.fernet.encrypt(victimIp.encode())
-
-        match actionType:
-            case 0 :
-                b.block = 0
-                b.user = victimUser
-            case 1:
-                b.block = action_amount
-                b.user = self.privateInfo.user
-            case _:
-                pass
-
-        self.conn.SendBlock(b)'''
-        b = chat.Block()
-        # user = player.transformFromJSON(user)
-        for p in self.players:
-            if p.getUid() == user.getUid():
-                b.json_str = player.transformIntoJSON(p)
-        b.block = amount
-        self.conn.SendBlock(b)
-
-    def SendHealing(self, user: player.Player, amount: int = None):
-        h = chat.Healing()
-        # user = player.transformFromJSON(user)
-        for p in self.players:
-            if p.getUid() == user.getUid():
-                h.json_str = player.transformIntoJSON(p)
-        h.hp = amount
-        self.conn.SendHealing(h)
-
-    def SendAttack(self, user: player.Player, amount: int = None):
-        m = chat.Attack()
-        # user = player.transformFromJSON(user)
-        for p in self.players:
-            if p.getUid() == user.getUid():
-                m.json_str = player.transformIntoJSON(p)
-        m.attack = amount
-        self.conn.SendAttack(m)
 
     def SendFinishGame(self):
         self.conn.FinishGame(chat.Empty())

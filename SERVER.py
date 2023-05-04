@@ -122,77 +122,26 @@ class ChatServer(rpc.ChatServerServicer):
         # something needs to be returned required by protobuf language, we just return empty msg
         return chat.Empty()
 
-    def SendHealing(self, request: chat.Healing, context):
-        # new_h = {"ip": self.fernet.decrypt(request.ip).decode(), "hp": request.hp, "user": str(request.user)}
-        self.hp.append(request)
-        # print(new_h)
-        return chat.Empty()
-
-    def SendAttack(self, request: chat.Attack, context):
-        # new_h = {"ip": self.fernet.decrypt(request.ip).decode(), "hp": request.hp, "user": str(request.user)}
-        print(request, " - RECIEVED ATTACK")
-        self.attack.append(request)
-        # print(new_h)
-        return chat.Empty()
-
-    def SendBlock(self, request: chat.Block, context):
-        # new_h = {"ip": self.fernet.decrypt(request.ip).decode(), "hp": request.hp, "user": str(request.user)}
-        self.listBlock.append(request)
-        print(request)
-        # print(new_h)
-        return chat.Empty()
-
     def SendAction(self, request: chat.Action, context):
         # new_a = {"ip_sender": self.fernet.decrypt(request.ip_sender).decode(), "ip_reciever": self.fernet.decrypt(request.ip_reciever).decode(), "amount": int(request.amount)}
         self.actions.append(request)
+        n = request
+        pl = player.transformFromJSON(n.reciever)
+        am = n.amount
+        action_type = n.action_type
+        for p in self.listUser:
+            if p.getUid() == pl.getUid():
+                if action_type == 0:
+                    p.takeDamage(am)
+                elif action_type == 1:
+                    p.heal(am)
+                elif action_type == 2:
+                    p.block(am)
+                else:
+                    print("OPS! Error with the actions.")
         print("New Action = ", request)
         # manage the fact that people are attacking you
         return chat.Empty()
-
-    def HealingStream(self, request_iterator, context):
-        lastindex = 0
-        # For every client a infinite loop starts (in gRPC's own managed thread)
-        while True:
-            # Check if there are any new messages
-            while len(self.hp) > lastindex:
-                n = self.hp[lastindex]
-                pl = player.transformFromJSON(n.json_str)
-                for p in self.listUser:
-                    if p.getUid() == pl.getUid():
-                        p.heal(int(n.hp))
-                # print(self.hp)
-                lastindex += 1
-                yield n
-
-    def BlockStream(self, request_iterator, context):
-        lastindex = 0
-        # For every client a infinite loop starts (in gRPC's own managed thread)
-        while True:
-            # Check if there are any new messages
-            while len(self.listBlock) > lastindex:
-                n = self.listBlock[lastindex]
-                pl = player.transformFromJSON(n.json_str)
-                for p in self.listUser:
-                    if p.getUid() == pl.getUid():
-                        p.block(int(n.block))
-                # print(n)
-                lastindex += 1
-                yield n
-
-    def AttackStream(self, request_iterator, context):
-        lastindex = 0
-        # For every client a infinite loop starts (in gRPC's own managed thread)
-        while True:
-            # Check if there are any new messages
-            while len(self.attack) > lastindex:
-                n = self.attack[lastindex]
-                pl = player.transformFromJSON(n.json_str)
-                for p in self.listUser:
-                    if p.getUid() == pl.getUid():
-                        p.takeDamage(int(n.attack))
-                print(n)
-                lastindex += 1
-                yield n
 
     def ActionStream(self, request_iterator, context):
         lastindex = 0
@@ -203,6 +152,7 @@ class ChatServer(rpc.ChatServerServicer):
                 n = self.actions[lastindex]
                 lastindex += 1
                 print("Yielding action = ", n)
+
                 yield n
 
     def SendPrivateInfo(self, request: chat.PrivateInfo, context):

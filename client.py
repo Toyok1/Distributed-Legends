@@ -12,16 +12,11 @@ from GRPCClientHelper import helper, player, serverDialog, userTypeDialog
 from cryptography.fernet import Fernet
 from tkinter import simpledialog
 from tkinter import ttk
-from GRPCClientHelper.config import key, cancel_id, aniThreadPointer, pg_type, sentinel_list
+from GRPCClientHelper.config import key, cancel_id, aniThreadPointer, pg_type
 
 
 class Client():
     def __init__(self, user: str, userType: int, serverAddress: str, window, isHost: int):
-        # the frame to put ui components on
-        # self.myPostOffice.myPlayer = None  # quick reference to my player
-        # self.otherPlayers = []  # quick reference to everyone but me
-        # self.myPostOffice.players = []  # quick refernce to every player in the game
-        # self.myPostOffice.heroesList = []
         self.GAME_STARTED = False
         self.isHost = True if isHost == 1 else False
         self.window = window
@@ -50,10 +45,6 @@ class Client():
 
         threading.Thread(target=self.__listen_for_turns, daemon=True).start()
         threading.Thread(target=self.__listen_for_actions, daemon=True).start()
-        threading.Thread(target=self.__listen_for_attack, daemon=True).start()
-        threading.Thread(target=self.__listen_for_health, daemon=True).start()
-        threading.Thread(target=self.__listen_for_block, daemon=True).start()
-        threading.Thread(target=self.__listen_for_labels, daemon=True).start()
         # threading.Thread(target=self.__diagnose, daemon=True).start()
         threading.Thread(target=self.__listen_for_finish, daemon=True).start()
 
@@ -92,67 +83,6 @@ class Client():
             print("Error in __diagnose ")
             self.__diagnose()
 
-    def __listen_for_labels(self):
-        global sentinel_list
-
-        while True:
-            while not sentinel_list:
-                time.sleep(0.25)
-            sentinel_list = False
-            for p in self.myPostOffice.players:
-                self.adjustLabels(p)
-
-    def __listen_for_health(self):
-        try:
-            for health in self.myPostOffice.HealingStream():
-                print("HEALING: ", health, type(health.hp))
-                healed = player.transformFromJSON(health.json_str)
-                for p in self.myPostOffice.players:
-                    if p.getUid() == healed.getUid():
-                        healed = p
-                health_amount = int(health.hp)
-
-                healed.heal(health_amount)
-                # self.adjustLabels(healed)
-                '''for pl in self.myPostOffice.players:
-                    self.adjustLabels(pl)'''
-        except:
-            print("Error in __listen_for_health")
-            self.__listen_for_health()
-
-    def __listen_for_attack(self):
-        try:
-            for a in self.myPostOffice.AttackStream():
-                print("ATTACK: ", a)
-                attacked = player.transformFromJSON(a.json_str)
-                for p in self.myPostOffice.players:
-                    if p.getUid() == attacked.getUid():
-                        attacked = p
-                attack_amount = int(a.attack)
-
-                attacked.takeDamage(attack_amount)
-        except:
-            print("Error in __listen_for_attack")
-            self.__listen_for_attack()
-
-    def __listen_for_block(self):
-        try:
-            for block in self.myPostOffice.BlockStream():
-                print("BLOCK: ", block, type(block.block))
-                blocked = player.transformFromJSON(block.json_str)
-                for p in self.myPostOffice.players:
-                    if p.getUid() == blocked.getUid():
-                        blocked = p
-                block_amount = int(block.block)
-
-                blocked.block(block_amount)
-                # self.adjustLabels(blocked)
-                '''for pl in self.myPostOffice.players:
-                    self.adjustLabels(pl)'''
-        except:
-            print("Error in __listen_for_block")
-            self.__listen_for_block()
-
     def __listen_for_actions(self):
         for action in self.myPostOffice.ActionStream():
             actor = player.transformFromJSON(action.sender)
@@ -166,8 +96,6 @@ class Client():
             action_type = action.action_type
             mode = ""
 
-            print(actor, victim, action_amount, action_type)
-
             if action_type == 0:
                 mode = "attacks"
             elif action_type == 1:
@@ -177,7 +105,6 @@ class Client():
             else:
                 mode = "idles"
 
-            print("DONE CHECKING")
             addendum = victim.getUsername()
             print_message_array = ["User", actor.getUsername(
             ), mode, addendum, "for", str(abs(action_amount)), "points!"]
@@ -185,25 +112,11 @@ class Client():
             # gets rid of the double space in addendum when action_type != 2
             print_message = " ".join(
                 print_message_array).replace("  ", " ")
-            print("print message did")
             self.entry_message.config(text=print_message)
             self.state = mode
             print("--- MESSAGE ---")
             print(print_message)
             print("--- MESSAGE ---")
-            # print("MIO UID", self.myPostOffice.myPlayer.getUid())
-            if victim.getUid() == self.myPostOffice.myPlayer.getUid():
-                if action_type == 0:
-                    self.myPostOffice.SendAttack(
-                        user=victim, amount=action_amount)
-                elif action_type == 1:
-                    self.myPostOffice.SendHealing(
-                        user=victim, amount=action_amount)
-                elif action_type == 2:
-                    self.myPostOffice.SendBlock(
-                        user=victim, amount=action_amount)
-                else:
-                    print("Error with the actions :(")
 
     def __listen_for_turns(self):
         try:
@@ -224,10 +137,13 @@ class Client():
                         self.myPostOffice.SendFinishGame()
                         # end the game right here
 
-                if what.getUsername() == self.myPostOffice.myPlayer.getUsername() and what.getUid() == self.myPostOffice.myPlayer.getUid():  # for testing use this line
+                if what.getUid() == self.myPostOffice.myPlayer.getUid():  # for testing use this line
                     # if self.fernet.decrypt(turn.ip).decode() == self.ip:
                     print("Mio turno: " + self.myPostOffice.myPlayer.getUsername())
                     self.turn_button["state"] = "normal"
+
+                    for p in self.myPostOffice.players:
+                        self.adjustLabels(p)
                     self.unlockButtons()  # unlock the buttons when it's my turn
                     # if miei hp <= 0 endturn + interfaccia "you died"
 
@@ -242,7 +158,7 @@ class Client():
                             self.lockButtons()
                             self.send_end_turn()
         except:
-            print("Error in __listen_for_turns")
+            # print("Error in __listen_for_turns")
             self.__listen_for_turns()
 
     def __listen_for_finish(self):
@@ -308,8 +224,6 @@ class Client():
             self.myPostOffice.myPlayer, attacked, actionType=0)
 
     def heal_single(self, healed):
-        if self.myPostOffice.myPlayer.getUsertype() != 1:
-            self.assignButtons()
         self.assignButtons()
         self.lockButtons()
         self.state = "heal"
@@ -317,9 +231,6 @@ class Client():
             self.myPostOffice.myPlayer, healed, actionType=1)
 
     def block_single(self, blocked):
-        # self.__after_action()
-        if self.myPostOffice.myPlayer.getUsertype() != 1:
-            self.assignButtons()
         self.assignButtons()
         self.lockButtons()
         self.state = "protect"
@@ -327,7 +238,7 @@ class Client():
             self.myPostOffice.myPlayer, blocked, actionType=2)
 
     def adjustLabels(self, pl):
-        print("CHANGING LABELS")
+        print("CHANGING LABELS FOR ", pl)
         # TODO: remove old disconnected player from labels references to change life value by their indexes
         if pl.getUsertype() == 1:
             self.labelrefs[pl.getUid()]["health_label"].config(
@@ -449,54 +360,6 @@ class Client():
         self.myPostOffice.StartGame()
         self.cleanInitialList()
         self.start_button.destroy()
-
-    '''
-    def animate(self, label):
-        global pg_type
-        path = "src/"+pg_type[0]+"/"+self.state+"/"
-        i=0
-        while True:
-            label.configure(image=self.imgs[i])
-            label.update()
-            time.sleep(0.2)
-            i+=1
-            if i == len(os.listdir(path))-1:
-                i = 0
-    '''
-
-    '''def update_label_image(self, label, ani_img, ms_delay, frame_num):
-        global cancel_id
-        label.configure(image=ani_img[frame_num])
-        frame_num = (frame_num+1) % len(ani_img)
-        cancel_id = root.after(
-            ms_delay, self.update_label_image, label, ani_img, ms_delay, frame_num)
-
-    def enable_animation(self, animation):
-        global cancel_id
-        if cancel_id is None:  # Animation not started?
-            # 1000// len(self.imgs)  # Show all frames in 1000 ms.
-            ms_delay = 250
-            cancel_id = root.after(
-                ms_delay, self.update_label_image, animation, self.imgs, ms_delay, 0)
-
-    def enable_animation_thread(self, animation):
-        global cancel_id
-        global aniThreadPointer
-        if cancel_id is None:
-            t = threading.Thread(target=self.enable_animation, args=(
-                animation,), daemon=True)  # create thread
-            t.start()
-            aniThreadPointer.append(t)
-
-    def cancel_animation(self):'
-        global cancel_id
-        global aniThreadPointer
-        if cancel_id is not None:  # Animation started?
-            self.window.after_cancel(cancel_id)
-            while aniThreadPointer != []:  # kill all threads
-                ttmp = aniThreadPointer.pop()
-                ttmp.join()
-            cancel_id = None'''
 
     def loadImgs(self):
 
