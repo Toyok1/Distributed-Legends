@@ -126,6 +126,8 @@ class Client():
                 what = player.transformFromJSON(turn.json_str)
 
                 if self.GAME_STARTED:
+                    for pl in self.myPostOffice.players:
+                        self.adjustLabels(pl)
                     print("STARTED")
                     counter = 0
                     for p in self.myPostOffice.players:
@@ -142,8 +144,6 @@ class Client():
                     print("Mio turno: " + self.myPostOffice.myPlayer.getUsername())
                     self.turn_button["state"] = "normal"
 
-                    for p in self.myPostOffice.players:
-                        self.adjustLabels(p)
                     self.unlockButtons()  # unlock the buttons when it's my turn
                     # if miei hp <= 0 endturn + interfaccia "you died"
 
