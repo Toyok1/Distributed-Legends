@@ -12,7 +12,7 @@ from GRPCClientHelper import helper, player, serverDialog, userTypeDialog
 from cryptography.fernet import Fernet
 from tkinter import simpledialog
 from tkinter import ttk
-from GRPCClientHelper.config import key, cancel_id, aniThreadPointer, pg_type
+from GRPCClientHelper.config import key
 
 
 class Client():
@@ -35,13 +35,15 @@ class Client():
             serverAddress, user, self.myUid, userType)
         self.myPostOffice.Subscribe()
 
+        self.__setup_ui()
+
         try:
             threading.Thread(target=self.myPostOffice.Listen_for_PingPong, args=(
                 self.myUid,), daemon=True).start()
         except:
-            self.CloseGame()
-
-        self.__setup_ui()
+            self.entry_message.config(
+                text="Connection lost :(")
+            self.closeGame()
 
         threading.Thread(target=self.__listen_for_turns, daemon=True).start()
         threading.Thread(target=self.__listen_for_actions, daemon=True).start()
@@ -123,9 +125,12 @@ class Client():
             while self.myPostOffice.myPlayer is None:
                 pass
             for turn in self.myPostOffice.TurnStream():
+                if self.isFinished == True:
+                    break
                 what = player.transformFromJSON(turn.json_str)
 
                 if self.GAME_STARTED:
+                    print(len(self.myPostOffice.players), " - LUNGHEZZA LISTA")
                     for pl in self.myPostOffice.players:
                         self.adjustLabels(pl)
                     print("STARTED")
@@ -141,9 +146,11 @@ class Client():
                     if countMonster == 1:
                         self.isFinished = True
                         self.myPostOffice.SendFinishGame(False)
+                        self.lockButtons()
                     elif countHero == len(self.myPostOffice.players) - 1:
                         self.isFinished = True
                         self.myPostOffice.SendFinishGame(True)
+                        self.lockButtons()
                         # end the game right here
 
                 if what.getUid() == self.myPostOffice.myPlayer.getUid():  # for testing use this line
@@ -170,27 +177,25 @@ class Client():
             self.__listen_for_turns()
 
     def __listen_for_finish(self):
-        try:
-            while self.isFinished == False:
-                # doNothing
-                pass
-            for finish in self.myPostOffice.FinishStream():
-                # print("Game is finished")
-                if finish.fin == True:
-                    if self.myPostOffice.myPlayer.getUsertype() == 1:
-                        self.entry_message.config(text=finish.MonsterWin)
-                    else:
-                        self.entry_message.config(text=finish.HeroesDefeat)
+
+        while self.isFinished == False:
+            # doNothing
+            pass
+        for finish in self.myPostOffice.FinishStream():
+            print("Game is finished ", finish)
+            if finish.fin == True:
+                if self.myPostOffice.myPlayer.getUsertype() == 1:
+                    self.entry_message.config(text=finish.MonsterWin)
                 else:
-                    if self.myPostOffice.myPlayer.getUsertype() == 1:
-                        self.entry_message.config(text=finish.MonsterDefeat)
-                    else:
-                        self.entry_message.config(text=finish.HeroesWin)
-                self.closeGame()
-            print("Game would have finished")
-        except:
-            print("Error in __listen_for_turns")
-            self.__listen_for_finish()
+                    self.entry_message.config(text=finish.HeroesDefeat)
+            else:
+                if self.myPostOffice.myPlayer.getUsertype() == 1:
+                    self.entry_message.config(text=finish.MonsterDefeat)
+                else:
+                    self.entry_message.config(text=finish.HeroesWin)
+            self.closeGame()
+            break
+        print("Game would have finished")
 
     def closeGame(self):
         # TODO end game
@@ -198,7 +203,8 @@ class Client():
         self.isFinished = True
         self.turn_button["state"] = "disabled"
         self.state = "idle"
-        self.myPostOffice = None
+        self.send_end_turn()
+
     # TODO: implement a one action per turn thing
 
     def lockButtons(self):
@@ -368,6 +374,7 @@ class Client():
         self.myPostOffice.StartGame()
         self.cleanInitialList()
         self.start_button.destroy()
+        self.GAME_STARTED = True
 
     def loadImgs(self):
 
