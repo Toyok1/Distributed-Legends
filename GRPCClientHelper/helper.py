@@ -39,7 +39,7 @@ class PostOffice:
         ping.id = my_id
         pong = self.conn.SendPing(ping)
         time.sleep(sl_time)
-        # print(pong.list_players, "server response")
+        # #print(pong.list_players, "server response")
         self.players = player.transformFullListFromJSON(pong.list_players)
         return pong
 
@@ -82,7 +82,7 @@ class PostOffice:
 
     def EndTurn(self, last_turn: player.Player):
         mess_et = chat.PlayerMessage()
-        print(last_turn, "last_turn")
+        # print(last_turn, "last_turn")
         mess_et.json_str = player.transformIntoJSON(last_turn)
         self.conn.EndTurn(mess_et)
 
@@ -108,7 +108,7 @@ class PostOffice:
                 n.amount = 10  # TODO range of damage
             case _:  # TODO check how do you wont insert like default (????)
                 pass
-        print(n)
+        # print(n)
         self.conn.SendAction(n)
 
     def SendFinishGame(self, f):

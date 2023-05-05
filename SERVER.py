@@ -38,7 +38,7 @@ class ChatServer(rpc.ChatServerServicer):
     def __updateUserList(self, req_ip, req_id):
         for usr in self.listUser:
             if usr.getIp() == req_ip and usr.getUid() == req_id:
-                # print("pinged", usr)
+                # #print("pinged", usr)
                 usr.setPingTime(time.time())
 
     def __keep_alive(self):
@@ -51,11 +51,10 @@ class ChatServer(rpc.ChatServerServicer):
         # if a user (hero) is more than 5 seconds from its last ping we count it as dead and, if it is its turn we skip it and we go to the next user.
         while True:
             if self.isStartedGame:
-                # print("Player List", self.listUser)
+                # #print("Player List", self.listUser)
                 for user in self.listUser:
                     if float(time.time()) - float(user.getPingTime()) > 10.0:
-                        print("lost ping with ", user.getUsername(), " time ", float(
-                            time.time()) - float(user.getPingTime()))
+                        # print("lost ping with ", user.getUsername(), " time ", float(time.time()) - float(user.getPingTime()))
                         # if it's the turn user, pick another
                         if len(self.listUser) == 1:
                             n = chat.EndNote()
@@ -99,9 +98,9 @@ class ChatServer(rpc.ChatServerServicer):
     def __distributeHealth(self):
         for user in self.listUser:
             if user.getUsertype() == 1:
-                user.setHp(10)
+                user.setHp(100)
             else:
-                user.setHp(5)
+                user.setHp(50)
 
     # The stream which will be used to send new messages to clients
     def ChatStream(self, request_iterator, context):
@@ -116,7 +115,7 @@ class ChatServer(rpc.ChatServerServicer):
 
     def SendNote(self, request: chat.Note, context):
         # this is only for the server console
-        print("[{}] {}".format(request.name, request.message))
+        # print("[{}] {}".format(request.name, request.message))
         # Add it to the chat history
         self.chats.append(request)
         # something needs to be returned required by protobuf language, we just return empty msg
@@ -139,7 +138,7 @@ class ChatServer(rpc.ChatServerServicer):
                     p.block(am)
                 else:
                     print("OPS! Error with the actions.")
-        print("New Action = ", request)
+        # print("New Action = ", request)
         # manage the fact that people are attacking you
         return chat.Empty()
 
@@ -151,7 +150,7 @@ class ChatServer(rpc.ChatServerServicer):
             while len(self.actions) > lastindex:
                 n = self.actions[lastindex]
                 lastindex += 1
-                print("Yielding action = ", n)
+                # print("Yielding action = ", n)
 
                 yield n
 
@@ -172,7 +171,7 @@ class ChatServer(rpc.ChatServerServicer):
             self.turns.append(b)
             self.LAST_USER_TURN = new_user
         self.listUser.append(new_user)
-        print(self.listUser)
+        # print(self.listUser)
         # something needs to be returned required by protobuf language, we just return empty msg
         return chat.Empty()
 
@@ -183,7 +182,7 @@ class ChatServer(rpc.ChatServerServicer):
         return chat.Pong(message="Thanks, friend!", list_players=player.tranformFullListIntoJSON(self.listUser))
 
     def EndTurn(self, request: chat.PlayerMessage, context):
-        print("end turn")
+        # print("end turn")
         userLast = player.transformFromJSON(request.json_str)
         self.LAST_USER_TURN = userLast
         for i in range(0, len(self.listUser)):
@@ -191,7 +190,7 @@ class ChatServer(rpc.ChatServerServicer):
             if userLast.getUid() == self.listUser[i].getUid():
                 userNext = self.listUser[(i+1) % len(self.listUser)]
         # create the return message, encrypt the ip and send it in broadcast to everyone.
-        print("prossimo turno: ", userNext.getUsername())
+        # print("prossimo turno: ", userNext.getUsername())
         r = chat.PlayerMessage()
         r.json_str = player.transformIntoJSON(userNext)
         self.turns.append(r)
@@ -203,7 +202,7 @@ class ChatServer(rpc.ChatServerServicer):
         while True:
             while len(self.turns) > lastindex:
                 n = self.turns[lastindex]
-                print(n)
+                # print(n)
                 lastindex += 1
                 yield n
 
@@ -213,15 +212,15 @@ class ChatServer(rpc.ChatServerServicer):
         return b
 
     def StartGame(self, request: chat.PrivateInfo, context):
-        print('StartGame ', self.listUser)
+        # print('StartGame ', self.listUser)
         if self.HOST.getUsername() == request.user:
-            print("L'host è onnipotente")
+            # print("L'host è onnipotente")
             self.isStartedGame = True
             self.__distributeHealth()
         return chat.Empty()
 
     def FinishGame(self, request_iterator, context):
-        print("FinishGame called")
+        # print("FinishGame called")
         self.isStartedGame = False
         n = chat.EndNote()
         n.MonsterWin = "YOU CAN RULE THE WORLD"
@@ -233,7 +232,7 @@ class ChatServer(rpc.ChatServerServicer):
         return chat.Empty()
 
     def FinishStream(self, request_iterator, context):
-        print("FinishStream called")
+        # print("FinishStream called")
 
         lastindex = 0
         # For every client a infinite loop starts (in gRPC's own managed thread)
@@ -241,7 +240,7 @@ class ChatServer(rpc.ChatServerServicer):
             # Check if there are any new messages
             while len(self.finish) > lastindex:
                 n = self.finish[lastindex]
-                print(n)
+                # print(n)
                 lastindex += 1
                 yield n
 
@@ -255,7 +254,6 @@ if __name__ == '__main__':
         os.getpid()), server)  # register the server to gRPC
     # gRPC basically manages all the threading and server responding logic, which is perfect!
     print('Starting server. Listening...')
-    # print("Connect to: " + str(get('https://api.ipify.org').content.decode('utf8')))
     server.add_insecure_port('[::]:' + str(port))
     server.start()
     print("Connect here: ", get('https://api.ipify.org').content.decode('utf8'))
