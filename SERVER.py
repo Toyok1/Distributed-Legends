@@ -99,9 +99,9 @@ class ChatServer(rpc.ChatServerServicer):
     def __distributeHealth(self):
         for user in self.listUser:
             if user.getUsertype() == 1:
-                user.setHp(100)
+                user.setHp(10)
             else:
-                user.setHp(50)
+                user.setHp(5)
 
     # The stream which will be used to send new messages to clients
     def ChatStream(self, request_iterator, context):
@@ -258,6 +258,7 @@ if __name__ == '__main__':
     # print("Connect to: " + str(get('https://api.ipify.org').content.decode('utf8')))
     server.add_insecure_port('[::]:' + str(port))
     server.start()
+    print("Connect here: ", get('https://api.ipify.org').content.decode('utf8'))
     try:
         while True:
             time.sleep(86400)

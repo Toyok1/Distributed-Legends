@@ -129,14 +129,21 @@ class Client():
                     for pl in self.myPostOffice.players:
                         self.adjustLabels(pl)
                     print("STARTED")
-                    counter = 0
+                    countMonster = 0
+                    countHero = 0
                     for p in self.myPostOffice.players:
                         # print("Player " + p.getUsername() + "has" + str(p.getHp()) + " hp")
                         if p.getHp() <= 0:
-                            counter += 1
-                    if counter == len(self.myPostOffice.players) - 1:
+                            if p.getUsertype() == 1:
+                                countMonster += 1
+                            else:
+                                countHero += 1
+                    if countMonster == 1:
                         self.isFinished = True
-                        self.myPostOffice.SendFinishGame()
+                        self.myPostOffice.SendFinishGame(False)
+                    elif countHero == len(self.myPostOffice.players) - 1:
+                        self.isFinished = True
+                        self.myPostOffice.SendFinishGame(True)
                         # end the game right here
 
                 if what.getUid() == self.myPostOffice.myPlayer.getUid():  # for testing use this line
@@ -151,6 +158,7 @@ class Client():
                         if self.myPostOffice.myPlayer.getUsertype() == 1:  # monster
                             self.entry_message.config(
                                 text="THE MONSTER IS DEAD! The game will end shortly.")
+                            self.lockButtons()
                             # end the game right here
                         else:
                             self.entry_message.config(
@@ -182,7 +190,7 @@ class Client():
             print("Game would have finished")
         except:
             print("Error in __listen_for_turns")
-            self.__listen_for_turns()
+            self.__listen_for_finish()
 
     def closeGame(self):
         # TODO end game

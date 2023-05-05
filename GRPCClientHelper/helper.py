@@ -111,8 +111,10 @@ class PostOffice:
         print(n)
         self.conn.SendAction(n)
 
-    def SendFinishGame(self):
-        self.conn.FinishGame(chat.Empty())
+    def SendFinishGame(self, f):
+        n = chat.FinishedBool()
+        n.fin = f
+        self.conn.FinishGame(n)
 
     def FinishStream(self):
         return self.conn.FinishStream(chat.Empty())
