@@ -30,7 +30,7 @@ class Client():
         self.myUid = str(uuid.uuid4())
         self.labelrefs = {}
         self.fernet = Fernet(key)
-        self.isFinished = False
+
         self.myPostOffice = helper.PostOffice(
             serverAddress, user, self.myUid, userType)
         self.myPostOffice.Subscribe()
@@ -100,16 +100,17 @@ class Client():
                 print_message_array).replace("  ", " ")
             self.entry_message.config(text=print_message)
             self.state = mode
-            # print("--- MESSAGE ---")
-            # print(#print_message)
-            # print("--- MESSAGE ---")
+            ''' #print("--- MESSAGE ---")
+            #print(print_message)
+            #print("--- MESSAGE ---")'''
 
     def __listen_for_turns(self):
         try:
             while self.myPostOffice.myPlayer is None:
                 pass
             for turn in self.myPostOffice.TurnStream():
-                if self.isFinished == True:
+                # print("TURNO - ", turn)
+                if self.myPostOffice.isFinished == True:
                     break
                 what = player.transformFromJSON(turn.json_str)
 
@@ -119,18 +120,18 @@ class Client():
                     countMonster = 0
                     countHero = 0
                     for p in self.myPostOffice.players:
-                        # ##print("Player " + p.getUsername() + "has" + str(p.getHp()) + " hp")
+                        # #print("Player " + p.getUsername() + "has" + str(p.getHp()) + " hp")
                         if p.getHp() <= 0:
                             if p.getUsertype() == 1:
                                 countMonster += 1
                             else:
                                 countHero += 1
                     if countMonster == 1:
-                        self.isFinished = True
+                        self.myPostOffice.isFinished = True
                         self.myPostOffice.SendFinishGame(False)
                         self.lockButtons()
                     elif countHero == len(self.myPostOffice.players) - 1:
-                        self.isFinished = True
+                        self.myPostOffice.isFinished = True
                         self.myPostOffice.SendFinishGame(True)
                         self.lockButtons()
                         # end the game right here
@@ -155,12 +156,12 @@ class Client():
                             self.lockButtons()
                             self.send_end_turn()
         except:
-            # ##print("Error in __listen_for_turns")
+            # #print("Error in __listen_for_turns")
             self.__listen_for_turns()
 
     def __listen_for_finish(self):
 
-        while self.isFinished == False:
+        while self.myPostOffice.isFinished == False:
             # doNothing
             pass
         for finish in self.myPostOffice.FinishStream():
@@ -177,12 +178,11 @@ class Client():
                     self.entry_message.config(text=finish.HeroesWin)
             self.closeGame()
             break
-        # print("Game would have finished")
 
     def closeGame(self):
         # TODO end game
         self.lockButtons()
-        self.isFinished = True
+        self.myPostOffice.isFinished = True
         self.turn_button["state"] = "disabled"
         self.state = "idle"
         self.send_end_turn()
@@ -200,10 +200,11 @@ class Client():
         self.block_button["state"] = "normal"
 
     def send_end_turn(self):
-        # print("Ending my turn: " + self.username)
+        # #print("Ending my turn: " + self.username)
         self.turn_button["state"] = "disabled"
         self.lockButtons()
         self.state = "idle"
+        time.sleep(2.5)
         # self.myPostOffice.ManualUpdateList(self.myPostOffice.myPlayer.getUid())
         for p in self.myPostOffice.players:
             self.adjustLabels(p)
@@ -215,7 +216,7 @@ class Client():
         self.lockButtons()
         self.state = "attack"
         # self.__after_action()
-        # print("MESSAGGIO CREATO")
+        # #print("MESSAGGIO CREATO")
         self.myPostOffice.SendAction(
             self.myPostOffice.myPlayer, attacked, actionType=0)
 
@@ -234,7 +235,7 @@ class Client():
             self.myPostOffice.myPlayer, blocked, actionType=2)
 
     def adjustLabels(self, pl):
-        # print("CHANGING LABELS FOR ", pl)
+        # #print("CHANGING LABELS FOR ", pl)
         # TODO: remove old disconnected player from labels references to change life value by their indexes
         if pl.getUsertype() == 1:
             self.labelrefs[pl.getUid()]["health_label"].config(
@@ -245,7 +246,7 @@ class Client():
 
     def mapFuncToButtons(self, function, shout):
         buttons = [self.attack_button, self.block_button, self.heal_button]
-        # ##print(len(self.myPostOffice.heroesList), " ",len(buttons) )
+        # #print(len(self.myPostOffice.heroesList), " ", len(buttons))
 
         for i in range(0, len(self.myPostOffice.heroesList)):
             try:
@@ -267,7 +268,6 @@ class Client():
         self.turn_button.configure(command=self.assignButtons)
 
     def do_nothing(self):
-        # print("Did nothing")
         pass
 
     def cleanInitialList(self):
@@ -280,7 +280,7 @@ class Client():
               self.hero3_healthLabel]  # labels_health
         v3 = [self.hero1, self.hero2, self.hero3]  # labels_images
         for u in self.myPostOffice.players:
-            # print("Cleaning ", u)
+            # #print("Cleaning ", u)
             if u.getUid() == self.myPostOffice.myPlayer.getUid():
                 self.myPostOffice.myPlayer = u
                 self.myPlayerType = u.getUsertype()
@@ -325,14 +325,14 @@ class Client():
         self.assignButtons()
 
     def assignButtons(self):
-        # ##print("ASSIGNING")
+        # #print("ASSIGNING")
         self.attack_button.configure(text="ATTACK")
         self.block_button.configure(text="BLOCK")
         self.heal_button.configure(text="HEAL")
         self.turn_button.configure(text="END TURN")
         self.turn_button.configure(command=self.send_end_turn)
         if self.myPostOffice.myPlayer.getUsertype() == 1:
-            # ##print("ASSINGED MONSTER")
+            # #print("ASSINGED MONSTER")
             # monster
             attack = partial(self.mapFuncToButtons,
                              self.attack_single, "ATTACK")
@@ -342,7 +342,7 @@ class Client():
             heal = partial(self.heal_single, self.myPostOffice.myPlayer)
             self.heal_button.configure(command=heal)
         else:
-            # ##print("ASSIGNED HERO")
+            # #print("ASSIGNED HERO")
             attack = partial(self.attack_single, self.monsterRef)
             self.attack_button.configure(command=attack)
             block = partial(self.mapFuncToButtons,
@@ -534,7 +534,7 @@ if __name__ == '__main__':
     root.withdraw()  # Hides the window
     username = None
     # "localhost"  # None when we deploy but for testing localhost is fine
-    serverAddress = "localhost"
+    serverAddress = None
     while username is None:
         # retrieve a username so we can distinguish all the different clients
         username = simpledialog.askstring(
@@ -547,15 +547,12 @@ if __name__ == '__main__':
 
     if isHost == 1:
         userType_int = 1
-    else:
-        userType_int = 0
-        '''
-        while True:  # pseudo do while loop
-            userType = userTypeDialog.UserTypeDialog(root)
-            root.wait_window(userType)
-            if userType.result != None:
-                break
-        '''
+
+    while True:  # pseudo do while loop
+        userType = userTypeDialog.UserTypeDialog(root)
+        root.wait_window(userType)
+        if userType.result != None:
+            break
 
     # if isHost == 0:
     while (serverAddress != "localhost") or (serverAddress is None):

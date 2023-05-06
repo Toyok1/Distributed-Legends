@@ -31,6 +31,7 @@ class ChatServer(rpc.ChatServerServicer):
         self.processId = pId
         self.LAST_USER_TURN = None
         self.isStartedGame = False
+        self.TERMINATE = None
 
         threading.Thread(target=self.__clean_user_list, daemon=True).start()
         # threading.Thread(target=self.__keep_alive, daemon=True).start()
@@ -51,38 +52,14 @@ class ChatServer(rpc.ChatServerServicer):
         # if a user (hero) is more than 5 seconds from its last ping we count it as dead and, if it is its turn we skip it and we go to the next user.
         while True:
             if self.isStartedGame:
-                # #print("Player List", self.listUser)
+                # print("Player List", self.listUser)
                 for user in self.listUser:
                     if float(time.time()) - float(user.getPingTime()) > 10.0:
-                        # print("lost ping with ", user.getUsername(), " time ", float(time.time()) - float(user.getPingTime()))
+                        # print("lost ping with ", user)
                         # if it's the turn user, pick another
-                        if len(self.listUser) == 1:
-                            n = chat.EndNote()
-                            # only two messages that should ever be displayed
-                            n.MonsterWin = "YOU CAN RULE THE WORLD BECAUSE EVERYONE ELSE DISCONNECTED"
-                            # only two messages that should ever be displayed
-                            n.HeroesWin = "YOU SAVED THE WORLD BECAUSE EVERYONE ELSE DISCONNECTED"
-                            n.MonsterDefeat = "How did you get here?"
-                            n.HeroesDefeat = "Looking for easter eggs?"
-                            n.fin = True if self.listUser[0].getUsertype(
-                            ) == 1 else False
-                            self.finish.append(n)
-                            break
-
-                        # list of all types of users. If there is no monter the heroes win by default.
-                        if not 1 in [int(u.getUsertype()) for u in self.listUser]:
-                            n = chat.EndNote()
-                            n.MonsterWin = "Noone expects the spanish inquisition!"
-                            # the only message to ever be displayed
-                            n.HeroesWin = "YOU SAVED THE WORLD BECAUSE THE MONSTER DISCONNECTED"
-                            n.MonsterDefeat = "How did you get here?"
-                            n.HeroesDefeat = "Looking for easter eggs?"
-                            n.fin = False
-                            self.finish.append(n)
-                            break
-
                         if user.getUid() == self.LAST_USER_TURN.getUid():  # disconnected while it's my turn
                             # add a turn message for the next guy
+                            # print("IT WAS MY TURN")
                             for i in range(0, len(self.listUser)):
                                 if self.LAST_USER_TURN.getUid() == self.listUser[i].getUid():
                                     userNext = self.listUser[(
@@ -91,8 +68,39 @@ class ChatServer(rpc.ChatServerServicer):
                                     n.json_str = player.transformIntoJSON(
                                         userNext)
                                     # TODO get this to work
-                                    self.EndTurn(n, None)
-                        # self.listUser.remove(user)
+                                    self.turns.append(n)
+                        self.listUser.remove(user)
+                if len(self.listUser) == 1:
+                    # print("length userList == 1")
+                    n = chat.EndNote()
+                    # only two messages that should ever be displayed
+                    n.MonsterWin = "YOU CAN RULE THE WORLD BECAUSE EVERYONE ELSE DISCONNECTED"
+                    # only two messages that should ever be displayed
+                    n.HeroesWin = "YOU SAVED THE WORLD BECAUSE EVERYONE ELSE DISCONNECTED"
+                    n.MonsterDefeat = "How did you get here?"
+                    n.HeroesDefeat = "Looking for easter eggs?"
+                    n.fin = True if self.listUser[0].getUsertype(
+                    ) == 1 else False
+                    self.finish.append(n)
+                    self.isStartedGame = False
+                    self.TERMINATE = True
+                    break
+
+                    # list of all types of users. If there is no monter the heroes win by default.
+                if not 1 in [int(u.getUsertype()) for u in self.listUser]:
+                    # print("NO MONSTERS")
+                    n = chat.EndNote()
+                    n.MonsterWin = "Noone expects the spanish inquisition!"
+                    # the only message to ever be displayed
+                    n.HeroesWin = "YOU SAVED THE WORLD BECAUSE THE MONSTER DISCONNECTED"
+                    n.MonsterDefeat = "How did you get here?"
+                    n.HeroesDefeat = "Looking for easter eggs?"
+                    n.fin = False
+                    self.finish.append(n)
+                    self.isStartedGame = False
+                    self.TERMINATE = True
+                    break
+
             time.sleep(2.5)
 
     def __distributeHealth(self):
@@ -115,7 +123,7 @@ class ChatServer(rpc.ChatServerServicer):
 
     def SendNote(self, request: chat.Note, context):
         # this is only for the server console
-        # print("[{}] {}".format(request.name, request.message))
+        # #print("[{}] {}".format(request.name, request.message))
         # Add it to the chat history
         self.chats.append(request)
         # something needs to be returned required by protobuf language, we just return empty msg
@@ -138,7 +146,7 @@ class ChatServer(rpc.ChatServerServicer):
                     p.block(am)
                 else:
                     print("OPS! Error with the actions.")
-        # print("New Action = ", request)
+        # #print("New Action = ", request)
         # manage the fact that people are attacking you
         return chat.Empty()
 
@@ -150,7 +158,7 @@ class ChatServer(rpc.ChatServerServicer):
             while len(self.actions) > lastindex:
                 n = self.actions[lastindex]
                 lastindex += 1
-                # print("Yielding action = ", n)
+                # #print("Yielding action = ", n)
 
                 yield n
 
@@ -171,7 +179,7 @@ class ChatServer(rpc.ChatServerServicer):
             self.turns.append(b)
             self.LAST_USER_TURN = new_user
         self.listUser.append(new_user)
-        # print(self.listUser)
+        # #print(self.listUser)
         # something needs to be returned required by protobuf language, we just return empty msg
         return chat.Empty()
 
@@ -179,17 +187,20 @@ class ChatServer(rpc.ChatServerServicer):
         """ Fulfills SendPing RPC defined in ping.proto """
         self.__updateUserList(self.fernet.decrypt(
             request.ip).decode(), request.id)
-        return chat.Pong(message="Thanks, friend!", list_players=player.tranformFullListIntoJSON(self.listUser))
+        return chat.Pong(message="Thanks, friend!" if self.TERMINATE != True else "SET_FINISHED", list_players=player.tranformFullListIntoJSON(self.listUser))
 
     def EndTurn(self, request: chat.PlayerMessage, context):
-        # print("end turn")
+        # #print("end turn")
         userLast = player.transformFromJSON(request.json_str)
-        self.LAST_USER_TURN = userLast
+
         for i in range(0, len(self.listUser)):
             # if self.listUser[i]["ip"] == ipLast:
             if userLast.getUid() == self.listUser[i].getUid():
                 userNext = self.listUser[(i+1) % len(self.listUser)]
         # create the return message, encrypt the ip and send it in broadcast to everyone.
+        for p in self.listUser:
+            if p.getUid() == userNext.getUid():
+                self.LAST_USER_TURN = p
         # print("prossimo turno: ", userNext.getUsername())
         r = chat.PlayerMessage()
         r.json_str = player.transformIntoJSON(userNext)
@@ -202,7 +213,7 @@ class ChatServer(rpc.ChatServerServicer):
         while True:
             while len(self.turns) > lastindex:
                 n = self.turns[lastindex]
-                # print(n)
+                # #print(n)
                 lastindex += 1
                 yield n
 
@@ -212,15 +223,15 @@ class ChatServer(rpc.ChatServerServicer):
         return b
 
     def StartGame(self, request: chat.PrivateInfo, context):
-        # print('StartGame ', self.listUser)
+        # #print('StartGame ', self.listUser)
         if self.HOST.getUsername() == request.user:
-            # print("L'host è onnipotente")
+            # #print("L'host è onnipotente")
             self.isStartedGame = True
             self.__distributeHealth()
         return chat.Empty()
 
     def FinishGame(self, request_iterator, context):
-        # print("FinishGame called")
+        # #print("FinishGame called")
         self.isStartedGame = False
         n = chat.EndNote()
         n.MonsterWin = "YOU CAN RULE THE WORLD"
@@ -232,7 +243,7 @@ class ChatServer(rpc.ChatServerServicer):
         return chat.Empty()
 
     def FinishStream(self, request_iterator, context):
-        # print("FinishStream called")
+        # #print("FinishStream called")
 
         lastindex = 0
         # For every client a infinite loop starts (in gRPC's own managed thread)
@@ -240,7 +251,7 @@ class ChatServer(rpc.ChatServerServicer):
             # Check if there are any new messages
             while len(self.finish) > lastindex:
                 n = self.finish[lastindex]
-                # print(n)
+                # #print(n)
                 lastindex += 1
                 yield n
 

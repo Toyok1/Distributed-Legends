@@ -70,8 +70,8 @@ class Player:
 
     def takeDamage(self, amount):  # all >0
         # se ho blocco, devo togliere prima quello, altrimenti prendo danni alla salute.
-        # print(amount, "AMOUNT")
-        # print(self.getHp() - amount, "POSSIBLE NEW AMOUNT")
+        # #print(amount, "AMOUNT")
+        # #print(self.getHp() - amount, "POSSIBLE NEW AMOUNT")
         if self.getBlock() > 0:
             # 20 hp, 10 block , attack 15     ==  15 - 10 > 0
             amount = amount - int(self.getBlock())
@@ -140,10 +140,8 @@ def transformFromJSON(json_str):  # ip output decoded
 def tranformFullListIntoJSON(array):
     final_str = ""
     for i in array:
-        # #print("PLEASE #print", i)
         final_str += transformIntoJSON(i) + "#"
     final_str = final_str[:-1]
-    # #print(final_str, "final_str")
     return final_str
 
 
@@ -152,5 +150,4 @@ def transformFullListFromJSON(string_json):
     ret_array = []
     for i in array:
         ret_array.append(transformFromJSON(i))
-    # #print(ret_array, "ret_array")
     return ret_array

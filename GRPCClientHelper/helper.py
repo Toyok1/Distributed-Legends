@@ -32,6 +32,7 @@ class PostOffice:
         self.myPlayer = None
         self.old_players = []
         self.disconnected_players = []
+        self.isFinished = False
 
     def __create_ping(self, sl_time, my_id):
         ping = chat.Ping()  # create protobug message (called Ping)
@@ -57,7 +58,11 @@ class PostOffice:
             # low enough the labels become consistent TODO
             pong = self.__create_ping(1, my_id)
             self.__set_user_list()
-            if pong.message != "Thanks, friend!":
+            if pong.message == "Thanks, friend!":
+                pass
+            elif pong.message == "SET_FINISHED":
+                self.isFinished = True
+            else:
                 raise Exception("Disconnect to the server!")
 
     def ManualUpdateList(self, my_id):
@@ -82,7 +87,7 @@ class PostOffice:
 
     def EndTurn(self, last_turn: player.Player):
         mess_et = chat.PlayerMessage()
-        # print(last_turn, "last_turn")
+        # #print(last_turn, "last_turn")
         mess_et.json_str = player.transformIntoJSON(last_turn)
         self.conn.EndTurn(mess_et)
 
@@ -90,25 +95,47 @@ class PostOffice:
         n = chat.Action()
         n.sender = ""
         n.reciever = ""
+
         for p in self.players:
             if p.getUid() == send.getUid():
                 n.sender = player.transformIntoJSON(p)
+                usr = p
             if p.getUid() == recieve.getUid():
                 n.reciever = player.transformIntoJSON(p)
 
-        match actionType:
-            case 0:  # attack
-                n.action_type = 0
-                n.amount = 10 + random.randint(-5, 5)  # TODO range of damage
-            case 1:  # heal
-                n.action_type = 1
-                n.amount = 8 + random.randint(-5, 5)  # TODO range of damage
-            case 2:  # block
-                n.action_type = 2
-                n.amount = 10  # TODO range of damage
-            case _:  # TODO check how do you wont insert like default (????)
-                pass
-        # print(n)
+        if usr.getUsertype() == 0:
+            # knight
+            values = {"attack": 8, "heal": 8, "block": 10}
+        elif usr.getUsertype() == 1:
+            # monster - does more damage, heals more and blocks more based on how many enemies he has. 1vs1 he is slightly better at most things but worse at one thing
+            values = {"attack": 9 + 2 * (len(self.players)-2), "heal": 9 + 2 * (
+                len(self.players)-2), "block": 9 + 2 * (len(self.players)-2)}
+        elif usr.getUsertype() == 2:
+            # priest
+            values = {"attack": 8, "heal": 10, "block": 8}
+        elif usr.getUsertype() == 3:
+            # mage
+            values = {"attack": 10, "heal": 8, "block": 8}
+        else:
+            # default
+            values = {"attack": 0, "heal": 0, "block": 0}
+
+        if actionType == 0:
+            n.action_type = 0
+            n.amount = values["attack"] + \
+                random.randint(-10, 10)  # TODO range of damage
+        elif actionType == 1:
+            n.action_type = 1
+            n.amount = values["heal"] + \
+                random.randint(-10, 10)  # TODO range of damage
+        elif actionType == 2:
+            n.action_type = 2
+            n.amount = values["block"]  # TODO range of damage
+        else:
+            n.action_type = 2
+            n.amount = 0
+
+        # #print(n)
         self.conn.SendAction(n)
 
     def SendFinishGame(self, f):
