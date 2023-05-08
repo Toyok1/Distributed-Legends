@@ -25,4 +25,4 @@ if __name__ == "__main__":
     elif isHost.result == 2:
         os.system("python client.py")
     else:
-        ##print("errore")
+        print("errore")

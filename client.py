@@ -477,9 +477,6 @@ class Client():
         self.buttons_frame.grid(row=0, column=0, sticky=tk.NSEW)
         self.buttons_frame.columnconfigure([0, 1], weight=1, minsize=144)
         self.buttons_frame.rowconfigure([0, 1], weight=1, minsize=90)
-        '''p_a = partial(self.attack_single, None)
-        p_b = partial(self.block_single, None)
-        p_h = partial(self.heal_single, None)'''
         self.attack_button = tk.Button(
             self.buttons_frame, text="ATTACK", bg='#f00', fg='#fff', command=self.do_nothing)
         self.attack_button.grid(row=0, column=0, sticky=tk.NSEW)
@@ -498,7 +495,7 @@ class Client():
         # TEXT MESSAGE SETUP
         self.text_frame = tk.Frame(
             master=self.controls_frame, borderwidth=1, bg="#5f4548")
-        self.text_frame.grid(row=0, column=1, sticky=tk.SE)
+        self.text_frame.grid(row=0, column=1, sticky=tk.NSEW)
         self.text_frame.columnconfigure(0, weight=1, minsize=672)
         self.text_frame.rowconfigure(0, weight=1, minsize=180)
 
@@ -547,12 +544,12 @@ if __name__ == '__main__':
 
     if isHost == 1:
         userType_int = 1
-
-    while True:  # pseudo do while loop
-        userType = userTypeDialog.UserTypeDialog(root)
-        root.wait_window(userType)
-        if userType.result != None:
-            break
+    else:
+        while True:  # pseudo do while loop
+            userType = userTypeDialog.UserTypeDialog(root)
+            root.wait_window(userType)
+            if userType.result != None:
+                break
 
     # if isHost == 0:
     while (serverAddress != "localhost") or (serverAddress is None):
