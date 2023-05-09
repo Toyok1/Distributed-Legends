@@ -267,7 +267,7 @@ if __name__ == '__main__':
     print('Starting server. Listening...')
     server.add_insecure_port('[::]:' + str(port))
     server.start()
-    print("Connect here: ", get('https://api.ipify.org').content.decode('utf8'))
+    # print("Connect here: ", get('https://api.ipify.org').content.decode('utf8'))
     try:
         while True:
             time.sleep(86400)

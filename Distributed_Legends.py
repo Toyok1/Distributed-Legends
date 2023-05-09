@@ -8,7 +8,10 @@ from GRPCClientHelper import serverDialog
 if __name__ == "__main__":
     root = tk.Tk()
     root.resizable(False, False)
-    root.iconbitmap("./src/icon/icon.ico")
+    try:
+        root.iconbitmap("./src/icon/icon.ico")
+    except:
+        pass
     root.title("RPGCombat - Host choice")
     root.withdraw()
 

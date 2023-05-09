@@ -6,6 +6,8 @@ import uuid
 import sys
 import re
 from functools import partial
+import socket
+from requests import get
 
 from PIL import ImageTk, Image
 from GRPCClientHelper import helper, player, serverDialog, userTypeDialog
@@ -56,6 +58,18 @@ class Client():
             threading.Thread(target=self.__check_for_start,
                              daemon=True).start()
         self.window.mainloop()
+
+    def get_local_ip(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # doesn't even have to be reachable
+            s.connect(('192.255.255.255', 1))
+            IP = s.getsockname()[0]
+        except:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+        return IP
 
     def __check_for_start(self):
         try:
@@ -502,7 +516,14 @@ class Client():
         self.entry_message = tk.Label(self.text_frame, bd=5)
         # self.entry_message.bind('<Return>', self.send_message)
         # self.entry_message.focus()
-        self.entry_message.config(text="Welcome to the game!")
+
+        if self.isHost == True:
+            my_str = "Welcome to the game! Have your friends connect to your global IP: " + \
+                get('https://api.ipify.org').content.decode('utf8') + \
+                " \nor your local IP: " + self.get_local_ip()
+            self.entry_message.config(text=my_str)
+        else:
+            self.entry_message.config(text="Welcome to the game!")
         self.entry_message.grid(row=0, column=0, padx=5,
                                 pady=5, sticky=tk.NSEW)
 
@@ -525,13 +546,16 @@ if __name__ == '__main__':
     root = tk.Tk()
     root.resizable(False, False)
     root.geometry("960x600")
-    root.iconbitmap("./src/icon/icon.ico")
+    try:
+        root.iconbitmap("./src/icon/icon.ico")
+    except:
+        pass
     MainWindow = tk.Frame(root, width=300, height=300)
     MainWindow.pack()
     root.withdraw()  # Hides the window
     username = None
     # "localhost"  # None when we deploy but for testing localhost is fine
-    serverAddress = None
+
     while username is None:
         # retrieve a username so we can distinguish all the different clients
         username = simpledialog.askstring(
@@ -552,6 +576,7 @@ if __name__ == '__main__':
                 break
 
     # if isHost == 0:
+    serverAddress = None if isHost != 1 else "localhost"
     while (serverAddress != "localhost") or (serverAddress is None):
         # retrieve a username so we can distinguish all the different clients
         serverAddress = simpledialog.askstring(
