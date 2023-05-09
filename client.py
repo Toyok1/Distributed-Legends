@@ -218,8 +218,7 @@ class Client():
         self.turn_button["state"] = "disabled"
         self.lockButtons()
         self.state = "idle"
-        time.sleep(2.5)
-        # self.myPostOffice.ManualUpdateList(self.myPostOffice.myPlayer.getUid())
+        time.sleep(1)
         for p in self.myPostOffice.players:
             self.adjustLabels(p)
         self.myPostOffice.EndTurn(self.myPostOffice.myPlayer)

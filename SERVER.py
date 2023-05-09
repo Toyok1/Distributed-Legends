@@ -130,8 +130,6 @@ class ChatServer(rpc.ChatServerServicer):
         return chat.Empty()
 
     def SendAction(self, request: chat.Action, context):
-        # new_a = {"ip_sender": self.fernet.decrypt(request.ip_sender).decode(), "ip_reciever": self.fernet.decrypt(request.ip_reciever).decode(), "amount": int(request.amount)}
-        self.actions.append(request)
         n = request
         pl = player.transformFromJSON(n.reciever)
         am = n.amount
@@ -146,8 +144,7 @@ class ChatServer(rpc.ChatServerServicer):
                     p.block(am)
                 else:
                     print("OPS! Error with the actions.")
-        # #print("New Action = ", request)
-        # manage the fact that people are attacking you
+        self.actions.append(request)
         return chat.Empty()
 
     def ActionStream(self, request_iterator, context):
