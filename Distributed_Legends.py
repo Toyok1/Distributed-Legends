@@ -22,10 +22,8 @@ if __name__ == "__main__":
             break
 
     if isHost.result == 1:
-        # host
-        subprocess.run([sys.executable, "host_start.sh"])
-    # os.system("host_start.sh")
+        os.system("(python SERVER.py || python3 SERVER.py) & (python client.py 1 ||python3 client.py 1 )")
     elif isHost.result == 2:
-        os.system("python client.py")
+        os.system("python client.py || python3 client.py")
     else:
         print("errore")
