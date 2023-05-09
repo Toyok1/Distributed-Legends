@@ -536,7 +536,7 @@ if __name__ == '__main__':
         # retrieve a username so we can distinguish all the different clients
         username = simpledialog.askstring(
             "Username", "What's your username?", parent=root)
-    root.title("RPGCombat - " + username)
+    root.title("Distributed Legends - " + username)
 
     isHost = int(list(sys.argv)[1]) if len(list(sys.argv)) > 1 else 2
 
