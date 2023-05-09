@@ -1,6 +1,5 @@
 import os
-import subprocess
-import sys
+import threading
 import tkinter as tk
 
 from GRPCClientHelper import serverDialog
@@ -22,7 +21,12 @@ if __name__ == "__main__":
             break
 
     if isHost.result == 1:
-        os.system("(python SERVER.py || python3 SERVER.py) & (python client.py 1 ||python3 client.py 1 )")
+        '''os.system("(python SERVER.py || python3 SERVER.py) ")
+        os.system("(python client.py 1 ||python3 client.py 1 )")'''
+        threading.Thread(target=lambda: os.system(
+            "(python SERVER.py || python3 SERVER.py) "), daemon=True).start()
+        threading.Thread(target=lambda: os.system(
+            "(python client.py 1 ||python3 client.py 1 )"), daemon=True).start()
     elif isHost.result == 2:
         os.system("python client.py || python3 client.py")
     else:

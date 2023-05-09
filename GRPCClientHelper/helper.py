@@ -123,11 +123,11 @@ class PostOffice:
         if actionType == 0:
             n.action_type = 0
             n.amount = values["attack"] + \
-                random.randint(-10, 10)  # TODO range of damage
+                random.randint(-5, 5)  # TODO range of damage
         elif actionType == 1:
             n.action_type = 1
             n.amount = values["heal"] + \
-                random.randint(-10, 10)  # TODO range of damage
+                random.randint(-5, 5)  # TODO range of damage
         elif actionType == 2:
             n.action_type = 2
             n.amount = values["block"]  # TODO range of damage
