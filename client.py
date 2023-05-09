@@ -229,7 +229,6 @@ class Client():
         self.assignButtons()
         self.lockButtons()
         self.state = "attack"
-        # self.__after_action()
         # #print("MESSAGGIO CREATO")
         self.myPostOffice.SendAction(
             self.myPostOffice.myPlayer, attacked, actionType=0)

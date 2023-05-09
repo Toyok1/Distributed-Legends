@@ -178,7 +178,10 @@ class ChatServer(rpc.ChatServerServicer):
             b.json_str = player.transformIntoJSON(new_user)
             self.turns.append(b)
             self.LAST_USER_TURN = new_user
-        self.listUser.append(new_user)
+        if len(self.listUser) < 4 and not new_user in self.listUser and self.isStartedGame == False:
+            self.listUser.append(new_user)
+        else:
+            print("User already in the game or game already started")
         # #print(self.listUser)
         # something needs to be returned required by protobuf language, we just return empty msg
         return chat.Empty()

@@ -39,40 +39,10 @@ class ChatServerStub(object):
                 request_serializer=chat__pb2.PrivateInfo.SerializeToString,
                 response_deserializer=chat__pb2.Empty.FromString,
                 )
-        self.SendAttack = channel.unary_unary(
-                '/grpc.ChatServer/SendAttack',
-                request_serializer=chat__pb2.Attack.SerializeToString,
-                response_deserializer=chat__pb2.Empty.FromString,
-                )
-        self.SendHealing = channel.unary_unary(
-                '/grpc.ChatServer/SendHealing',
-                request_serializer=chat__pb2.Healing.SerializeToString,
-                response_deserializer=chat__pb2.Empty.FromString,
-                )
-        self.SendBlock = channel.unary_unary(
-                '/grpc.ChatServer/SendBlock',
-                request_serializer=chat__pb2.Block.SerializeToString,
-                response_deserializer=chat__pb2.Empty.FromString,
-                )
         self.SendAction = channel.unary_unary(
                 '/grpc.ChatServer/SendAction',
                 request_serializer=chat__pb2.Action.SerializeToString,
                 response_deserializer=chat__pb2.Empty.FromString,
-                )
-        self.AttackStream = channel.unary_stream(
-                '/grpc.ChatServer/AttackStream',
-                request_serializer=chat__pb2.Empty.SerializeToString,
-                response_deserializer=chat__pb2.Attack.FromString,
-                )
-        self.HealingStream = channel.unary_stream(
-                '/grpc.ChatServer/HealingStream',
-                request_serializer=chat__pb2.Empty.SerializeToString,
-                response_deserializer=chat__pb2.Healing.FromString,
-                )
-        self.BlockStream = channel.unary_stream(
-                '/grpc.ChatServer/BlockStream',
-                request_serializer=chat__pb2.Empty.SerializeToString,
-                response_deserializer=chat__pb2.Block.FromString,
                 )
         self.ActionStream = channel.unary_stream(
                 '/grpc.ChatServer/ActionStream',
@@ -140,43 +110,7 @@ class ChatServerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def SendAttack(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def SendHealing(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def SendBlock(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
     def SendAction(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def AttackStream(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def HealingStream(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def BlockStream(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -246,40 +180,10 @@ def add_ChatServerServicer_to_server(servicer, server):
                     request_deserializer=chat__pb2.PrivateInfo.FromString,
                     response_serializer=chat__pb2.Empty.SerializeToString,
             ),
-            'SendAttack': grpc.unary_unary_rpc_method_handler(
-                    servicer.SendAttack,
-                    request_deserializer=chat__pb2.Attack.FromString,
-                    response_serializer=chat__pb2.Empty.SerializeToString,
-            ),
-            'SendHealing': grpc.unary_unary_rpc_method_handler(
-                    servicer.SendHealing,
-                    request_deserializer=chat__pb2.Healing.FromString,
-                    response_serializer=chat__pb2.Empty.SerializeToString,
-            ),
-            'SendBlock': grpc.unary_unary_rpc_method_handler(
-                    servicer.SendBlock,
-                    request_deserializer=chat__pb2.Block.FromString,
-                    response_serializer=chat__pb2.Empty.SerializeToString,
-            ),
             'SendAction': grpc.unary_unary_rpc_method_handler(
                     servicer.SendAction,
                     request_deserializer=chat__pb2.Action.FromString,
                     response_serializer=chat__pb2.Empty.SerializeToString,
-            ),
-            'AttackStream': grpc.unary_stream_rpc_method_handler(
-                    servicer.AttackStream,
-                    request_deserializer=chat__pb2.Empty.FromString,
-                    response_serializer=chat__pb2.Attack.SerializeToString,
-            ),
-            'HealingStream': grpc.unary_stream_rpc_method_handler(
-                    servicer.HealingStream,
-                    request_deserializer=chat__pb2.Empty.FromString,
-                    response_serializer=chat__pb2.Healing.SerializeToString,
-            ),
-            'BlockStream': grpc.unary_stream_rpc_method_handler(
-                    servicer.BlockStream,
-                    request_deserializer=chat__pb2.Empty.FromString,
-                    response_serializer=chat__pb2.Block.SerializeToString,
             ),
             'ActionStream': grpc.unary_stream_rpc_method_handler(
                     servicer.ActionStream,
@@ -407,57 +311,6 @@ class ChatServer(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def SendAttack(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/grpc.ChatServer/SendAttack',
-            chat__pb2.Attack.SerializeToString,
-            chat__pb2.Empty.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def SendHealing(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/grpc.ChatServer/SendHealing',
-            chat__pb2.Healing.SerializeToString,
-            chat__pb2.Empty.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def SendBlock(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/grpc.ChatServer/SendBlock',
-            chat__pb2.Block.SerializeToString,
-            chat__pb2.Empty.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
     def SendAction(request,
             target,
             options=(),
@@ -471,57 +324,6 @@ class ChatServer(object):
         return grpc.experimental.unary_unary(request, target, '/grpc.ChatServer/SendAction',
             chat__pb2.Action.SerializeToString,
             chat__pb2.Empty.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def AttackStream(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/grpc.ChatServer/AttackStream',
-            chat__pb2.Empty.SerializeToString,
-            chat__pb2.Attack.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def HealingStream(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/grpc.ChatServer/HealingStream',
-            chat__pb2.Empty.SerializeToString,
-            chat__pb2.Healing.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def BlockStream(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/grpc.ChatServer/BlockStream',
-            chat__pb2.Empty.SerializeToString,
-            chat__pb2.Block.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

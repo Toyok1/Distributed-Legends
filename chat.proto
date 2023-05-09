@@ -84,13 +84,7 @@ service ChatServer {
     rpc SendPrivateInfo (PrivateInfo) returns (Empty);
     rpc SendPing(Ping) returns (Pong);
     rpc StartGame(PrivateInfo) returns(Empty);
-    rpc SendAttack(Attack) returns(Empty);
-    rpc SendHealing(Healing) returns(Empty);
-    rpc SendBlock(Block) returns(Empty);
     rpc SendAction(Action) returns(Empty);
-    rpc AttackStream(Empty) returns(stream Attack);
-    rpc HealingStream(Empty) returns(stream Healing);
-    rpc BlockStream(Empty) returns(stream Block);
     rpc ActionStream(Empty) returns(stream Action);
     rpc FinishGame(FinishedBool) returns(Empty);
     rpc FinishStream(Empty) returns(stream EndNote);
