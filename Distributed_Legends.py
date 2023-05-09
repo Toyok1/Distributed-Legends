@@ -11,7 +11,7 @@ if __name__ == "__main__":
         root.iconbitmap("./src/icon/icon.ico")
     except:
         pass
-    root.title("RPGCombat - Host choice")
+    root.title("Distributed Legends - Host choice")
     root.withdraw()
 
     while True:  # in the future this is replaced by the script that opens up the server together with the client
