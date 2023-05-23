@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package grpc;
+
+message Empty {}
+
+message EndNote{
+    string MonsterWin=1;
+    string HeroesWin=2;
+    string MonsterDefeat=3;    
+    string HeroesDefeat=4;
+    bool fin=5;
+}
+
+message PrivateInfo{
+    bytes ip = 1;
+    string user = 2;
+    string u_id = 3;
+    int32 user_type = 4;
+}
+
+message PlayerMessage{
+    string json_str = 1;
+}
+
+message Ping {
+    bytes ip = 1;
+    string id = 2;
+}
+
+message Pong {
+    string message = 1;
+    string list_players = 2;
+}
+
+message Action{
+    string sender = 1;
+    string reciever = 2;
+    int32 amount = 3;
+    int32 action_type = 4; //0 = attack, 1 = heal, 2 = block etc etc
+}
+
+service ClientController {
+    rpc SendPrivateInfo (PrivateInfo) returns (Empty);
+    rpc SendPing(Ping) returns (Pong);
+    rpc SendAction(Action) returns(Empty);
+    rpc ActionStream(Empty) returns(stream Action);
+    rpc FinishStream(Empty) returns(stream EndNote);
+}
+// python3 -m grpc_tools.protoc -I=. --python_out=. --grpc_python_out=. clientController.proto 
+// python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. clientController.proto      
