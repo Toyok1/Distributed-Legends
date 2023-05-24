@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+service Player {
+
+  rpc sendPlayerList (stream SendPlayerListRequest) returns (SendPlayerListReply) {}
+
+  rpc sendStartGame (SendStartGameRequest) returns (SendStartGameReply) {}
+
+  rpc cardHandHash (CardHandRequest) returns (stream CardHandReply) {}
+}
+
+message SendPlayerListRequest {
+  double timestamp = 1;
+  string address = 2;
+  string playerId = 3;
+}
+
+message SendPlayerListReply {
+  bool success = 1;
+}
+
+message SendStartGameRequest {}
+
+message SendStartGameReply {
+  bool success = 1;
+}
+
+message CardHandRequest {}
+
+message CardHandReply {
+  int32 card = 1;
+}
