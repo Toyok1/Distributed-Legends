@@ -11,6 +11,8 @@ service Matchmaker {
   rpc deleteGame (DeleteGameRequest) returns (DeleteGameReply) {}
 
   rpc saveGame (SaveGameRequest) returns (SaveGameReply) {}
+
+  rpc listPlayers (ListPlayerRequest) returns (stream ListPlayerReply) {}
 }
 
 message NewGameRequest {
@@ -54,4 +56,13 @@ message SaveGameRequest {}
 
 message SaveGameReply {
   bool success = 1;
+}
+
+message ListPlayerRequest {
+  string gameId = 1,
+  string playerId = 2
+}
+
+message ListPlayerReply {
+  string playerList = 1;
 }

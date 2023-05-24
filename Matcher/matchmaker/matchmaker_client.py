@@ -16,7 +16,7 @@ if __name__ == '__main__':
     matchmaker_address = matchmaker_address_manual
   
   print('connecting to {:s}'.format(matchmaker_address))
-  channel = grpc.insecure_channel('{:s}:50051'.format(matchmaker_address))
+  channel = grpc.insecure_channel('{:s}:900'.format(matchmaker_address))
   stub = matchmaker_pb2_grpc.MatchmakerStub(channel)
 
   command = input(' > ')
@@ -50,9 +50,8 @@ if __name__ == '__main__':
       response = stub.deleteGame(matchmaker_pb2.DeleteGameRequest(gameId = game_id, playerId = player_id))
       print('{:s}'.format('DONE' if response.success else 'ERROR'))
       print('==============================')
-    elif command == 'save-game':
+    elif command == 'list-players':
       print('==============================')
-      response = stub.saveGame(matchmaker_pb2.SaveGameRequest())
-      print('{:s}'.format('DONE' if response.success else 'ERROR'))
-      print('==============================')
+      game_id = str(input('Game id: '))
+      response = stub.listPlayer(matchmaker_pb2.ListPlayerRequest(gameId = game_id, playerId = player_id))
     command = input(' > ')

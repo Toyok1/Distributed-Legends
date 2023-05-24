@@ -48,10 +48,10 @@ class Matchmaker(matchmaker_pb2_grpc.MatchmakerServicer):
     result = matchmakerDb.deleteGame(trim_address(context.peer()), request.gameId, request.playerId)
     return matchmaker_pb2.DeleteGameReply(success = result)
 
-  def saveGame(self, request, context):
-    print(' => saveGame')
-    result = matchmakerDb.saveGame()
-    return matchmaker_pb2.SaveGameReply(success = result)
+  def listPlayer(self, request, context):
+    print(' => listPlayer')
+    for player in matchmakerDb.listPlayer(request.gameId, request.playerId):
+      yield game.to_ListPlayerReply()
 
 
 

@@ -38,6 +38,12 @@ class MatchmakerDb:
       return True
     else:
       return False
+    
+  def listPlayer(self, game_id):
+    gameSelector = self.game_list
+    if game_id :
+      gameSelector = list(filter(lambda x: x.game_id == game_id, gameSelector))
+    return gameSelector[0].listPlayer()
 
   def saveGame(self):
     f = open('matchmaker_db.json', 'w')
