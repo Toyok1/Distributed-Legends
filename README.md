@@ -1,6 +1,6 @@
 # Distributed-Legends
 ## Introduction
-
+  
 GRPCombat is a distributed videogame built using gRPC [@grpc], an open
 source framework for remote procedure calls that was originally built by
 Google. The premise is simple: a group of 3 heroes (chosen from 3
