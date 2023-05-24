@@ -9,7 +9,12 @@ class Game:
     self.game_id = game_id
     self.player_id = player_id
     self.list_client = []
-
+  
+  def __init__(self, address, game_id, player_id, list_client):
+    self.address = address
+    self.game_id = game_id
+    self.player_id = player_id
+    self.list_client = list_client
   def to_ListGameReply(self):
     return matchmaker_pb2.ListGameReply(address = self.address, gameId = self.game_id, playerId = self.player_id)
   

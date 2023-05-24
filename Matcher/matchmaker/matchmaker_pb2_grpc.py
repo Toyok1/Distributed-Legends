@@ -39,6 +39,11 @@ class MatchmakerStub(object):
                 request_serializer=matchmaker__pb2.SaveGameRequest.SerializeToString,
                 response_deserializer=matchmaker__pb2.SaveGameReply.FromString,
                 )
+        self.listPlayers = channel.unary_stream(
+                '/Matchmaker/listPlayers',
+                request_serializer=matchmaker__pb2.ListPlayerRequest.SerializeToString,
+                response_deserializer=matchmaker__pb2.ListPlayerReply.FromString,
+                )
 
 
 class MatchmakerServicer(object):
@@ -74,6 +79,12 @@ class MatchmakerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def listPlayers(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MatchmakerServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -101,6 +112,11 @@ def add_MatchmakerServicer_to_server(servicer, server):
                     servicer.saveGame,
                     request_deserializer=matchmaker__pb2.SaveGameRequest.FromString,
                     response_serializer=matchmaker__pb2.SaveGameReply.SerializeToString,
+            ),
+            'listPlayers': grpc.unary_stream_rpc_method_handler(
+                    servicer.listPlayers,
+                    request_deserializer=matchmaker__pb2.ListPlayerRequest.FromString,
+                    response_serializer=matchmaker__pb2.ListPlayerReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -194,5 +210,22 @@ class Matchmaker(object):
         return grpc.experimental.unary_unary(request, target, '/Matchmaker/saveGame',
             matchmaker__pb2.SaveGameRequest.SerializeToString,
             matchmaker__pb2.SaveGameReply.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def listPlayers(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(request, target, '/Matchmaker/listPlayers',
+            matchmaker__pb2.ListPlayerRequest.SerializeToString,
+            matchmaker__pb2.ListPlayerReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

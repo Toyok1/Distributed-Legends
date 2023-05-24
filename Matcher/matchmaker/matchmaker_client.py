@@ -53,5 +53,9 @@ if __name__ == '__main__':
     elif command == 'list-players':
       print('==============================')
       game_id = str(input('Game id: '))
-      response = stub.listPlayer(matchmaker_pb2.ListPlayerRequest(gameId = game_id, playerId = player_id))
+      response = stub.listPlayers(matchmaker_pb2.ListPlayerRequest(gameId = game_id))
+      for player in response:
+        print('==============================')
+        print(player)
+      
     command = input(' > ')

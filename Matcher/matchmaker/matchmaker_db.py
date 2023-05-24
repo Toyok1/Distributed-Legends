@@ -10,7 +10,7 @@ class MatchmakerDb:
     self.game_list = list()
     # TODODSE
     # Solo per avere su cosa provare
-    self.game_list = [game.Game('0.0.0.0', '[do not use]test_1', 'player_1'), game.Game('0.0.0.0', '[do not use]test_2', 'player_2'), game.Game('0.0.0.0', '[do not use]test_3', 'player_3')]
+    self.game_list = [game.Game('0.0.0.0', '[do not use]test_1', 'player_1', ['mario','luigi']), game.Game('0.0.0.0', '[do not use]test_2', 'player_2'), game.Game('0.0.0.0', '[do not use]test_3', 'player_3')]
 
   def newGame(self, game):
     game_list = list(filter(lambda x: x.player_id == game.player_id, filter(lambda x: x.game_id == game.game_id, filter(lambda x: x.address == game.address, self.game_list))))
