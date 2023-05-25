@@ -16,9 +16,10 @@ from GRPCClientHelper.config import port, key
 
 
 class ChatServer(rpc.ChatServerServicer):
-    def __init__(self, pId):
+    def __init__(self, pId, req_ip, req_id):
         self.finish = []
-        self.clients = []
+        self.peers = []
+        self.peers_actions = []
         # List with all the chat history
         self.chats = []
         self.actions = []
@@ -33,11 +34,30 @@ class ChatServer(rpc.ChatServerServicer):
         self.isStartedGame = False
         self.TERMINATE = None
 
+        self.__connect_to_peers(self, req_ip, req_id)
+
         threading.Thread(target=self.__clean_user_list, daemon=True).start()
         '''
         threading.Thread(target=self.__keep_alive, daemon=True).start()
         '''
     
+    def __connect_to_peers(self,req_ip:list,req_id:list):
+        for i in range(len(req_ip)):
+            if req_ip[i] != get('https://api.ipify.org').text:
+                #print("connecting to peer", req_ip[i])
+                channel = grpc.insecure_channel(req_ip[i]+":"+str(port))
+                stub = rpc.ChatServerStub(channel)
+                self.peers.append(stub)
+                #print("connected to peer", req_ip[i])
+                self.__updateUserList(req_ip[i], req_id[i])
+        #print("connected to all peers")
+        for i in range(len(self.peers)):
+            threading.Thread(target=self.__listen_for_action_stream, args=(self.peers[i],), daemon=True).start()
+
+    def __listen_for_action_stream(self, peer):
+        for action in peer.ActionStream(chat.Empty()):
+            self.peers_actions.append(action)
+
     def __updateUserList(self, req_ip, req_id):
         for usr in self.listUser:
             if usr.getIp() == req_ip and usr.getUid() == req_id:
@@ -114,26 +134,7 @@ class ChatServer(rpc.ChatServerServicer):
             else:
                 user.setHp(50)
     '''
-    # The stream which will be used to send new messages to clients
-    '''
-    def ChatStream(self, request_iterator, context):
-        lastindex = 0
-        # For every client a infinite loop starts (in gRPC's own managed thread)
-        while True:
-            # Check if there are any new messages
-            while len(self.chats) > lastindex:
-                n = self.chats[lastindex]
-                lastindex += 1
-                yield n
-
-    def SendNote(self, request: chat.Note, context):
-        # this is only for the server console
-        # #print("[{}] {}".format(request.name, request.message))
-        # Add it to the chat history
-        self.chats.append(request)
-        # something needs to be returned required by protobuf language, we just return empty msg
-        return chat.Empty()
-    '''
+    
     def SendAction(self, request: chat.Action, context):
         n = request
         pl = player.transformFromJSON(n.reciever)
@@ -160,10 +161,9 @@ class ChatServer(rpc.ChatServerServicer):
             while len(self.actions) > lastindex:
                 n = self.actions[lastindex]
                 lastindex += 1
+                self.turn_actions.append(n)
                 # #print("Yielding action = ", n)
-
                 yield n
-
     '''
     def SendPrivateInfo(self, request: chat.PrivateInfo, context):
         encMessage = request.ip
