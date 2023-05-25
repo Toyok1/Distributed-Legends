@@ -123,6 +123,7 @@ def transformIntoJSON(theplayertotransform: Player):  # ip input decoded
         "block": theplayertotransform.getBlock(),
         "ping_time": theplayertotransform.getPingTime()
     }
+
     return json.dumps(obj)
 
 

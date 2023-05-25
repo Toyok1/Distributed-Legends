@@ -10,11 +10,12 @@ import socket
 from requests import get
 
 from PIL import ImageTk, Image
-from GRPCClientHelper import helper, player, serverDialog, userTypeDialog
+from GRPCClientHelper import helper, player, serverDialog, userTypeDialog, postOffice
 from cryptography.fernet import Fernet
 from tkinter import simpledialog
 from tkinter import ttk
 from GRPCClientHelper.config import key
+
 
 class Client():
     def __init__(self, user: str, userType: int, serverAddress: str, window, isHost: int):
@@ -24,6 +25,7 @@ class Client():
         self.myHp = [tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar()]
         self.myBlock = 0
         self.imgs = []
+        self.lavagnetta = ["Welcome to the game!"]
         self.myPlayerType = userType
         self.username = user
         self.myTurn = False
@@ -31,11 +33,29 @@ class Client():
         self.myUid = str(uuid.uuid4())
         self.labelrefs = {}
         self.fernet = Fernet(key)
+        self.PeersOffice = None  # TODO ridefinire con quello che sta in postOffice.py
 
         self.myPostOffice = helper.PostOffice(
             serverAddress, user, self.myUid, userType)
         self.myPostOffice.Subscribe()
-
+        str_list_user = '''
+        {'ip': '93.34.81.120',
+          'u_id': 'f323f433-778c-425f-9499-7086d1c4e8b0',
+            'username': 'lillo',
+              'user_type': 0,
+                'hp': 50,
+                  'block': 0,
+                    'ping_time': 1685028018.7448},
+        {'ip': '93.34.81.120',
+        'u_id': 'ecd2f112-aeb0-407b-94a8-5163f86db8bb',
+            'username': 'pippa',
+            'user_type': 1,
+                'hp': 100,
+                'block': 0,
+                    'ping_time': 1685028019.267047}
+                                  '''
+        self.myPeerOffice = postOffice.PeerOffice(
+            os.getpid(), ["localhost", "93.34.81.120"], ["f323f433-778c-425f-9499-7086d1c4e8b0", "ecd2f112-aeb0-407b-94a8-5163f86db8bb"], str_list_user)
         self.__setup_ui()
 
         try:
@@ -47,7 +67,10 @@ class Client():
             self.closeGame()
 
         threading.Thread(target=self.__listen_for_turns, daemon=True).start()
-        threading.Thread(target=self.__listen_for_actions, daemon=True).start()
+        threading.Thread(target=self.__aggiorna_lavagnetta,
+                         daemon=True).start()
+        threading.Thread(target=self.__completeTurn, daemon=True).start()
+        # threading.Thread(target=self.__listen_for_actions, daemon=True).start()
         # threading.Thread(target=self.__diagnose, daemon=True).start()
         threading.Thread(target=self.__listen_for_finish, daemon=True).start()
 
@@ -81,6 +104,54 @@ class Client():
         except:
             # print("Error in __check_for_start ")
             self.__check_for_start()
+
+    def __aggiorna_lavagnetta(self):
+        while True:
+            if len(self.lavagnetta) != 0:
+                for i in self.lavagnetta:
+                    self.entry_message.config(text=i)
+                    time.sleep(1)
+
+    def __completeTurn(self):
+        while True:
+            while len(self.myPeerOffice.peers_actions) < len(self.peers) + 1:
+                time.sleep(0.5)
+            print("completing turn")
+            for action in self.peers_actions:
+                actor = player.transformFromJSON(action.sender)
+                victim = player.transformFromJSON(action.reciever)
+                for p in self.myPeerOffice.listUser:
+                    if p.getUid() == victim.getUid():
+                        victim = p
+                        break
+
+                action_amount = action.amount
+                action_type = action.action_type
+                mode = ""
+
+                if action_type == 0:
+                    mode = "attacks"
+                elif action_type == 1:
+                    mode = "heals"
+                elif action_type == 2:
+                    mode = "blocks for"
+                else:
+                    mode = "idles"
+
+                addendum = victim.getUsername()
+                print_message_array = ["User", actor.getUsername(
+                ), mode, addendum, "for", str(abs(action_amount)), "points!"]
+
+                # gets rid of the double space in addendum when action_type != 2
+                print_message = " ".join(
+                    print_message_array).replace("  ", " ")
+                self.lavagnetta.append(print_message)
+
+            for p in self.myPeerOffice.listUser:
+                self.adjustLabels(p)
+
+            self.myPeerOffice.peers_actions = []
+            self.unlockButtons()
 
     def __listen_for_actions(self):
         for action in self.myPostOffice.ActionStream():
@@ -211,16 +282,19 @@ class Client():
         self.attack_button["state"] = "normal"
         self.heal_button["state"] = "normal"
         self.block_button["state"] = "normal"
+        self.lavagnetta = []
+        self.entry_message.config(text="Do something!")
 
     def send_end_turn(self):
         # #print("Ending my turn: " + self.username)
-        self.turn_button["state"] = "disabled"
+        '''self.turn_button["state"] = "disabled"
         self.lockButtons()
         self.state = "idle"
         time.sleep(1)
         for p in self.myPostOffice.players:
             self.adjustLabels(p)
-        self.myPostOffice.EndTurn(self.myPostOffice.myPlayer)
+        self.myPostOffice.EndTurn(self.myPostOffice.myPlayer)'''
+        self.do_nothing()
 
     def attack_single(self, attacked):
         # attack people that are not your same class or friends
@@ -511,8 +585,6 @@ class Client():
         self.text_frame.rowconfigure(0, weight=1, minsize=180)
 
         self.entry_message = tk.Label(self.text_frame, bd=5)
-        # self.entry_message.bind('<Return>', self.send_message)
-        # self.entry_message.focus()
 
         if self.isHost == True:
             my_str = "Welcome to the game! Have your friends connect to your global IP: " + \

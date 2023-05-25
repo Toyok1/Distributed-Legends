@@ -15,19 +15,26 @@ from requests import get
 from GRPCClientHelper.config import port, key
 
 
-class ChatServer(rpc.ChatServerServicer):
-    def __init__(self, pId, req_ip, req_id):
+class PeerChatServer(rpc.ChatServerServicer):
+    def __init__(self, pId, req_ip, req_id, str_list_user):
+        server = grpc.server(futures.ThreadPoolExecutor(
+            max_workers=100))  # create a gRPC server
+        rpc.add_ChatServerServicer_to_server(
+            self, server)  # register the server to gRPC
+        # gRPC basically manages all the threading and server responding logic, which is perfect!
+        print('Starting server. Listening...')
+        server.add_insecure_port('[::]:' + str(port))
+        server.start()
         self.finish = []
         self.peers = []
         self.peers_actions = []
         # List with all the chat history
-        self.chats = []
         self.actions = []
         self.hp = []
         self.attack = []
         self.listBlock = []
         self.turns = []
-        self.listUser = []  # every element is a Player
+        self.listUser = player.transformFullListFromJSON(str_list_user)
         self.fernet = Fernet(key)
         self.processId = pId
         self.LAST_USER_TURN = None
@@ -40,22 +47,37 @@ class ChatServer(rpc.ChatServerServicer):
         '''
         threading.Thread(target=self.__keep_alive, daemon=True).start()
         '''
-    
-    def __connect_to_peers(self,req_ip:list,req_id:list):
+
+    def __connect_to_peers(self, req_ip: list, req_id: list):
         for i in range(len(req_ip)):
             if req_ip[i] != get('https://api.ipify.org').text:
-                #print("connecting to peer", req_ip[i])
+                # print("connecting to peer", req_ip[i])
                 channel = grpc.insecure_channel(req_ip[i]+":"+str(port))
                 stub = rpc.ChatServerStub(channel)
                 self.peers.append(stub)
-                #print("connected to peer", req_ip[i])
+                # print("connected to peer", req_ip[i])
                 self.__updateUserList(req_ip[i], req_id[i])
-        #print("connected to all peers")
+        # print("connected to all peers")
         for i in range(len(self.peers)):
-            threading.Thread(target=self.__listen_for_action_stream, args=(self.peers[i],), daemon=True).start()
+            threading.Thread(target=self.__listen_for_action_stream, args=(
+                self.peers[i],), daemon=True).start()
 
     def __listen_for_action_stream(self, peer):
         for action in peer.ActionStream(chat.Empty()):
+            n = action
+            pl = player.transformFromJSON(n.reciever)
+            am = n.amount
+            action_type = n.action_type
+            for p in self.listUser:
+                if p.getUid() == pl.getUid():
+                    if action_type == 0:
+                        p.takeDamage(am)
+                    elif action_type == 1:
+                        p.heal(am)
+                    elif action_type == 2:
+                        p.block(am)
+                    else:
+                        print("OPS! Error with the actions.")
             self.peers_actions.append(action)
 
     def __updateUserList(self, req_ip, req_id):
@@ -70,7 +92,8 @@ class ChatServer(rpc.ChatServerServicer):
             if len(self.listUser) == 0:
                 os.kill(self.processId, signal.SIGTERM)
     '''
-    #TO ADAPT TO p2p architecture
+    # TO ADAPT TO p2p architecture
+
     def __clean_user_list(self):
         # if a user (hero) is more than 10 seconds from its last ping we count it as dead and, if it is its turn we skip it and we go to the next user.
         while True:
@@ -134,23 +157,10 @@ class ChatServer(rpc.ChatServerServicer):
             else:
                 user.setHp(50)
     '''
-    
+
     def SendAction(self, request: chat.Action, context):
-        n = request
-        pl = player.transformFromJSON(n.reciever)
-        am = n.amount
-        action_type = n.action_type
-        for p in self.listUser:
-            if p.getUid() == pl.getUid():
-                if action_type == 0:
-                    p.takeDamage(am)
-                elif action_type == 1:
-                    p.heal(am)
-                elif action_type == 2:
-                    p.block(am)
-                else:
-                    print("OPS! Error with the actions.")
         self.actions.append(request)
+        self.peers_actions.append(request)
         return chat.Empty()
 
     def ActionStream(self, request_iterator, context):
@@ -215,7 +225,6 @@ class ChatServer(rpc.ChatServerServicer):
 
         return chat.Empty()
 
-    
     def TurnStream(self, request_iterator, context):
         lastindex = 0
         while True:
@@ -270,7 +279,7 @@ if __name__ == '__main__':
     # then no more clients able to connect to the server.
     server = grpc.server(futures.ThreadPoolExecutor(
         max_workers=1000))  # create a gRPC server
-    rpc.add_ChatServerServicer_to_server(ChatServer(
+    rpc.add_ChatServerServicer_to_server(PeerChatServer(
         os.getpid()), server)  # register the server to gRPC
     # gRPC basically manages all the threading and server responding logic, which is perfect!
     print('Starting server. Listening...')
