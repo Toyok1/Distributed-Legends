@@ -59,8 +59,7 @@ message SaveGameReply {
 }
 
 message ListPlayerRequest {
-  string gameId = 1,
-  string playerId = 2
+  string gameId = 1;
 }
 
 message ListPlayerReply {

@@ -16,7 +16,6 @@ from tkinter import simpledialog
 from tkinter import ttk
 from GRPCClientHelper.config import key
 
-
 class Client():
     def __init__(self, user: str, userType: int, serverAddress: str, window, isHost: int):
         self.GAME_STARTED = False

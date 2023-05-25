@@ -34,20 +34,23 @@ class ChatServer(rpc.ChatServerServicer):
         self.TERMINATE = None
 
         threading.Thread(target=self.__clean_user_list, daemon=True).start()
+        '''
         threading.Thread(target=self.__keep_alive, daemon=True).start()
-
+        '''
+    
     def __updateUserList(self, req_ip, req_id):
         for usr in self.listUser:
             if usr.getIp() == req_ip and usr.getUid() == req_id:
                 # #print("pinged", usr)
                 usr.setPingTime(time.time())
-
+    '''
     def __keep_alive(self):
         while True:
             time.sleep(180)  # TODO change number of seconds of inactivity
             if len(self.listUser) == 0:
                 os.kill(self.processId, signal.SIGTERM)
-
+    '''
+    #TO ADAPT TO p2p architecture
     def __clean_user_list(self):
         # if a user (hero) is more than 10 seconds from its last ping we count it as dead and, if it is its turn we skip it and we go to the next user.
         while True:
@@ -103,14 +106,16 @@ class ChatServer(rpc.ChatServerServicer):
 
             time.sleep(2.5)
 
+    '''
     def __distributeHealth(self):
         for user in self.listUser:
             if user.getUsertype() == 1:
                 user.setHp(100)
             else:
                 user.setHp(50)
-
+    '''
     # The stream which will be used to send new messages to clients
+    '''
     def ChatStream(self, request_iterator, context):
         lastindex = 0
         # For every client a infinite loop starts (in gRPC's own managed thread)
@@ -128,7 +133,7 @@ class ChatServer(rpc.ChatServerServicer):
         self.chats.append(request)
         # something needs to be returned required by protobuf language, we just return empty msg
         return chat.Empty()
-
+    '''
     def SendAction(self, request: chat.Action, context):
         n = request
         pl = player.transformFromJSON(n.reciever)
@@ -159,6 +164,7 @@ class ChatServer(rpc.ChatServerServicer):
 
                 yield n
 
+    '''
     def SendPrivateInfo(self, request: chat.PrivateInfo, context):
         encMessage = request.ip
         user = request.user
@@ -182,6 +188,7 @@ class ChatServer(rpc.ChatServerServicer):
         # #print(self.listUser)
         # something needs to be returned required by protobuf language, we just return empty msg
         return chat.Empty()
+    '''
 
     def SendPing(self, request: chat.Ping, context):
         """ Fulfills SendPing RPC defined in ping.proto """
@@ -208,6 +215,7 @@ class ChatServer(rpc.ChatServerServicer):
 
         return chat.Empty()
 
+    
     def TurnStream(self, request_iterator, context):
         lastindex = 0
         while True:
@@ -216,7 +224,7 @@ class ChatServer(rpc.ChatServerServicer):
                 # #print(n)
                 lastindex += 1
                 yield n
-
+    '''
     def ReturnStarted(self, request_iterator, context):
         b = chat.StartedBool()
         b.started = self.isStartedGame
@@ -229,6 +237,7 @@ class ChatServer(rpc.ChatServerServicer):
             self.isStartedGame = True
             self.__distributeHealth()
         return chat.Empty()
+    '''
 
     def FinishGame(self, request_iterator, context):
         # #print("FinishGame called")
