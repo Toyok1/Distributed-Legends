@@ -30,15 +30,15 @@ class Client():
         self.username = user
         self.myTurn = False
         self.state = "idle"
-        self.myUid = str(uuid.uuid4())
+        self.myUid = str(userType)  # str(uuid.uuid4())
         self.labelrefs = {}
         self.fernet = Fernet(key)
-        self.PeersOffice = None  # TODO ridefinire con quello che sta in postOffice.py
+        self.PeersOffice = postOffice.PeerChatServer(
+            os.getpid(), [], [], "ciao")  # TODO ridefinire con quello che sta in postOffice.py
 
-        self.myPostOffice = helper.PostOffice(
-            serverAddress, user, self.myUid, userType)
-        self.myPostOffice.Subscribe()
-        str_list_user = '''
+        # self.myPostOffice = helper.PostOffice(serverAddress, user, self.myUid, userType)
+        # self.myPostOffice.Subscribe()
+        '''str_list_user = 
         {'ip': '93.34.81.120',
           'u_id': 'f323f433-778c-425f-9499-7086d1c4e8b0',
             'username': 'lillo',
@@ -54,31 +54,30 @@ class Client():
                 'block': 0,
                     'ping_time': 1685028019.267047}
                                   '''
-        self.myPeerOffice = postOffice.PeerOffice(
-            os.getpid(), ["localhost", "93.34.81.120"], ["f323f433-778c-425f-9499-7086d1c4e8b0", "ecd2f112-aeb0-407b-94a8-5163f86db8bb"], str_list_user)
+
         self.__setup_ui()
 
-        try:
+        '''try:
             threading.Thread(target=self.myPostOffice.Listen_for_PingPong, args=(
                 self.myUid,), daemon=True).start()
         except:
             self.entry_message.config(
                 text="Connection lost :(")
-            self.closeGame()
+            self.closeGame()'''
 
-        threading.Thread(target=self.__listen_for_turns, daemon=True).start()
+        # threading.Thread(target=self.__listen_for_turns, daemon=True).start()
         threading.Thread(target=self.__aggiorna_lavagnetta,
                          daemon=True).start()
         threading.Thread(target=self.__completeTurn, daemon=True).start()
         # threading.Thread(target=self.__listen_for_actions, daemon=True).start()
         # threading.Thread(target=self.__diagnose, daemon=True).start()
-        threading.Thread(target=self.__listen_for_finish, daemon=True).start()
+        # threading.Thread(target=self.__listen_for_finish, daemon=True).start()
 
         # probably the host won't need to run this thread so TODO when we have a way to distinguish them: get rid of it for the host.
 
-        if userType != 1:
+        '''if userType != 1:
             threading.Thread(target=self.__check_for_start,
-                             daemon=True).start()
+                             daemon=True).start()'''
         self.window.mainloop()
 
     def get_local_ip(self):
@@ -113,14 +112,15 @@ class Client():
                     time.sleep(1)
 
     def __completeTurn(self):
+        self.peers = ["1"]
         while True:
-            while len(self.myPeerOffice.peers_actions) < len(self.peers) + 1:
+            while len(self.PeersOffice.peers_actions) < len(self.peers) + 1:
                 time.sleep(0.5)
             print("completing turn")
             for action in self.peers_actions:
                 actor = player.transformFromJSON(action.sender)
                 victim = player.transformFromJSON(action.reciever)
-                for p in self.myPeerOffice.listUser:
+                for p in self.PeersOffice.listUser:
                     if p.getUid() == victim.getUid():
                         victim = p
                         break
@@ -147,10 +147,10 @@ class Client():
                     print_message_array).replace("  ", " ")
                 self.lavagnetta.append(print_message)
 
-            for p in self.myPeerOffice.listUser:
+            for p in self.PeersOffice.listUser:
                 self.adjustLabels(p)
 
-            self.myPeerOffice.peers_actions = []
+            self.PeersOffice.peers_actions = []
             self.unlockButtons()
 
     def __listen_for_actions(self):
@@ -302,22 +302,22 @@ class Client():
         self.lockButtons()
         self.state = "attack"
         # #print("MESSAGGIO CREATO")
-        self.myPostOffice.SendAction(
-            self.myPostOffice.myPlayer, attacked, actionType=0)
+        self.PeersOffice.SendAction(
+            self.PeersOffice.listUser[int(self.myUid)-1], attacked, actionType=0)
 
     def heal_single(self, healed):
         self.assignButtons()
         self.lockButtons()
         self.state = "heal"
-        self.myPostOffice.SendAction(
-            self.myPostOffice.myPlayer, healed, actionType=1)
+        self.PeersOffice.SendAction(
+            self.PeersOffice.listUser[int(self.myUid)-1], healed, actionType=1)
 
     def block_single(self, blocked):
         self.assignButtons()
         self.lockButtons()
         self.state = "protect"
-        self.myPostOffice.SendAction(
-            self.myPostOffice.myPlayer, blocked, actionType=2)
+        self.PeersOffice.SendAction(
+            self.PeersOffice.listUser[int(self.myUid)-1], blocked, actionType=2)
 
     def adjustLabels(self, pl):
         # #print("CHANGING LABELS FOR ", pl)
@@ -333,16 +333,16 @@ class Client():
         buttons = [self.attack_button, self.block_button, self.heal_button]
         # #print(len(self.myPostOffice.heroesList), " ", len(buttons))
 
-        for i in range(0, len(self.myPostOffice.heroesList)):
+        for i in range(0, len(self.PeersOffice.listUser)):
             try:
                 buttons[i].configure(
-                    text=shout + '\n' + self.myPostOffice.heroesList[i].getUsername())
-                func = partial(function, self.myPostOffice.heroesList[i])
+                    text=shout + '\n' + self.PeersOffice.listUser[i].getUsername())
+                func = partial(function, self.PeersOffice.listUser[i])
                 buttons[i].configure(command=func)
             except:
                 buttons[i].configure(text="----")
                 buttons[i].configure(command=self.do_nothing)
-        for i in range(len(self.myPostOffice.heroesList), len(buttons)):
+        for i in range(len(self.PeersOffice.listUser), len(buttons)):
             try:
                 buttons[i].configure(text="----")
                 buttons[i].configure(command=self.do_nothing)
@@ -416,25 +416,25 @@ class Client():
         self.heal_button.configure(text="HEAL")
         self.turn_button.configure(text="END TURN")
         self.turn_button.configure(command=self.send_end_turn)
-        if self.myPostOffice.myPlayer.getUsertype() == 1:
+        if self.myUid == "1":
             # #print("ASSINGED MONSTER")
             # monster
             attack = partial(self.mapFuncToButtons,
                              self.attack_single, "ATTACK")
             self.attack_button.configure(command=attack)
-            block = partial(self.block_single, self.myPostOffice.myPlayer)
-            self.block_button.configure(command=block)
-            heal = partial(self.heal_single, self.myPostOffice.myPlayer)
-            self.heal_button.configure(command=heal)
+            # block = partial(self.block_single, self.myPostOffice.myPlayer)
+            self.block_button.configure(command=attack)
+            # heal = partial(self.heal_single, self.myPostOffice.myPlayer)
+            self.heal_button.configure(command=attack)
         else:
             # #print("ASSIGNED HERO")
+            self.monsterRef = self.PeersOffice.listUser[0]
             attack = partial(self.attack_single, self.monsterRef)
             self.attack_button.configure(command=attack)
-            block = partial(self.mapFuncToButtons,
-                            self.block_single, "BLOCK FOR")
-            self.block_button.configure(command=block)
-            heal = partial(self.mapFuncToButtons, self.heal_single, "HEAL")
-            self.heal_button.configure(command=heal)
+            # block = partial(self.mapFuncToButtons,self.block_single, "BLOCK FOR")
+            self.block_button.configure(command=attack)
+            # heal = partial(self.mapFuncToButtons, self.heal_single, "HEAL")
+            self.heal_button.configure(command=attack)
 
     def send_start_game(self):
         # if i'm the host i can start the game  TODO: make it so that only hosts can use this button and maybe delete it after use (?)
@@ -575,7 +575,8 @@ class Client():
             self.buttons_frame, text="END TURN", command=self.send_end_turn)
         self.turn_button.grid(row=1, column=1, sticky=tk.NSEW)
         self.turn_button["state"] = "disabled"
-        self.lockButtons()
+        self.assignButtons()
+        # self.lockButtons()
 
         # TEXT MESSAGE SETUP
         self.text_frame = tk.Frame(

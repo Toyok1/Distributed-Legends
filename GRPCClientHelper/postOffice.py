@@ -34,21 +34,27 @@ class PeerChatServer(rpc.ChatServerServicer):
         self.attack = []
         self.listBlock = []
         self.turns = []
-        self.listUser = player.transformFullListFromJSON(str_list_user)
+        # player.transformFullListFromJSON(str_list_user)
+        self.listUser = [player.Player(
+            "localhost", "1", "host", 1, time.time()), player.Player(
+            "localhost", "2", "c", 2, time.time())]
         self.fernet = Fernet(key)
         self.processId = pId
         self.LAST_USER_TURN = None
         self.isStartedGame = False
         self.TERMINATE = None
 
-        self.__connect_to_peers(self, req_ip, req_id)
+        # time.sleep(20)
+        self.__connect_to_peers(req_ip, req_id)
 
-        threading.Thread(target=self.__clean_user_list, daemon=True).start()
+        # threading.Thread(target=self.__clean_user_list, daemon=True).start()
         '''
         threading.Thread(target=self.__keep_alive, daemon=True).start()
         '''
 
     def __connect_to_peers(self, req_ip: list, req_id: list):
+        print("connecting to peers")
+        time.sleep(2)
         for i in range(len(req_ip)):
             if req_ip[i] != get('https://api.ipify.org').text:
                 # print("connecting to peer", req_ip[i])
@@ -61,9 +67,12 @@ class PeerChatServer(rpc.ChatServerServicer):
         for i in range(len(self.peers)):
             threading.Thread(target=self.__listen_for_action_stream, args=(
                 self.peers[i],), daemon=True).start()
+        print(self.peers)
 
     def __listen_for_action_stream(self, peer):
+        print("listening for action stream")
         for action in peer.ActionStream(chat.Empty()):
+            print("action received from peer", action)
             n = action
             pl = player.transformFromJSON(n.reciever)
             am = n.amount
@@ -158,9 +167,53 @@ class PeerChatServer(rpc.ChatServerServicer):
                 user.setHp(50)
     '''
 
-    def SendAction(self, request: chat.Action, context):
-        self.actions.append(request)
-        self.peers_actions.append(request)
+    def SendAction(self, send: player.Player, recieve: player.Player, actionType: int):
+        n = chat.Action()
+        n.sender = ""
+        n.reciever = ""
+
+        for p in self.listUser:
+            if p.getUid() == send.getUid():
+                n.sender = player.transformIntoJSON(p)
+                usr = p
+            if p.getUid() == recieve.getUid():
+                n.reciever = player.transformIntoJSON(p)
+
+        if usr.getUsertype() == 0:
+            # knight
+            values = {"attack": 8, "heal": 8, "block": 10}
+        elif usr.getUsertype() == 1:
+            # monster - does more damage, heals more and blocks more based on how many enemies he has. 1vs1 he is slightly better at most things but worse at one thing
+            values = {"attack": 9 + 2 * (len(self.listUser)-2), "heal": 9 + 2 * (
+                len(self.listUser)-2), "block": 9 + 2 * (len(self.listUser)-2)}
+        elif usr.getUsertype() == 2:
+            # priest
+            values = {"attack": 8, "heal": 10, "block": 8}
+        elif usr.getUsertype() == 3:
+            # mage
+            values = {"attack": 10, "heal": 8, "block": 8}
+        else:
+            # default
+            values = {"attack": 0, "heal": 0, "block": 0}
+
+        if actionType == 0:
+            n.action_type = 0
+            n.amount = values["attack"] + \
+                3  # TODO range of damage
+        elif actionType == 1:
+            n.action_type = 1
+            n.amount = values["heal"] + \
+                3  # TODO range of damage
+        elif actionType == 2:
+            n.action_type = 2
+            n.amount = values["block"]  # TODO range of damage
+        else:
+            n.action_type = 2
+            n.amount = 0
+
+        self.actions.append(n)
+        self.peers_actions.append(n)
+        print("action added ", n)
         return chat.Empty()
 
     def ActionStream(self, request_iterator, context):
