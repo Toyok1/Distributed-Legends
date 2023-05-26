@@ -16,17 +16,18 @@ from GRPCClientHelper.config import port, key
 
 
 class PeerChatServer(rpc.ChatServerServicer):
-    def __init__(self, pId, req_ip, req_id, str_list_user):
+    def __init__(self, pId, address, Uid):
         server = grpc.server(futures.ThreadPoolExecutor(
             max_workers=100))  # create a gRPC server
         rpc.add_ChatServerServicer_to_server(
             self, server)  # register the server to gRPC
         # gRPC basically manages all the threading and server responding logic, which is perfect!
         print('Starting server. Listening...')
-        server.add_insecure_port('[::]:' + str(port))
+        server.add_insecure_port('[::]:' + str(1000))
         server.start()
         self.finish = []
-        self.peers = []
+        self.peers_connections = []
+        self.myUid = Uid
         self.peers_actions = []
         # List with all the chat history
         self.actions = []
@@ -35,15 +36,26 @@ class PeerChatServer(rpc.ChatServerServicer):
         self.listBlock = []
         self.turns = []
         # player.transformFullListFromJSON(str_list_user)
-        self.listUser = [player.Player(
-            "localhost", "1", "host", 1, time.time()), player.Player(
-            "localhost", "2", "c", 2, time.time())]
+        self.listUser = []
         self.fernet = Fernet(key)
         self.processId = pId
         self.LAST_USER_TURN = None
         self.isStartedGame = False
         self.TERMINATE = None
+        print("connecting to lobby")
+        channel = grpc.insecure_channel(address + ':' + str(port))
+        self.conn = rpc.ChatServerStub(channel)
 
+        for started in self.conn.StartedStream(chat.Empty()):
+            if started.name == "game started":
+                self.listUser = player.transformFullListFromJSON(
+                    started.message)
+                break
+        print("out the for loop")
+        channel.close()
+
+        req_ip = [u.getIp() for u in self.listUser if u.getId() != self.myUid]
+        req_id = [u.getId() for u in self.listUser if u.getId() != self.myUid]
         # time.sleep(20)
         self.__connect_to_peers(req_ip, req_id)
 
@@ -52,22 +64,27 @@ class PeerChatServer(rpc.ChatServerServicer):
         threading.Thread(target=self.__keep_alive, daemon=True).start()
         '''
 
+    def Subscribe(self):
+        self.conn.SendPrivateInfo(self.privateInfo)
+
     def __connect_to_peers(self, req_ip: list, req_id: list):
         print("connecting to peers")
-        time.sleep(2)
+        # time.sleep(2)
         for i in range(len(req_ip)):
             if req_ip[i] != get('https://api.ipify.org').text:
                 # print("connecting to peer", req_ip[i])
-                channel = grpc.insecure_channel(req_ip[i]+":"+str(port))
+                channel = grpc.insecure_channel(req_ip[i]+":"+str(1000))
                 stub = rpc.ChatServerStub(channel)
-                self.peers.append(stub)
+                self.peers_connections.append(stub)
                 # print("connected to peer", req_ip[i])
                 self.__updateUserList(req_ip[i], req_id[i])
+                # TODO start pinging the peers
+
         # print("connected to all peers")
-        for i in range(len(self.peers)):
+        for i in range(len(self.peers_connections)):
             threading.Thread(target=self.__listen_for_action_stream, args=(
                 self.peers[i],), daemon=True).start()
-        print(self.peers)
+        print(self.peers_connections)
 
     def __listen_for_action_stream(self, peer):
         print("listening for action stream")
@@ -227,31 +244,6 @@ class PeerChatServer(rpc.ChatServerServicer):
                 self.turn_actions.append(n)
                 # #print("Yielding action = ", n)
                 yield n
-    '''
-    def SendPrivateInfo(self, request: chat.PrivateInfo, context):
-        encMessage = request.ip
-        user = request.user
-        decMessage = self.fernet.decrypt(encMessage).decode()
-        u_id = request.u_id
-        user_type = request.user_type
-        new_user = player.Player(
-            ip=decMessage, unique_id=u_id, username=user, user_type=user_type, ping_time=time.time())
-
-        if user_type == 1:
-            self.HOST = new_user
-        if len(self.listUser) == 0:
-            b = chat.PlayerMessage()
-            b.json_str = player.transformIntoJSON(new_user)
-            self.turns.append(b)
-            self.LAST_USER_TURN = new_user
-        if len(self.listUser) < 4 and not new_user in self.listUser and self.isStartedGame == False:
-            self.listUser.append(new_user)
-        else:
-            print("User already in the game or game already started")
-        # #print(self.listUser)
-        # something needs to be returned required by protobuf language, we just return empty msg
-        return chat.Empty()
-    '''
 
     def SendPing(self, request: chat.Ping, context):
         """ Fulfills SendPing RPC defined in ping.proto """
@@ -286,20 +278,6 @@ class PeerChatServer(rpc.ChatServerServicer):
                 # #print(n)
                 lastindex += 1
                 yield n
-    '''
-    def ReturnStarted(self, request_iterator, context):
-        b = chat.StartedBool()
-        b.started = self.isStartedGame
-        return b
-
-    def StartGame(self, request: chat.PrivateInfo, context):
-        # #print('StartGame ', self.listUser)
-        if self.HOST.getUsername() == request.user:
-            # #print("L'host è onnipotente")
-            self.isStartedGame = True
-            self.__distributeHealth()
-        return chat.Empty()
-    '''
 
     def FinishGame(self, request_iterator, context):
         # #print("FinishGame called")

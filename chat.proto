@@ -91,6 +91,7 @@ service ChatServer {
     rpc EndTurn(PlayerMessage) returns(Empty);
     rpc TurnStream (Empty) returns(stream PlayerMessage);
     rpc ReturnStarted (Empty) returns(StartedBool);
+    rpc StartedStream(Empty) returns(stream Note);
 }
 // python3 -m grpc_tools.protoc -I=. --python_out=. --grpc_python_out=. chat.proto 
 // python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. chat.proto      

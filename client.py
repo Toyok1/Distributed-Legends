@@ -34,26 +34,10 @@ class Client():
         self.labelrefs = {}
         self.fernet = Fernet(key)
         self.PeersOffice = postOffice.PeerChatServer(
-            os.getpid(), [], [], "ciao")  # TODO ridefinire con quello che sta in postOffice.py
+            os.getpid(), serverAddress, self.myUid)  # TODO ridefinire con quello che sta in postOffice.py
 
         # self.myPostOffice = helper.PostOffice(serverAddress, user, self.myUid, userType)
         # self.myPostOffice.Subscribe()
-        '''str_list_user = 
-        {'ip': '93.34.81.120',
-          'u_id': 'f323f433-778c-425f-9499-7086d1c4e8b0',
-            'username': 'lillo',
-              'user_type': 0,
-                'hp': 50,
-                  'block': 0,
-                    'ping_time': 1685028018.7448},
-        {'ip': '93.34.81.120',
-        'u_id': 'ecd2f112-aeb0-407b-94a8-5163f86db8bb',
-            'username': 'pippa',
-            'user_type': 1,
-                'hp': 100,
-                'block': 0,
-                    'ping_time': 1685028019.267047}
-                                  '''
 
         self.__setup_ui()
 
