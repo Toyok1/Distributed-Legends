@@ -16,15 +16,18 @@ from GRPCClientHelper.config import port, key
 
 
 class PeerChatServer(rpc.ChatServerServicer):
-    def __init__(self, pId, address, Uid):
+    def __init__(self, pId, address, Uid, username, usertype):
         server = grpc.server(futures.ThreadPoolExecutor(
             max_workers=100))  # create a gRPC server
         rpc.add_ChatServerServicer_to_server(
             self, server)  # register the server to gRPC
         # gRPC basically manages all the threading and server responding logic, which is perfect!
         print('Starting server. Listening...')
-        server.add_insecure_port('[::]:' + str(1000))
+        server.add_insecure_port('[::]:' + str(8080))
         server.start()
+        self.ip = get('https://api.ipify.org').content.decode('utf8')
+        self.fernet = Fernet(key)
+        self.encIp = self.fernet.encrypt(self.ip.encode())
         self.finish = []
         self.peers_connections = []
         self.myUid = Uid
@@ -42,9 +45,16 @@ class PeerChatServer(rpc.ChatServerServicer):
         self.LAST_USER_TURN = None
         self.isStartedGame = False
         self.TERMINATE = None
+        self.privateInfo = chat.PrivateInfo()  # create protobug message (called Note)
+        self.privateInfo.ip = self.encIp
+        self.privateInfo.user = username
+        self.privateInfo.u_id = Uid
+        self.privateInfo.user_type = usertype
+
         print("connecting to lobby")
         channel = grpc.insecure_channel(address + ':' + str(port))
         self.conn = rpc.ChatServerStub(channel)
+        self.Subscribe()
 
         for started in self.conn.StartedStream(chat.Empty()):
             if started.name == "game started":
@@ -73,7 +83,7 @@ class PeerChatServer(rpc.ChatServerServicer):
         for i in range(len(req_ip)):
             if req_ip[i] != get('https://api.ipify.org').text:
                 # print("connecting to peer", req_ip[i])
-                channel = grpc.insecure_channel(req_ip[i]+":"+str(1000))
+                channel = grpc.insecure_channel(req_ip[i]+":"+str(8080))
                 stub = rpc.ChatServerStub(channel)
                 self.peers_connections.append(stub)
                 # print("connected to peer", req_ip[i])

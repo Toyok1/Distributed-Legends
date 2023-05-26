@@ -34,7 +34,7 @@ class Client():
         self.labelrefs = {}
         self.fernet = Fernet(key)
         self.PeersOffice = postOffice.PeerChatServer(
-            os.getpid(), serverAddress, self.myUid)  # TODO ridefinire con quello che sta in postOffice.py
+            os.getpid(), serverAddress, self.myUid, user, userType)  # TODO ridefinire con quello che sta in postOffice.py
 
         # self.myPostOffice = helper.PostOffice(serverAddress, user, self.myUid, userType)
         # self.myPostOffice.Subscribe()
@@ -422,7 +422,7 @@ class Client():
 
     def send_start_game(self):
         # if i'm the host i can start the game  TODO: make it so that only hosts can use this button and maybe delete it after use (?)
-        self.myPostOffice.StartGame()
+        self.PeersOffice.StartGame()
         self.cleanInitialList()
         self.start_button.destroy()
         self.GAME_STARTED = True
