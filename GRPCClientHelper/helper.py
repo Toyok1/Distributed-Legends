@@ -1,17 +1,19 @@
+import grpc
 import threading
 import os
-from requests import get
-from cryptography.fernet import Fernet
 import time
 import random
-
-import grpc
-import chat_pb2 as chat
-import chat_pb2_grpc as rpc
 from GRPCClientHelper import player
-
 from GRPCClientHelper.config import port, key
 
+from requests import get
+from cryptography.fernet import Fernet
+
+import clientController_pb2 as clientController
+import clientController_pb2_grpc as clientController_rpc
+
+import lobby_auth_pb2 as lobby_auth
+import lobby_auth_pb2_grpc as lobby_auth_rpc
 
 class PostOffice:
 
@@ -21,12 +23,14 @@ class PostOffice:
         self.encIp = self.fernet.encrypt(self.ip.encode())
 
         channel = grpc.insecure_channel(address + ':' + str(port))
-        self.conn = rpc.ChatServerStub(channel)
-        self.privateInfo = chat.PrivateInfo()  # create protobug message (called Note)
+        self.conn = lobby_auth_rpc.LobbyAuthServerStub(channel)
+        
+        self.privateInfo = lobby_auth.PrivateInfo()
         self.privateInfo.ip = self.encIp
         self.privateInfo.user = user
         self.privateInfo.u_id = u_id
         self.privateInfo.user_type = user_type
+        
         self.players = []
         self.heroesList = []
         self.myPlayer = None
@@ -35,7 +39,7 @@ class PostOffice:
         self.isFinished = False
 
     def __create_ping(self, sl_time, my_id):
-        ping = chat.Ping()  # create protobug message (called Ping)
+        ping = clientController.Ping()  # create protobug message (called Ping)
         ping.ip = self.encIp
         ping.id = my_id
         pong = self.conn.SendPing(ping)
@@ -70,29 +74,28 @@ class PostOffice:
         self.__set_user_list()
 
     def Subscribe(self):
-        # send the Note to the server
         self.conn.SendPrivateInfo(self.privateInfo)
 
     def CheckStarted(self):
-        return self.conn.ReturnStarted(chat.Empty())
+        return self.conn.ReturnStarted(clientController.Empty())
 
     def StartGame(self):
         return self.conn.StartGame(self.privateInfo)
 
     def ActionStream(self):
-        return self.conn.ActionStream(chat.Empty())
+        return self.conn.ActionStream(clientController.Empty())
 
     def TurnStream(self):
-        return self.conn.TurnStream(chat.Empty())
+        return self.conn.TurnStream(clientController.Empty())
 
     def EndTurn(self, last_turn: player.Player):
-        mess_et = chat.PlayerMessage()
+        mess_et = clientController.PlayerMessage()
         # #print(last_turn, "last_turn")
         mess_et.json_str = player.transformIntoJSON(last_turn)
         self.conn.EndTurn(mess_et)
 
     def SendAction(self, send: player.Player, recieve: player.Player, actionType: int):
-        n = chat.Action()
+        n = clientController.Action()
         n.sender = ""
         n.reciever = ""
 
@@ -139,9 +142,9 @@ class PostOffice:
         self.conn.SendAction(n)
 
     def SendFinishGame(self, f):
-        n = chat.FinishedBool()
+        n = clientController.FinishedBool()
         n.fin = f
         self.conn.FinishGame(n)
 
     def FinishStream(self):
-        return self.conn.FinishStream(chat.Empty())
+        return self.conn.FinishStream(clientController.Empty())

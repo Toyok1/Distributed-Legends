@@ -1,16 +1,18 @@
+from concurrent import futures
 import grpc
+import os
+import signal
 import time
 import threading
-from concurrent import futures
-from GRPCClientHelper import player
-import os
-import clientController_pb2 as clientController
-import clientController_pb2_grpc as rpc
-import signal
+
 from cryptography.fernet import Fernet
 from requests import get
+
+from GRPCClientHelper import player
 from GRPCClientHelper.config import port, key
 
+import clientController_pb2 as clientController
+import clientController_pb2_grpc as rpc
 
 class ClientController(rpc.ClientControllerServicer):
     def __init__(self, pId):
@@ -100,7 +102,7 @@ class ClientController(rpc.ClientControllerServicer):
                 user.setHp(100)
             else:
                 user.setHp(50)
-                
+    
     def SendAction(self, request: clientController.Action, context):
         n = request
         pl = player.transformFromJSON(n.reciever)
@@ -121,17 +123,13 @@ class ClientController(rpc.ClientControllerServicer):
 
     def ActionStream(self, request_iterator, context):
         lastindex = 0
-        # For every client a infinite loop starts (in gRPC's own managed thread)
         while True:
-            # Check if there are any new messages
             while len(self.actions) > lastindex:
                 n = self.actions[lastindex]
                 lastindex += 1
-                # #print("Yielding action = ", n)
-
                 yield n
 
-    def SendPrivateInfo(self, request: clientController.PrivateInfo, context):
+    '''def SendPrivateInfo(self, request: clientController.PrivateInfo, context):
         encMessage = request.ip
         user = request.user
         decMessage = self.fernet.decrypt(encMessage).decode()
@@ -153,7 +151,7 @@ class ClientController(rpc.ClientControllerServicer):
             print("User already in the game or game already started")
         # #print(self.listUser)
         # something needs to be returned required by protobuf language, we just return empty msg
-        return clientController.Empty()
+        return clientController.Empty()'''
 
     def SendPing(self, request: clientController.Ping, context):
         """ Fulfills SendPing RPC defined in ping.proto """
@@ -186,12 +184,11 @@ class ClientController(rpc.ClientControllerServicer):
                 lastindex += 1
                 yield n
 
-
 if __name__ == '__main__':
     server = grpc.server(futures.ThreadPoolExecutor(
         max_workers=1000))  
     rpc.add_ClientControllerServicer_to_server(ClientController(
-        os.getpid()), server)  
+        os.get_pid()), server)  
     print('Starting server. Listening...')
     server.add_insecure_port('[::]:' + str(port))
     server.start()

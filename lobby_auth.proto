@@ -1,0 +1,25 @@
+syntax = "proto3";
+package grpc;
+
+message Empty_Lobby {}
+
+message Note { // must be remove
+    string name = 1;
+    string message = 2;
+}
+
+message PrivateInfo{
+    bytes ip = 1;
+    string user = 2;
+    string u_id = 3;
+    int32 user_type = 4;
+}
+
+service LobbyAuthServer {
+    rpc SendPrivateInfo (PrivateInfo) returns (Empty_Lobby);
+    rpc StartGame(PrivateInfo) returns(Empty_Lobby);
+    rpc StartedStream(Empty_Lobby) returns(stream Note);
+}
+
+// python3 -m grpc_tools.protoc -I=. --python_out=. --grpc_python_out=. lobby_auth.proto 
+// python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. lobby_auth.proto 

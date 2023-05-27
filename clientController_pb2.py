@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16\x63lientController.proto\x12\x04grpc\"\x07\n\x05\x45mpty\"j\n\x07\x45ndNote\x12\x12\n\nMonsterWin\x18\x01 \x01(\t\x12\x11\n\tHeroesWin\x18\x02 \x01(\t\x12\x15\n\rMonsterDefeat\x18\x03 \x01(\t\x12\x14\n\x0cHeroesDefeat\x18\x04 \x01(\t\x12\x0b\n\x03\x66in\x18\x05 \x01(\x08\"H\n\x0bPrivateInfo\x12\n\n\x02ip\x18\x01 \x01(\x0c\x12\x0c\n\x04user\x18\x02 \x01(\t\x12\x0c\n\x04u_id\x18\x03 \x01(\t\x12\x11\n\tuser_type\x18\x04 \x01(\x05\"!\n\rPlayerMessage\x12\x10\n\x08json_str\x18\x01 \x01(\t\"\x1e\n\x04Ping\x12\n\n\x02ip\x18\x01 \x01(\x0c\x12\n\n\x02id\x18\x02 \x01(\t\"-\n\x04Pong\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x14\n\x0clist_players\x18\x02 \x01(\t\"O\n\x06\x41\x63tion\x12\x0e\n\x06sender\x18\x01 \x01(\t\x12\x10\n\x08reciever\x18\x02 \x01(\t\x12\x0e\n\x06\x61mount\x18\x03 \x01(\x05\x12\x13\n\x0b\x61\x63tion_type\x18\x04 \x01(\x05\x32\xed\x01\n\x10\x43lientController\x12\x31\n\x0fSendPrivateInfo\x12\x11.grpc.PrivateInfo\x1a\x0b.grpc.Empty\x12\"\n\x08SendPing\x12\n.grpc.Ping\x1a\n.grpc.Pong\x12\'\n\nSendAction\x12\x0c.grpc.Action\x1a\x0b.grpc.Empty\x12+\n\x0c\x41\x63tionStream\x12\x0b.grpc.Empty\x1a\x0c.grpc.Action0\x01\x12,\n\x0c\x46inishStream\x12\x0b.grpc.Empty\x1a\r.grpc.EndNote0\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16\x63lientController.proto\x12\x04grpc\"\x07\n\x05\x45mpty\"j\n\x07\x45ndNote\x12\x12\n\nMonsterWin\x18\x01 \x01(\t\x12\x11\n\tHeroesWin\x18\x02 \x01(\t\x12\x15\n\rMonsterDefeat\x18\x03 \x01(\t\x12\x14\n\x0cHeroesDefeat\x18\x04 \x01(\t\x12\x0b\n\x03\x66in\x18\x05 \x01(\x08\"!\n\rPlayerMessage\x12\x10\n\x08json_str\x18\x01 \x01(\t\"\x1e\n\x04Ping\x12\n\n\x02ip\x18\x01 \x01(\x0c\x12\n\n\x02id\x18\x02 \x01(\t\"-\n\x04Pong\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x14\n\x0clist_players\x18\x02 \x01(\t\"O\n\x06\x41\x63tion\x12\x0e\n\x06sender\x18\x01 \x01(\t\x12\x10\n\x08reciever\x18\x02 \x01(\t\x12\x0e\n\x06\x61mount\x18\x03 \x01(\x05\x12\x13\n\x0b\x61\x63tion_type\x18\x04 \x01(\x05\x32\xba\x01\n\x10\x43lientController\x12\"\n\x08SendPing\x12\n.grpc.Ping\x1a\n.grpc.Pong\x12\'\n\nSendAction\x12\x0c.grpc.Action\x1a\x0b.grpc.Empty\x12+\n\x0c\x41\x63tionStream\x12\x0b.grpc.Empty\x1a\x0c.grpc.Action0\x01\x12,\n\x0c\x46inishStream\x12\x0b.grpc.Empty\x1a\r.grpc.EndNote0\x01\x62\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'clientController_pb2', globals())
@@ -24,16 +24,14 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _EMPTY._serialized_end=39
   _ENDNOTE._serialized_start=41
   _ENDNOTE._serialized_end=147
-  _PRIVATEINFO._serialized_start=149
-  _PRIVATEINFO._serialized_end=221
-  _PLAYERMESSAGE._serialized_start=223
-  _PLAYERMESSAGE._serialized_end=256
-  _PING._serialized_start=258
-  _PING._serialized_end=288
-  _PONG._serialized_start=290
-  _PONG._serialized_end=335
-  _ACTION._serialized_start=337
-  _ACTION._serialized_end=416
-  _CLIENTCONTROLLER._serialized_start=419
-  _CLIENTCONTROLLER._serialized_end=656
+  _PLAYERMESSAGE._serialized_start=149
+  _PLAYERMESSAGE._serialized_end=182
+  _PING._serialized_start=184
+  _PING._serialized_end=214
+  _PONG._serialized_start=216
+  _PONG._serialized_end=261
+  _ACTION._serialized_start=263
+  _ACTION._serialized_end=342
+  _CLIENTCONTROLLER._serialized_start=345
+  _CLIENTCONTROLLER._serialized_end=531
 # @@protoc_insertion_point(module_scope)

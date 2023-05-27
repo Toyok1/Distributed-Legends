@@ -14,11 +14,6 @@ class ClientControllerStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.SendPrivateInfo = channel.unary_unary(
-                '/grpc.ClientController/SendPrivateInfo',
-                request_serializer=clientController__pb2.PrivateInfo.SerializeToString,
-                response_deserializer=clientController__pb2.Empty.FromString,
-                )
         self.SendPing = channel.unary_unary(
                 '/grpc.ClientController/SendPing',
                 request_serializer=clientController__pb2.Ping.SerializeToString,
@@ -43,12 +38,6 @@ class ClientControllerStub(object):
 
 class ClientControllerServicer(object):
     """Missing associated documentation comment in .proto file."""
-
-    def SendPrivateInfo(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
 
     def SendPing(self, request, context):
         """Missing associated documentation comment in .proto file."""
@@ -77,11 +66,6 @@ class ClientControllerServicer(object):
 
 def add_ClientControllerServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'SendPrivateInfo': grpc.unary_unary_rpc_method_handler(
-                    servicer.SendPrivateInfo,
-                    request_deserializer=clientController__pb2.PrivateInfo.FromString,
-                    response_serializer=clientController__pb2.Empty.SerializeToString,
-            ),
             'SendPing': grpc.unary_unary_rpc_method_handler(
                     servicer.SendPing,
                     request_deserializer=clientController__pb2.Ping.FromString,
@@ -111,23 +95,6 @@ def add_ClientControllerServicer_to_server(servicer, server):
  # This class is part of an EXPERIMENTAL API.
 class ClientController(object):
     """Missing associated documentation comment in .proto file."""
-
-    @staticmethod
-    def SendPrivateInfo(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/grpc.ClientController/SendPrivateInfo',
-            clientController__pb2.PrivateInfo.SerializeToString,
-            clientController__pb2.Empty.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
     def SendPing(request,

@@ -1,15 +1,9 @@
-'''import threading
-import os
-import time
-import random'''
 import json
 from cryptography.fernet import Fernet
 
-from GRPCClientHelper import helper
 
 key = b'ZhDach4lH7NbH-Gy9EfN2e2HNrWRfbBFD8zeCTBgdEA='
 fernet = Fernet(key)
-
 
 class Player:
 

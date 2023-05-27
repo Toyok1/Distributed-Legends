@@ -10,7 +10,7 @@ import socket
 from requests import get
 
 from PIL import ImageTk, Image
-from GRPCClientHelper import helper, player, serverDialog, userTypeDialog, postOffice
+from GRPCClientHelper import helper, player, serverDialog, userTypeDialog
 from cryptography.fernet import Fernet
 from tkinter import simpledialog
 from tkinter import ttk
@@ -33,11 +33,8 @@ class Client():
         self.myUid = str(userType)  # str(uuid.uuid4())
         self.labelrefs = {}
         self.fernet = Fernet(key)
-        self.PeersOffice = postOffice.PeerChatServer(
-            os.getpid(), serverAddress, self.myUid, user, userType)  # TODO ridefinire con quello che sta in postOffice.py
-
-        # self.myPostOffice = helper.PostOffice(serverAddress, user, self.myUid, userType)
-        # self.myPostOffice.Subscribe()
+        self.myPostOffice = helper.PostOffice(serverAddress, user, self.myUid, userType)
+        self.myPostOffice.Subscribe()
 
         self.__setup_ui()
 
@@ -50,18 +47,14 @@ class Client():
             self.closeGame()'''
 
         # threading.Thread(target=self.__listen_for_turns, daemon=True).start()
-        threading.Thread(target=self.__aggiorna_lavagnetta,
-                         daemon=True).start()
+        threading.Thread(target=self.__aggiorna_lavagnetta, daemon=True).start()
         threading.Thread(target=self.__completeTurn, daemon=True).start()
         # threading.Thread(target=self.__listen_for_actions, daemon=True).start()
         # threading.Thread(target=self.__diagnose, daemon=True).start()
         # threading.Thread(target=self.__listen_for_finish, daemon=True).start()
 
-        # probably the host won't need to run this thread so TODO when we have a way to distinguish them: get rid of it for the host.
-
         '''if userType != 1:
-            threading.Thread(target=self.__check_for_start,
-                             daemon=True).start()'''
+            threading.Thread(target=self.__check_for_start, daemon=True).start()'''
         self.window.mainloop()
 
     def get_local_ip(self):
@@ -98,13 +91,13 @@ class Client():
     def __completeTurn(self):
         self.peers = ["1"]
         while True:
-            while len(self.PeersOffice.peers_actions) < len(self.peers) + 1:
+            while len(self.myPostOffice.peers_actions) < len(self.peers) + 1:
                 time.sleep(0.5)
             print("completing turn")
             for action in self.peers_actions:
                 actor = player.transformFromJSON(action.sender)
                 victim = player.transformFromJSON(action.reciever)
-                for p in self.PeersOffice.listUser:
+                for p in self.myPostOffice.listUser:
                     if p.getUid() == victim.getUid():
                         victim = p
                         break
@@ -131,10 +124,10 @@ class Client():
                     print_message_array).replace("  ", " ")
                 self.lavagnetta.append(print_message)
 
-            for p in self.PeersOffice.listUser:
+            for p in self.myPostOffice.listUser:
                 self.adjustLabels(p)
 
-            self.PeersOffice.peers_actions = []
+            self.myPostOffice.peers_actions = []
             self.unlockButtons()
 
     def __listen_for_actions(self):
@@ -255,7 +248,48 @@ class Client():
         self.state = "idle"
         self.send_end_turn()
 
-    # TODO: implement a one action per turn thing
+    #TODO: connettersi agli altri player dopo lautenticazione
+    '''
+    def __connect_to_peers(self, req_ip: list, req_id: list):
+        print("connecting to peers")
+        # time.sleep(2)
+        for i in range(len(req_ip)):
+            if req_ip[i] != get('https://api.ipify.org').text:
+                # print("connecting to peer", req_ip[i])
+                channel = grpc.insecure_channel(req_ip[i]+":"+str(8080))
+                stub = rpc.ChatServerStub(channel)
+                self.peers_connections.append(stub)
+                # print("connected to peer", req_ip[i])
+                self.__updateUserList(req_ip[i], req_id[i])
+                # TODO start pinging the peers
+
+        # print("connected to all peers")
+        for i in range(len(self.peers_connections)):
+            threading.Thread(target=self.__listen_for_action_stream, args=(
+                self.peers[i],), daemon=True).start()
+        print(self.peers_connections)
+
+    def __listen_for_action_stream(self, peer):
+        print("listening for action stream")
+        for action in peer.ActionStream(chat.Empty()):
+            print("action received from peer", action)
+            n = action
+            pl = player.transformFromJSON(n.reciever)
+            am = n.amount
+            action_type = n.action_type
+            for p in self.listUser:
+                if p.getUid() == pl.getUid():
+                    if action_type == 0:
+                        p.takeDamage(am)
+                    elif action_type == 1:
+                        p.heal(am)
+                    elif action_type == 2:
+                        p.block(am)
+                    else:
+                        print("OPS! Error with the actions.")
+            self.peers_actions.append(action)
+    '''
+
 
     def lockButtons(self):
         self.attack_button["state"] = "disabled"
@@ -286,22 +320,22 @@ class Client():
         self.lockButtons()
         self.state = "attack"
         # #print("MESSAGGIO CREATO")
-        self.PeersOffice.SendAction(
-            self.PeersOffice.listUser[int(self.myUid)-1], attacked, actionType=0)
+        self.myPostOffice.SendAction(
+            self.myPostOffice.listUser[int(self.myUid)-1], attacked, actionType=0)
 
     def heal_single(self, healed):
         self.assignButtons()
         self.lockButtons()
         self.state = "heal"
-        self.PeersOffice.SendAction(
-            self.PeersOffice.listUser[int(self.myUid)-1], healed, actionType=1)
+        self.myPostOffice.SendAction(
+            self.myPostOffice.listUser[int(self.myUid)-1], healed, actionType=1)
 
     def block_single(self, blocked):
         self.assignButtons()
         self.lockButtons()
         self.state = "protect"
-        self.PeersOffice.SendAction(
-            self.PeersOffice.listUser[int(self.myUid)-1], blocked, actionType=2)
+        self.myPostOffice.SendAction(
+            self.myPostOffice.listUser[int(self.myUid)-1], blocked, actionType=2)
 
     def adjustLabels(self, pl):
         # #print("CHANGING LABELS FOR ", pl)
@@ -317,16 +351,16 @@ class Client():
         buttons = [self.attack_button, self.block_button, self.heal_button]
         # #print(len(self.myPostOffice.heroesList), " ", len(buttons))
 
-        for i in range(0, len(self.PeersOffice.listUser)):
+        for i in range(0, len(self.myPostOffice.listUser)):
             try:
                 buttons[i].configure(
-                    text=shout + '\n' + self.PeersOffice.listUser[i].getUsername())
-                func = partial(function, self.PeersOffice.listUser[i])
+                    text=shout + '\n' + self.myPostOffice.listUser[i].getUsername())
+                func = partial(function, self.myPostOffice.listUser[i])
                 buttons[i].configure(command=func)
             except:
                 buttons[i].configure(text="----")
                 buttons[i].configure(command=self.do_nothing)
-        for i in range(len(self.PeersOffice.listUser), len(buttons)):
+        for i in range(len(self.myPostOffice.listUser), len(buttons)):
             try:
                 buttons[i].configure(text="----")
                 buttons[i].configure(command=self.do_nothing)
@@ -412,7 +446,7 @@ class Client():
             self.heal_button.configure(command=attack)
         else:
             # #print("ASSIGNED HERO")
-            self.monsterRef = self.PeersOffice.listUser[0]
+            self.monsterRef = self.myPostOffice.listUser[0]
             attack = partial(self.attack_single, self.monsterRef)
             self.attack_button.configure(command=attack)
             # block = partial(self.mapFuncToButtons,self.block_single, "BLOCK FOR")
@@ -422,7 +456,7 @@ class Client():
 
     def send_start_game(self):
         # if i'm the host i can start the game  TODO: make it so that only hosts can use this button and maybe delete it after use (?)
-        self.PeersOffice.StartGame()
+        self.myPostOffice.StartGame()
         self.cleanInitialList()
         self.start_button.destroy()
         self.GAME_STARTED = True
