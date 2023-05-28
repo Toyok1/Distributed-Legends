@@ -8,6 +8,10 @@ message Note { // must be remove
     string message = 2;
 }
 
+message PlayersList{
+    string list = 1;
+}
+
 message PrivateInfo{
     bytes ip = 1;
     string user = 2;
@@ -17,9 +21,9 @@ message PrivateInfo{
 }
 
 service LobbyAuthServer {
-    rpc SendPrivateInfo (PrivateInfo) returns (Empty_Lobby);
+    rpc SendPrivateInfo (PrivateInfo) returns (PlayersList);
     rpc StartGame(PrivateInfo) returns(Empty_Lobby);
-    rpc StartedStream(Empty_Lobby) returns(stream Note);
+    rpc GetPlayerList(PrivateInfo) returns(PlayersList);
 }
 
 // python3 -m grpc_tools.protoc -I=. --python_out=. --grpc_python_out=. lobby_auth.proto 

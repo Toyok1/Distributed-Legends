@@ -157,7 +157,7 @@ class ClientController(rpc.ClientControllerServicer):
         """ Fulfills SendPing RPC defined in ping.proto """
         self.__updateUserList(self.fernet.decrypt(
             request.ip).decode(), request.id)
-        return clientController.Pong(message="Thanks, friend!" if self.TERMINATE != True else "SET_FINISHED", list_players=player.tranformFullListIntoJSON(self.listUser))
+        return clientController.Pong(message="Thanks, friend!" if self.TERMINATE != True else "SET_FINISHED", list_players=player.transformFullListIntoJSON(self.listUser))
 
     def FinishGame(self, request_iterator, context):
         # #print("FinishGame called")

@@ -23,7 +23,6 @@ message Ping {
 
 message Pong {
     string message = 1;
-    string list_players = 2;
 }
 
 message Action{

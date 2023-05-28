@@ -25,6 +25,13 @@ class PostOffice:
         channel = grpc.insecure_channel(address + ':' + str(port))
         self.conn_auth = lobby_auth_rpc.LobbyAuthServerStub(channel)
         
+        #my local server for streaming action end turns
+        local_channel = grpc.insecure_channel('localhost' + ':' + str(port + 5 ))
+        self.conn_my_local_service = clientController_rpc.ClientControllerStub(local_channel)
+        
+        #TODO: create connection for all players tip-> lista di connessioni
+        self.conn_enemys = []
+        
         self.privateInfo = lobby_auth.PrivateInfo()
         self.privateInfo.ip = self.encIp
         self.privateInfo.user = user
@@ -45,8 +52,6 @@ class PostOffice:
         ping.id = my_id
         pong = self.conn_auth.SendPing(ping)
         time.sleep(sl_time)
-        # #print(pong.list_players, "server response")
-        self.players = player.transformFullListFromJSON(pong.list_players)
         return pong
 
     def __set_user_list(self):
@@ -75,25 +80,29 @@ class PostOffice:
         self.__set_user_list()
 
     def Subscribe(self):
-        self.conn_auth.SendPrivateInfo(self.privateInfo)
+        self.players = player.transformFullListFromJSON(self.conn_auth.SendPrivateInfo(self.privateInfo).list)
 
+    def SendEndTurn(self):
+        mess_et = clientController.PlayerMessage()
+        # #print(last_turn, "last_turn")
+        mess_et.json_str = player.transformIntoJSON(last_turn)
+        self.conn_my_local_service.EndTurn(mess_et)
+    
     def CheckStarted(self):
         return self.conn_auth.ReturnStarted(clientController.Empty())
 
     def StartGame(self):
-        return self.conn_auth.StartGame(self.privateInfo)
+        self.players = self.conn_auth.GetPlayerList(self.privateInfo).list
+        print('NewList', self.players)
+        # toglie il player dalla lobby del server dopo 60 secondi
+        threading.Timer(60, self.conn_auth.StartGame(self.privateInfo)).start()
+        return 
 
     def ActionStream(self):
-        return self.conn_auth.ActionStream(clientController.Empty())
+        return self.conn_my_local_service.ActionStream(clientController.Empty())
 
     def TurnStream(self):
-        return self.conn_auth.TurnStream(clientController.Empty())
-
-    def EndTurn(self, last_turn: player.Player):
-        mess_et = clientController.PlayerMessage()
-        # #print(last_turn, "last_turn")
-        mess_et.json_str = player.transformIntoJSON(last_turn)
-        self.conn_auth.EndTurn(mess_et)
+        return self.conn_my_local_service.TurnStream(clientController.Empty())
 
     def SendAction(self, send: player.Player, recieve: player.Player, actionType: int):
         n = clientController.Action()
@@ -140,15 +149,15 @@ class PostOffice:
             n.amount = 0
 
         # #print(n)
-        self.conn_auth.SendAction(n)
+        self.conn_my_local_service.SendAction(n)
 
     def SendFinishGame(self, f):
         n = clientController.FinishedBool()
         n.fin = f
-        self.conn_auth.FinishGame(n)
+        self.conn_my_local_service.FinishGame(n)
 
     def FinishStream(self):
-        return self.conn_auth.FinishStream(clientController.Empty())
+        return self.conn_my_local_service.FinishStream(clientController.Empty())
 
     #TODO: connettersi agli altri player dopo lautenticazione
     '''

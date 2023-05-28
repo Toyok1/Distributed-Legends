@@ -45,11 +45,7 @@ class Client():
             self.closeGame()'''
 
         # threading.Thread(target=self.__listen_for_turns, daemon=True).start()
-        # threading.Thread(target=self.__aggiorna_lavagnetta, daemon=True).start()
-        # threading.Thread(target=self.__completeTurn, daemon=True).start()
         # threading.Thread(target=self.__listen_for_actions, daemon=True).start()
-        # threading.Thread(target=self.__diagnose, daemon=True).start()
-        # threading.Thread(target=self.__listen_for_finish, daemon=True).start()
 
         '''if userType != 1:
             threading.Thread(target=self.__check_for_start, daemon=True).start()'''
@@ -67,6 +63,9 @@ class Client():
             s.close()
         return IP
 
+    def do_nothing(self):
+        pass
+    
     def __check_for_start(self):
         try:
             while not self.GAME_STARTED:
@@ -79,13 +78,6 @@ class Client():
             # print("Error in __check_for_start ")
             self.__check_for_start()
 
-    def __aggiorna_lavagnetta(self):
-        while True:
-            if len(self.lavagnetta) != 0:
-                for i in self.lavagnetta:
-                    self.entry_message.config(text=i)
-                    time.sleep(1)
-
     def __completeTurn(self):
         self.peers = ["1"]
         while True:
@@ -95,7 +87,7 @@ class Client():
             for action in self.peers_actions:
                 actor = player.transformFromJSON(action.sender)
                 victim = player.transformFromJSON(action.reciever)
-                for p in self.myPostOffice.listUser:
+                for p in self.myPostOffice.players:
                     if p.getUid() == victim.getUid():
                         victim = p
                         break
@@ -122,7 +114,7 @@ class Client():
                     print_message_array).replace("  ", " ")
                 self.lavagnetta.append(print_message)
 
-            for p in self.myPostOffice.listUser:
+            for p in self.myPostOffice.players:
                 self.adjustLabels(p)
 
             self.myPostOffice.peers_actions = []
@@ -183,6 +175,9 @@ class Client():
             self.closeGame()
             break
 
+    def send_end_turn(self):
+        self.myPostOffice.SendEndTurn()
+
     def closeGame(self):
         self.lockButtons()
         self.myPostOffice.isFinished = True
@@ -209,21 +204,21 @@ class Client():
         self.state = "attack"
         # #print("MESSAGGIO CREATO")
         self.myPostOffice.SendAction(
-            self.myPostOffice.listUser[int(self.myUid)-1], attacked, actionType=0)
+            self.myPostOffice.players[int(self.myUid)-1], attacked, actionType=0)
 
     def heal_single(self, healed):
         self.assignButtons()
         self.lockButtons()
         self.state = "heal"
         self.myPostOffice.SendAction(
-            self.myPostOffice.listUser[int(self.myUid)-1], healed, actionType=1)
+            self.myPostOffice.players[int(self.myUid)-1], healed, actionType=1)
 
     def block_single(self, blocked):
         self.assignButtons()
         self.lockButtons()
         self.state = "protect"
         self.myPostOffice.SendAction(
-            self.myPostOffice.listUser[int(self.myUid)-1], blocked, actionType=2)
+            self.myPostOffice.players[int(self.myUid)-1], blocked, actionType=2)
 
     def adjustLabels(self, pl):
         # #print("CHANGING LABELS FOR ", pl)
@@ -239,16 +234,16 @@ class Client():
         buttons = [self.attack_button, self.block_button, self.heal_button]
         # #print(len(self.myPostOffice.heroesList), " ", len(buttons))
 
-        for i in range(0, len(self.myPostOffice.listUser)):
+        for i in range(0, len(self.myPostOffice.players)):
             try:
                 buttons[i].configure(
-                    text=shout + '\n' + self.myPostOffice.listUser[i].getUsername())
-                func = partial(function, self.myPostOffice.listUser[i])
+                    text=shout + '\n' + self.myPostOffice.players[i].getUsername())
+                func = partial(function, self.myPostOffice.players[i])
                 buttons[i].configure(command=func)
             except:
                 buttons[i].configure(text="----")
                 buttons[i].configure(command=self.do_nothing)
-        for i in range(len(self.myPostOffice.listUser), len(buttons)):
+        for i in range(len(self.myPostOffice.players), len(buttons)):
             try:
                 buttons[i].configure(text="----")
                 buttons[i].configure(command=self.do_nothing)
@@ -332,7 +327,7 @@ class Client():
             self.heal_button.configure(command=attack)
         else:
             # #print("ASSIGNED HERO")
-            self.monsterRef = self.myPostOffice.listUser[0]
+            self.monsterRef = self.myPostOffice.players[0]
             attack = partial(self.attack_single, self.monsterRef)
             self.attack_button.configure(command=attack)
             # block = partial(self.mapFuncToButtons,self.block_single, "BLOCK FOR")
@@ -547,7 +542,8 @@ if __name__ == '__main__':
             root.wait_window(userType)
             if userType.result != None:
                 break
-
+    
+    isHost = 1 #TODO: sono tutti host
     # if isHost == 0:
     serverAddress = None if isHost != 1 else "localhost"
     while (serverAddress != "localhost") or (serverAddress is None):

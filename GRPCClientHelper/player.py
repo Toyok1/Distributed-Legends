@@ -132,7 +132,7 @@ def transformFromJSON(json_str):  # ip output decoded
     return ret
 
 
-def tranformFullListIntoJSON(array):
+def transformFullListIntoJSON(array):
     final_str = ""
     for i in array:
         final_str += transformIntoJSON(i) + "#"
