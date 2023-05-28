@@ -13,6 +13,7 @@ message PrivateInfo{
     string user = 2;
     string u_id = 3;
     int32 user_type = 4;
+    string id_lobby = 5;
 }
 
 service LobbyAuthServer {
