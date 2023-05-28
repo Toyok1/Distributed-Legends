@@ -17,19 +17,20 @@ import lobby_auth_pb2_grpc as lobby_auth_rpc
 
 class PostOffice:
 
-    def __init__(self, address: str, user, u_id, user_type):
+    def __init__(self, address: str, user, u_id, id_lobby, user_type):
         self.ip = get('https://api.ipify.org').content.decode('utf8')
         self.fernet = Fernet(key)
         self.encIp = self.fernet.encrypt(self.ip.encode())
 
         channel = grpc.insecure_channel(address + ':' + str(port))
-        self.conn = lobby_auth_rpc.LobbyAuthServerStub(channel)
+        self.conn_auth = lobby_auth_rpc.LobbyAuthServerStub(channel)
         
         self.privateInfo = lobby_auth.PrivateInfo()
         self.privateInfo.ip = self.encIp
         self.privateInfo.user = user
         self.privateInfo.u_id = u_id
         self.privateInfo.user_type = user_type
+        self.privateInfo.id_lobby = id_lobby
         
         self.players = []
         self.heroesList = []
@@ -42,7 +43,7 @@ class PostOffice:
         ping = clientController.Ping()  # create protobug message (called Ping)
         ping.ip = self.encIp
         ping.id = my_id
-        pong = self.conn.SendPing(ping)
+        pong = self.conn_auth.SendPing(ping)
         time.sleep(sl_time)
         # #print(pong.list_players, "server response")
         self.players = player.transformFullListFromJSON(pong.list_players)
@@ -74,25 +75,25 @@ class PostOffice:
         self.__set_user_list()
 
     def Subscribe(self):
-        self.conn.SendPrivateInfo(self.privateInfo)
+        self.conn_auth.SendPrivateInfo(self.privateInfo)
 
     def CheckStarted(self):
-        return self.conn.ReturnStarted(clientController.Empty())
+        return self.conn_auth.ReturnStarted(clientController.Empty())
 
     def StartGame(self):
-        return self.conn.StartGame(self.privateInfo)
+        return self.conn_auth.StartGame(self.privateInfo)
 
     def ActionStream(self):
-        return self.conn.ActionStream(clientController.Empty())
+        return self.conn_auth.ActionStream(clientController.Empty())
 
     def TurnStream(self):
-        return self.conn.TurnStream(clientController.Empty())
+        return self.conn_auth.TurnStream(clientController.Empty())
 
     def EndTurn(self, last_turn: player.Player):
         mess_et = clientController.PlayerMessage()
         # #print(last_turn, "last_turn")
         mess_et.json_str = player.transformIntoJSON(last_turn)
-        self.conn.EndTurn(mess_et)
+        self.conn_auth.EndTurn(mess_et)
 
     def SendAction(self, send: player.Player, recieve: player.Player, actionType: int):
         n = clientController.Action()
@@ -139,12 +140,54 @@ class PostOffice:
             n.amount = 0
 
         # #print(n)
-        self.conn.SendAction(n)
+        self.conn_auth.SendAction(n)
 
     def SendFinishGame(self, f):
         n = clientController.FinishedBool()
         n.fin = f
-        self.conn.FinishGame(n)
+        self.conn_auth.FinishGame(n)
 
     def FinishStream(self):
-        return self.conn.FinishStream(clientController.Empty())
+        return self.conn_auth.FinishStream(clientController.Empty())
+
+    #TODO: connettersi agli altri player dopo lautenticazione
+    '''
+    def __connect_to_peers(self, req_ip: list, req_id: list):
+        print("connecting to peers")
+        # time.sleep(2)
+        for i in range(len(req_ip)):
+            if req_ip[i] != get('https://api.ipify.org').text:
+                # print("connecting to peer", req_ip[i])
+                channel = grpc.insecure_channel(req_ip[i]+":"+str(8080))
+                stub = rpc.ChatServerStub(channel)
+                self.peers_connections.append(stub)
+                # print("connected to peer", req_ip[i])
+                self.__updateUserList(req_ip[i], req_id[i])
+                # TODO start pinging the peers
+
+        # print("connected to all peers")
+        for i in range(len(self.peers_connections)):
+            threading.Thread(target=self.__listen_for_action_stream, args=(
+                self.peers[i],), daemon=True).start()
+        print(self.peers_connections)
+
+    def __listen_for_action_stream(self, peer):
+        print("listening for action stream")
+        for action in peer.ActionStream(chat.Empty()):
+            print("action received from peer", action)
+            n = action
+            pl = player.transformFromJSON(n.reciever)
+            am = n.amount
+            action_type = n.action_type
+            for p in self.listUser:
+                if p.getUid() == pl.getUid():
+                    if action_type == 0:
+                        p.takeDamage(am)
+                    elif action_type == 1:
+                        p.heal(am)
+                    elif action_type == 2:
+                        p.block(am)
+                    else:
+                        print("OPS! Error with the actions.")
+            self.peers_actions.append(action)
+    '''

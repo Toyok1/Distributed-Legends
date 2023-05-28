@@ -11,7 +11,6 @@ from requests import get
 
 from PIL import ImageTk, Image
 from GRPCClientHelper import helper, player, serverDialog, userTypeDialog
-from cryptography.fernet import Fernet
 from tkinter import simpledialog
 from tkinter import ttk
 from GRPCClientHelper.config import key
@@ -25,15 +24,14 @@ class Client():
         self.myHp = [tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar()]
         self.myBlock = 0
         self.imgs = []
-        self.lavagnetta = ["Welcome to the game!"]
+        #self.lavagnetta = ["Welcome to the game!"]
         self.myPlayerType = userType
         self.username = user
         self.myTurn = False
         self.state = "idle"
         self.myUid = str(userType)  # str(uuid.uuid4())
         self.labelrefs = {}
-        self.fernet = Fernet(key)
-        self.myPostOffice = helper.PostOffice(serverAddress, user, self.myUid, userType)
+        self.myPostOffice = helper.PostOffice(serverAddress, user, self.myUid, 'prova', userType)
         self.myPostOffice.Subscribe()
 
         self.__setup_ui()
@@ -47,8 +45,8 @@ class Client():
             self.closeGame()'''
 
         # threading.Thread(target=self.__listen_for_turns, daemon=True).start()
-        threading.Thread(target=self.__aggiorna_lavagnetta, daemon=True).start()
-        threading.Thread(target=self.__completeTurn, daemon=True).start()
+        # threading.Thread(target=self.__aggiorna_lavagnetta, daemon=True).start()
+        # threading.Thread(target=self.__completeTurn, daemon=True).start()
         # threading.Thread(target=self.__listen_for_actions, daemon=True).start()
         # threading.Thread(target=self.__diagnose, daemon=True).start()
         # threading.Thread(target=self.__listen_for_finish, daemon=True).start()
@@ -165,61 +163,6 @@ class Client():
             #print(print_message)
             #print("--- MESSAGE ---")'''
 
-    def __listen_for_turns(self):
-        try:
-            while self.myPostOffice.myPlayer is None:
-                pass
-            for turn in self.myPostOffice.TurnStream():
-                # print("TURNO - ", turn)
-                if self.myPostOffice.isFinished == True:
-                    break
-                what = player.transformFromJSON(turn.json_str)
-
-                if self.GAME_STARTED:
-                    for pl in self.myPostOffice.players:
-                        self.adjustLabels(pl)
-                    countMonster = 0
-                    countHero = 0
-                    for p in self.myPostOffice.players:
-                        # #print("Player " + p.getUsername() + "has" + str(p.getHp()) + " hp")
-                        if p.getHp() <= 0:
-                            if p.getUsertype() == 1:
-                                countMonster += 1
-                            else:
-                                countHero += 1
-                    if countMonster == 1:
-                        self.myPostOffice.isFinished = True
-                        self.myPostOffice.SendFinishGame(False)
-                        self.lockButtons()
-                    elif countHero == len(self.myPostOffice.players) - 1:
-                        self.myPostOffice.isFinished = True
-                        self.myPostOffice.SendFinishGame(True)
-                        self.lockButtons()
-                        # end the game right here
-
-                if what.getUid() == self.myPostOffice.myPlayer.getUid():  # for testing use this line
-                    # if self.fernet.decrypt(turn.ip).decode() == self.ip:
-                    # print("Mio turno: " + self.myPostOffice.myPlayer.getUsername())
-                    self.turn_button["state"] = "normal"
-
-                    self.unlockButtons()  # unlock the buttons when it's my turn
-                    # if miei hp <= 0 endturn + interfaccia "you died"
-
-                    if self.myPostOffice.myPlayer.getHp() <= 0:
-                        if self.myPostOffice.myPlayer.getUsertype() == 1:  # monster
-                            self.entry_message.config(
-                                text="THE MONSTER IS DEAD! The game will end shortly.")
-                            self.lockButtons()
-                            # end the game right here
-                        else:
-                            self.entry_message.config(
-                                text="YOU ARE DEAD! Wait for one of your allies to revive you.")
-                            self.lockButtons()
-                            self.send_end_turn()
-        except:
-            # #print("Error in __listen_for_turns")
-            self.__listen_for_turns()
-
     def __listen_for_finish(self):
 
         while self.myPostOffice.isFinished == False:
@@ -241,55 +184,11 @@ class Client():
             break
 
     def closeGame(self):
-        # TODO end game
         self.lockButtons()
         self.myPostOffice.isFinished = True
         self.turn_button["state"] = "disabled"
         self.state = "idle"
         self.send_end_turn()
-
-    #TODO: connettersi agli altri player dopo lautenticazione
-    '''
-    def __connect_to_peers(self, req_ip: list, req_id: list):
-        print("connecting to peers")
-        # time.sleep(2)
-        for i in range(len(req_ip)):
-            if req_ip[i] != get('https://api.ipify.org').text:
-                # print("connecting to peer", req_ip[i])
-                channel = grpc.insecure_channel(req_ip[i]+":"+str(8080))
-                stub = rpc.ChatServerStub(channel)
-                self.peers_connections.append(stub)
-                # print("connected to peer", req_ip[i])
-                self.__updateUserList(req_ip[i], req_id[i])
-                # TODO start pinging the peers
-
-        # print("connected to all peers")
-        for i in range(len(self.peers_connections)):
-            threading.Thread(target=self.__listen_for_action_stream, args=(
-                self.peers[i],), daemon=True).start()
-        print(self.peers_connections)
-
-    def __listen_for_action_stream(self, peer):
-        print("listening for action stream")
-        for action in peer.ActionStream(chat.Empty()):
-            print("action received from peer", action)
-            n = action
-            pl = player.transformFromJSON(n.reciever)
-            am = n.amount
-            action_type = n.action_type
-            for p in self.listUser:
-                if p.getUid() == pl.getUid():
-                    if action_type == 0:
-                        p.takeDamage(am)
-                    elif action_type == 1:
-                        p.heal(am)
-                    elif action_type == 2:
-                        p.block(am)
-                    else:
-                        print("OPS! Error with the actions.")
-            self.peers_actions.append(action)
-    '''
-
 
     def lockButtons(self):
         self.attack_button["state"] = "disabled"
@@ -302,17 +201,6 @@ class Client():
         self.block_button["state"] = "normal"
         self.lavagnetta = []
         self.entry_message.config(text="Do something!")
-
-    def send_end_turn(self):
-        # #print("Ending my turn: " + self.username)
-        '''self.turn_button["state"] = "disabled"
-        self.lockButtons()
-        self.state = "idle"
-        time.sleep(1)
-        for p in self.myPostOffice.players:
-            self.adjustLabels(p)
-        self.myPostOffice.EndTurn(self.myPostOffice.myPlayer)'''
-        self.do_nothing()
 
     def attack_single(self, attacked):
         # attack people that are not your same class or friends
@@ -370,8 +258,6 @@ class Client():
         self.turn_button.configure(text="BACK")
         self.turn_button.configure(command=self.assignButtons)
 
-    def do_nothing(self):
-        pass
 
     def cleanInitialList(self):
         # [{"uid": adsd, health_label: label},{},{},{}]
@@ -462,7 +348,6 @@ class Client():
         self.GAME_STARTED = True
 
     def loadImgs(self):
-
         path = "src/"+"sprites/"
         # for image in os.listdir(path):
         images = ["0.png", "1.png", "2.png", "3.png"]

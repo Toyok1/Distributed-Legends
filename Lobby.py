@@ -20,12 +20,10 @@ class Lobby(lobby_auth_rpc.LobbyAuthServer):
         self.fernet = Fernet(key)
         self.listUser = []
         self.start_stream = []
-        
         self.list_of_lobby = []
         
-        self.list_of_lobby.append({'id_lobby': 3,'listPlayers':[{'ip':'127.0.0.1', 'unique_id':12, 'username':'Davide', 'user_type': 2, 'ping_time':'32443453534'}]})
-        
-        print(self.list_of_lobby)
+        #self.list_of_lobby.append({'id_lobby': 3,'listPlayers':[{'ip':'127.0.0.1', 'unique_id':12, 'username':'Davide', 'user_type': 2, 'ping_time':'32443453534'}]})
+        #print(self.list_of_lobby)
         
     def _get_lobby(self, lobby_id):
         for lobby in self.list_of_lobby:
@@ -65,10 +63,11 @@ class Lobby(lobby_auth_rpc.LobbyAuthServer):
         u_id = request.u_id
         user_type = request.user_type
         new_user = player.Player(ip=ip, unique_id=u_id, username=user, user_type=user_type, ping_time=time.time())
-        if _get_lobby(request.id_lobby) == None:
+        if self._get_lobby(request.id_lobby) == None:
             self.list_of_lobby.append({'id_lobby': request.id_lobby,'listPlayers':[new_user]})
         else:
             self._add_player_to_lobby(request.id_lobby,new_user)
+        print(self.list_of_lobby)
         return lobby_auth.Empty_Lobby()
 
     '''def SendPrivateInfo(self, request: lobby_auth.PrivateInfo, context):
