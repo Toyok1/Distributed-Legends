@@ -1,6 +1,8 @@
 import grpc
+import socket
 import threading
 import os
+from functools import partial
 import time
 import random
 from GRPCClientHelper import player
@@ -18,7 +20,7 @@ import lobby_auth_pb2_grpc as lobby_auth_rpc
 class PostOffice:
 
     def __init__(self, address: str, user, u_id, id_lobby, user_type):
-        self.ip = get('https://api.ipify.org').content.decode('utf8')
+        self.ip = self._get_local_ip() #get('https://api.ipify.org').content.decode('utf8')
         self.fernet = Fernet(key)
         self.encIp = self.fernet.encrypt(self.ip.encode())
 
@@ -46,6 +48,18 @@ class PostOffice:
         self.disconnected_players = []
         self.isFinished = False
 
+    def _get_local_ip(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # doesn't even have to be reachable
+            s.connect(('192.255.255.255', 1))
+            IP = s.getsockname()[0]
+        except:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+        return IP
+    
     def __create_ping(self, sl_time, my_id):
         ping = clientController.Ping()  # create protobug message (called Ping)
         ping.ip = self.encIp
@@ -92,10 +106,12 @@ class PostOffice:
         return self.conn_auth.ReturnStarted(clientController.Empty())
 
     def StartGame(self):
-        self.players = self.conn_auth.GetPlayerList(self.privateInfo).list
+        self.players = player.transformFullListFromJSON(self.conn_auth.GetPlayerList(self.privateInfo).list)
         print('NewList', self.players)
+        self.__set_user_list()
         # toglie il player dalla lobby del server dopo 60 secondi
-        threading.Timer(60, self.conn_auth.StartGame(self.privateInfo)).start()
+        callback = partial(self.conn_auth.StartGame, self.privateInfo)
+        threading.Timer(15, callback).start()
         return 
 
     def ActionStream(self):
@@ -136,14 +152,14 @@ class PostOffice:
         if actionType == 0:
             n.action_type = 0
             n.amount = values["attack"] + \
-                random.randint(-5, 5)  # TODO range of damage
+                random.randint(-5, 5) 
         elif actionType == 1:
             n.action_type = 1
             n.amount = values["heal"] + \
-                random.randint(-5, 5)  # TODO range of damage
+                random.randint(-5, 5) 
         elif actionType == 2:
             n.action_type = 2
-            n.amount = values["block"]  # TODO range of damage
+            n.amount = values["block"] 
         else:
             n.action_type = 2
             n.amount = 0

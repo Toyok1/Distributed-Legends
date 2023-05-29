@@ -34,8 +34,16 @@ class Lobby(lobby_auth_rpc.LobbyAuthServer):
             if lobby['id_lobby'] == lobby_id:
                 return lobby['listPlayers']
         return None
+    
+    def _get_player_by_lobby_id(self, player_id, lobby_id):
+        for lobby in self.list_of_lobby:
+            if lobby['id_lobby'] == lobby_id:
+                for player in lobby['listPlayers']:
+                    if player.getUid() == player_id:
+                        return player
+        return None
 
-    def _add_player_to_lobby(self, lobby_id,player):
+    def _add_player_to_lobby(self, lobby_id, player):
         for lobby in self.list_of_lobby:
             if lobby['id_lobby'] == lobby_id:
                 lobby['listPlayers'].append(player)
@@ -43,14 +51,16 @@ class Lobby(lobby_auth_rpc.LobbyAuthServer):
         return False
 
     def _remove_player_from_list(self, lobby_id, player):
+        lobby_remove = None
         for lobby in self.list_of_lobby:
             if lobby['id_lobby'] == lobby_id:
+                print('---listPlayers', lobby['listPlayers'])
                 lobby['listPlayers'].remove(player)
-                if lobby['listPlayers'].length == 0:
-                    list_of_lobby.remove(lobby)
-                return True
-        return False
-
+                if len(lobby['listPlayers']) == 0:
+                    lobby_remove = lobby
+        if lobby_remove is not None:
+            self.list_of_lobby.remove(lobby_remove)
+    
     def _get_my_lobby_by_player_id(self, player_id):
         for lobby in self.list_of_lobby:
             for player in lobby['listPlayers']:
@@ -80,8 +90,10 @@ class Lobby(lobby_auth_rpc.LobbyAuthServer):
         return list
 
     def StartGame(self, request: lobby_auth.PrivateInfo, context):
-        playerObj = self._get_players_by_lobby_id(request.id_lobby)        
-        self._remove_player_from_list(request.u_id, playerObj)
+        playerObj = self._get_player_by_lobby_id(request.u_id, request.id_lobby) 
+        print('player', playerObj, 'id_lobby', request.id_lobby, 'lobbys', self.list_of_lobby)       
+        self._remove_player_from_list(request.id_lobby, playerObj)
+        print('player 2', playerObj, 'id_lobby 2', request.id_lobby, 'lobbys 2', self.list_of_lobby)       
         return lobby_auth.Empty_Lobby()
 
     def GetPlayerList(self, request: lobby_auth.PrivateInfo, context):
@@ -94,9 +106,9 @@ if __name__ == '__main__':
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=1000))
     lobby_auth_rpc.add_LobbyAuthServerServicer_to_server(Lobby(os.getpid()), server)
     server.add_insecure_port('[::]:' + str(port))
-    print('Lobby started. Listening...')
     server.start()
-    print("Connect here: ", get('https://api.ipify.org').content.decode('utf8'))
+    print('Lobby started. Listening...')
+    #print("Connect here: ", get('https://api.ipify.org').content.decode('utf8'))
     try:
         while True:
             time.sleep(86400)

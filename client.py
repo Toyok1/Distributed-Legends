@@ -537,23 +537,21 @@ if __name__ == '__main__':
     if isHost == 1:
         userType_int = 1
     else:
-        while True:  # pseudo do while loop
+        while True: 
             userType = userTypeDialog.UserTypeDialog(root)
             root.wait_window(userType)
             if userType.result != None:
                 break
     
     isHost = 1 #TODO: sono tutti host
-    # if isHost == 0:
     serverAddress = None if isHost != 1 else "localhost"
+    
     while (serverAddress != "localhost") or (serverAddress is None):
         # retrieve a username so we can distinguish all the different clients
         serverAddress = simpledialog.askstring(
             "Game's address", "What's the address?", parent=root)
         if re.match(r"^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$", serverAddress):
             break
-    # else:
-    # *code to start hosting server here*
 
     root.deiconify()  # Makes the window visible again
     # this starts a client and thus a thread which keeps connection to server open
