@@ -9,7 +9,7 @@ from cryptography.fernet import Fernet
 from requests import get
 
 from GRPCClientHelper import player
-from GRPCClientHelper.config import port, key
+from GRPCClientHelper.config import portGame, key
 
 import clientController_pb2 as clientController
 import clientController_pb2_grpc as rpc
@@ -26,8 +26,8 @@ class ClientController(rpc.ClientControllerServicer):
         self.processId = pId
         self.TERMINATE = None
 
-        threading.Thread(target=self.__clean_user_list, daemon=True).start()
-        threading.Thread(target=self.__keep_alive, daemon=True).start()
+        #threading.Thread(target=self.__clean_user_list, daemon=True).start()
+        #threading.Thread(target=self.__keep_alive, daemon=True).start()
 
     def __updateUserList(self, req_ip, req_id):
         for usr in self.listUser:
@@ -104,6 +104,7 @@ class ClientController(rpc.ClientControllerServicer):
                 user.setHp(50)
     
     def SendAction(self, request: clientController.Action, context):
+        # TODO: comment for testing manual comunication
         n = request
         pl = player.transformFromJSON(n.reciever)
         am = n.amount
@@ -187,10 +188,9 @@ class ClientController(rpc.ClientControllerServicer):
 if __name__ == '__main__':
     server = grpc.server(futures.ThreadPoolExecutor(
         max_workers=1000))  
-    rpc.add_ClientControllerServicer_to_server(ClientController(
-        os.get_pid()), server)  
-    print('Starting server. Listening...')
-    server.add_insecure_port('[::]:' + str(port))
+    rpc.add_ClientControllerServicer_to_server(ClientController(os.getpid()), server)  
+    print('Starting my clientController. Listening...')
+    server.add_insecure_port('[::]:' + str(portGame))
     server.start()
     try:
         while True:

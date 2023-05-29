@@ -9,7 +9,7 @@ from cryptography.fernet import Fernet
 from requests import get
 
 from GRPCClientHelper import player
-from GRPCClientHelper.config import port, key
+from GRPCClientHelper.config import portAuth, key
 
 import lobby_auth_pb2 as lobby_auth
 import lobby_auth_pb2_grpc as lobby_auth_rpc
@@ -105,7 +105,7 @@ class Lobby(lobby_auth_rpc.LobbyAuthServer):
 if __name__ == '__main__':
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=1000))
     lobby_auth_rpc.add_LobbyAuthServerServicer_to_server(Lobby(os.getpid()), server)
-    server.add_insecure_port('[::]:' + str(port))
+    server.add_insecure_port('[::]:' + str(portAuth))
     server.start()
     print('Lobby started. Listening...')
     #print("Connect here: ", get('https://api.ipify.org').content.decode('utf8'))
