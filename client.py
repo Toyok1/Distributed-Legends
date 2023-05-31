@@ -9,7 +9,7 @@ from functools import partial
 import socket
 from requests import get
 
-from PIL import ImageTk, Image
+from PIL import ImageTk, Image, ImageOps
 from GRPCClientHelper import helper, player, serverDialog, userTypeDialog
 from tkinter import simpledialog
 from tkinter import ttk
@@ -24,13 +24,14 @@ class Client():
         self.myHp = [tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar()]
         self.myBlock = 0
         self.imgs = []
+        self.imgs_mirrored = []
         self.history_index = 0
         #self.lavagnetta = ["Welcome to the game!"]
         self.myPlayerType = userType
         self.username = user
         self.myTurn = False
         self.state = "idle"
-        self.myUid = str(userType)  # str(uuid.uuid4())
+        self.myUid = str(uuid.uuid4())
         self.labelrefs = {}
         self.myPostOffice = helper.PostOffice(serverAddress, user, self.myUid, 'prova', userType)
         self.myPostOffice.Subscribe()
@@ -45,7 +46,7 @@ class Client():
                 text="Connection lost :(")
             self.closeGame()'''
 
-        # threading.Thread(target=self.__listen_for_turns, daemon=True).start()
+        threading.Thread(target=self.__listen_for_turns, daemon=True).start()
         threading.Thread(target=self.__listen_for_actions, daemon=True).start()
 
         '''if userType != 1:
@@ -67,6 +68,57 @@ class Client():
     def do_nothing(self):
         pass
     
+    def __listen_for_turns(self):
+        while self.myPostOffice.myPlayer is None:
+            pass
+        for turn in self.myPostOffice.TurnStream():
+            print("TURNO - ", turn)
+            if self.myPostOffice.isFinished == True:
+                break
+            what = player.transformFromJSON(turn.json_str)
+
+            if self.GAME_STARTED:
+                for pl in self.myPostOffice.players:
+                    self.adjustLabels(pl)
+                countMonster = 0
+                countHero = 0
+                for p in self.myPostOffice.players:
+                    # #print("Player " + p.getUsername() + "has" + str(p.getHp()) + " hp")
+                    if p.getHp() <= 0:
+                        if p.getUsertype() == 1:
+                            countMonster += 1
+                        else:
+                            countHero += 1
+                if countMonster == 1:
+                    self.myPostOffice.isFinished = True
+                    self.myPostOffice.SendFinishGame(False)
+                    self.lockButtons()
+                elif countHero == len(self.myPostOffice.players) - 1:
+                    self.myPostOffice.isFinished = True
+                    self.myPostOffice.SendFinishGame(True)
+                    self.lockButtons()
+                    # end the game right here
+
+            if what.getUid() == self.myPostOffice.myPlayer.getUid():  # for testing use this line
+                # if self.fernet.decrypt(turn.ip).decode() == self.ip:
+                # print("Mio turno: " + self.myPostOffice.myPlayer.getUsername())
+                self.turn_button["state"] = "normal"
+
+                self.unlockButtons()  # unlock the buttons when it's my turn
+                # if miei hp <= 0 endturn + interfaccia "you died"
+
+                if self.myPostOffice.myPlayer.getHp() <= 0:
+                    if self.myPostOffice.myPlayer.getUsertype() == 1:  # monster
+                        self.entry_message.config(
+                            text="THE MONSTER IS DEAD! The game will end shortly.")
+                        self.lockButtons()
+                        # end the game right here
+                    else:
+                        self.entry_message.config(
+                            text="YOU ARE DEAD! Wait for one of your allies to revive you.")
+                        self.lockButtons()
+                        self.send_end_turn()
+
     def __check_for_start(self):
         try:
             while not self.GAME_STARTED:
@@ -180,7 +232,9 @@ class Client():
             break
 
     def send_end_turn(self):
+        self.turn_button["state"] = "disabled"
         self.myPostOffice.SendEndTurn()
+        
 
     def closeGame(self):
         self.lockButtons()
@@ -227,12 +281,8 @@ class Client():
     def adjustLabels(self, pl):
         # #print("CHANGING LABELS FOR ", pl)
         # TODO: remove old disconnected player from labels references to change life value by their indexes
-        if pl.getUsertype() == 1:
-            self.labelrefs[pl.getUid()]["health_label"].config(
-                text=str(pl.getHp())+'/100 ' + '['+str(pl.getBlock())+']')
-        else:
-            self.labelrefs[pl.getUid()]["health_label"].config(
-                text=str(pl.getHp())+'/50 ' + '['+str(pl.getBlock())+']')
+        self.labelrefs[pl.getUid()]["health_label"].config(
+            text=str(pl.getHp())+'/50 ' + '['+str(pl.getBlock())+']')
 
     def mapFuncToButtons(self, function, shout):
         buttons = [self.attack_button, self.block_button, self.heal_button]
@@ -272,38 +322,23 @@ class Client():
             if u.getUid() == self.myPostOffice.myPlayer.getUid():
                 self.myPostOffice.myPlayer = u
                 self.myPlayerType = u.getUsertype()
-                if self.myPlayerType == 1:
-                    self.monster_label.config(text=u.getUsername())
-                    self.monsterRef = u
-                    new_el = {"health_label": self.monster_healthLabel,
-                              "image_label": self.monster, "username_label": self.monster_label}
-                    self.labelrefs[u.getUid()] = new_el
-                    self.myHp[0].set(u.getHp())
-                else:
-                    v[i].config(text=u.getUsername())
-                    v3[i].config(image=self.imgs[u.getUsertype()])
-                    new_el = {
-                        "health_label": v2[i], "image_label": v3[i], "username_label": v[i]}
-                    self.labelrefs[u.getUid()] = new_el
-                    self.myHp[i+1].set(u.getHp())
-                    i += 1
+                print("My player is ", u)
+                self.monster_label.config(text=u.getUsername())
+                self.monsterRef = u
+                self.monster.config(image=self.imgs_mirrored[u.getUsertype()])
+                new_el = {"health_label": self.monster_healthLabel,
+                            "image_label": self.monster, "username_label": self.monster_label}
+                self.labelrefs[u.getUid()] = new_el
+                self.myHp[0].set(u.getHp())
+            
             else:
-                if u.getUsertype() == 1:
-                    self.monster_label.config(text=u.getUsername())
-                    self.monsterRef = u
-                    new_el = {"health_label": self.monster_healthLabel,
-                              "image_label": self.monster, "username_label": self.monster_label}
-                    self.labelrefs[u.getUid()] = new_el
-                    self.myHp[0].set(u.getHp())
-                    # monster = u
-                else:
-                    v[i].config(text=u.getUsername())
-                    v3[i].config(image=self.imgs[u.getUsertype()])
-                    new_el = {
-                        "health_label": v2[i], "image_label": v3[i], "username_label": v[i]}
-                    self.labelrefs[u.getUid()] = new_el
-                    self.myHp[i+1].set(u.getHp())
-                    i += 1
+                v[i].config(text=u.getUsername())
+                v3[i].config(image=self.imgs[u.getUsertype()])
+                new_el = {
+                    "health_label": v2[i], "image_label": v3[i], "username_label": v[i]}
+                self.labelrefs[u.getUid()] = new_el
+                self.myHp[i+1].set(u.getHp())
+                i += 1
 
         while i < 3:
             v[i].destroy()
@@ -344,7 +379,12 @@ class Client():
         self.cleanInitialList()
         self.start_button.destroy()
         self.GAME_STARTED = True
-        threading.Timer(16, self.unlockButtons).start()
+        threading.Timer(16, self.trueUnlock).start()
+        self.entry_message.configure(text="Now Loading...")
+    
+    def trueUnlock(self):
+        self.unlockButtons()
+        self.turn_button["state"] = "normal"
 
     def loadImgs(self):
         path = "src/"+"sprites/"
@@ -352,6 +392,11 @@ class Client():
         images = ["0.png", "1.png", "2.png", "3.png"]
         for image in images:
             self.imgs.append(ImageTk.PhotoImage(file=path+image))
+        pathMirror = "src/"+"sprites/mirrored/"
+        # for image in os.listdir(path):
+        images = ["0.png", "1.png", "2.png", "3.png"]
+        for image in images:
+            self.imgs_mirrored.append(ImageTk.PhotoImage(file=pathMirror+image))
 
     def __setup_ui(self):
         self.master_frame = tk.Frame(self.window)
@@ -442,14 +487,14 @@ class Client():
         # photo = ImageTk.PhotoImage(image)
 
         self.monster = tk.Label(
-            self.monster_frame, bg="#323046", image=self.imgs[1])
+            self.monster_frame, bg="#323046", image=self.imgs_mirrored[1])
         # self.monster.image = photo  # keep a reference!
         self.monster.pack()
         self.monster_label = tk.Label(
             self.monster_frame, bg="#323046", fg='#fff', text="Monster")
         self.monster_label.pack()
         self.monster_healthLabel = tk.Label(
-            self.monster_frame, bg="#323046", fg='#fff', text='100/100 [0]')
+            self.monster_frame, bg="#323046", fg='#fff', text='50/50 [0]')
         self.monster_healthLabel.pack()
 
         self.controls_frame = tk.Frame(self.master_frame, borderwidth=1)
@@ -538,15 +583,12 @@ if __name__ == '__main__':
 
     userType_int = None
 
-    if isHost == 1:
-        userType_int = 1
-    else:
-        while True: 
-            userType = userTypeDialog.UserTypeDialog(root)
-            root.wait_window(userType)
-            if userType.result != None:
-                break
-    
+    while True: 
+        userType = userTypeDialog.UserTypeDialog(root)
+        root.wait_window(userType)
+        if userType.result != None:
+            break
+
     isHost = 1 #TODO: sono tutti host
     serverAddress = None if isHost != 1 else "localhost"
     

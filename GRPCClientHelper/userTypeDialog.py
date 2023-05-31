@@ -1,13 +1,14 @@
 import tkinter as tk
+import random
 
 
 class UserTypeDialog(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
-        self.result = 0
+        self.result = random.randint(0, 3)
         self.title("Pick your class")
         classTypes = [("Knight", 0),
-                      ("Priest", 2), ("Mage", 3)]
+                      ("Priest", 2), ("Mage", 3), ("Monster", 1)]
         # classHost = [("Monster", 1)]
 
         # Set window size and position
@@ -32,9 +33,11 @@ class UserTypeDialog(tk.Toplevel):
         # Create OK button
 
         ok_button = tk.Button(self, text="OK", command=self.ok)
-        self.bind('<Return>', self.ok)
+        self.bind('<Return>', self.ok_event)
         ok_button.pack()
 
+    def ok_event(self, event):
+        self.ok()
     def ok(self):
         # Return the selected option
         self.result = self.var.get()

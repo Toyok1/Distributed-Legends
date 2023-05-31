@@ -25,7 +25,7 @@ class PostOffice:
         self.encIp = self.fernet.encrypt(self.ip.encode())
         self.actionList = []
 
-        
+
         channel = grpc.insecure_channel(address + ':' + str(portAuth))
         self.conn_auth = lobby_auth_rpc.LobbyAuthServerStub(channel)
         
@@ -99,7 +99,9 @@ class PostOffice:
     def SendEndTurn(self):
         mess_et = clientController.PlayerMessage()
         # #print(last_turn, "last_turn")
-        mess_et.json_str = player.transformIntoJSON(last_turn)
+        index = self.players.index(self.myPlayer)
+        next = self.players[(index + 1) % len(self.players)]
+        mess_et.json_str = player.transformIntoJSON(next)
         self.conn_my_local_service.EndTurn(mess_et)
     
     def CheckStarted(self):

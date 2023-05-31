@@ -37,6 +37,8 @@ service ClientController {
     rpc SendAction(Action) returns(Empty);
     rpc ActionStream(Empty) returns(stream Action);
     rpc FinishStream(Empty) returns(stream EndNote);
+    rpc EndTurn(PlayerMessage) returns(Empty);
+    rpc TurnStream (Empty) returns(stream PlayerMessage);
 }
 // python3 -m grpc_tools.protoc -I=. --python_out=. --grpc_python_out=. clientController.proto 
 // python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. clientController.proto      

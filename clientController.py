@@ -19,6 +19,7 @@ class ClientController(rpc.ClientControllerServicer):
         self.clients = []
         self.actions = []
         self.hp = []
+        self.turns = []
         self.attack = []
         self.listBlock = []
         self.listUser = []
@@ -153,6 +154,20 @@ class ClientController(rpc.ClientControllerServicer):
         # #print(self.listUser)
         # something needs to be returned required by protobuf language, we just return empty msg
         return clientController.Empty()'''
+    
+    def EndTurn(self, request: clientController.PlayerMessage, context):
+        n = request
+        #pl = player.transformFromJSON(n.json_str)
+        self.turns.append(request)
+        return clientController.Empty()
+
+    def TurnStream(self, request_iterator, context):
+        lastindex = 0
+        while True:
+            while len(self.turns) > lastindex:
+                n = self.turns[lastindex]
+                lastindex += 1
+                yield n
 
     def SendPing(self, request: clientController.Ping, context):
         """ Fulfills SendPing RPC defined in ping.proto """

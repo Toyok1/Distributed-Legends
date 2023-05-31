@@ -16,7 +16,7 @@ class Player:
         self.username = username
         # 1 = monster, 2 = knight, 3 = priest, 4 = mage TODO: make them match
         self.user_type = user_type
-        self.hp = 100 if user_type == 1 else 50
+        self.hp = 50
         self.block = 0
         self.ping_time = ping_time
 
@@ -79,18 +79,11 @@ class Player:
 
     def heal(self, amount):
         n_h = int(self.getHp()) + int(amount)
-        if self.getUsertype() == 1:
-            # monster
-            if n_h > 100:
-                self.setHp(100)
-            else:
-                self.setHp(n_h)
+        if n_h > 50:
+            self.setHp(50)
         else:
-            if n_h > 50:
-                self.setHp(50)
-            else:
-                self.setHp(n_h)
-            # hero
+            self.setHp(n_h)
+        # hero
 
     def block(self, amount):
         new_b = self.getBlock() + amount
