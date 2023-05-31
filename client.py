@@ -24,6 +24,7 @@ class Client():
         self.myHp = [tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar()]
         self.myBlock = 0
         self.imgs = []
+        self.history_index = 0
         #self.lavagnetta = ["Welcome to the game!"]
         self.myPlayerType = userType
         self.username = user
@@ -45,7 +46,7 @@ class Client():
             self.closeGame()'''
 
         # threading.Thread(target=self.__listen_for_turns, daemon=True).start()
-        # threading.Thread(target=self.__listen_for_actions, daemon=True).start()
+        threading.Thread(target=self.__listen_for_actions, daemon=True).start()
 
         '''if userType != 1:
             threading.Thread(target=self.__check_for_start, daemon=True).start()'''
@@ -121,39 +122,42 @@ class Client():
             self.unlockButtons()
 
     def __listen_for_actions(self):
-        for action in self.myPostOffice.ActionStream():
-            actor = player.transformFromJSON(action.sender)
-            victim = player.transformFromJSON(action.reciever)
-            for p in self.myPostOffice.players:
-                if p.getUid() == victim.getUid():
-                    victim = p
-                    break
+        while True:
+            while len(self.myPostOffice.actionList)>self.history_index:
+                action = self.myPostOffice.actionList[self.history_index]
+                actor = player.transformFromJSON(action.sender)
+                victim = player.transformFromJSON(action.reciever)
+                self.history_index += 1
+                for p in self.myPostOffice.players:
+                    if p.getUid() == victim.getUid():
+                        victim = p
+                        break
 
-            action_amount = action.amount
-            action_type = action.action_type
-            mode = ""
+                action_amount = action.amount
+                action_type = action.action_type
+                mode = ""
 
-            if action_type == 0:
-                mode = "attacks"
-            elif action_type == 1:
-                mode = "heals"
-            elif action_type == 2:
-                mode = "blocks for"
-            else:
-                mode = "idles"
+                if action_type == 0:
+                    mode = "attacks"
+                elif action_type == 1:
+                    mode = "heals"
+                elif action_type == 2:
+                    mode = "blocks for"
+                else:
+                    mode = "idles"
 
-            addendum = victim.getUsername()
-            print_message_array = ["User", actor.getUsername(
-            ), mode, addendum, "for", str(abs(action_amount)), "points!"]
+                addendum = victim.getUsername()
+                print_message_array = ["User", actor.getUsername(
+                ), mode, addendum, "for", str(abs(action_amount)), "points!"]
 
-            # gets rid of the double space in addendum when action_type != 2
-            print_message = " ".join(
-                print_message_array).replace("  ", " ")
-            self.entry_message.config(text=print_message)
-            self.state = mode
-            ''' #print("--- MESSAGE ---")
-            #print(print_message)
-            #print("--- MESSAGE ---")'''
+                # gets rid of the double space in addendum when action_type != 2
+                print_message = " ".join(
+                    print_message_array).replace("  ", " ")
+                self.entry_message.config(text=print_message)
+                self.state = mode
+                ''' #print("--- MESSAGE ---")
+                #print(print_message)
+                #print("--- MESSAGE ---")'''
 
     def __listen_for_finish(self):
 
@@ -204,7 +208,7 @@ class Client():
         self.state = "attack"
         # #print("MESSAGGIO CREATO")
         self.myPostOffice.SendAction(
-            self.myPostOffice.players[int(self.myUid)-1], attacked, actionType=0)
+            self.myPostOffice.myPlayer, attacked, actionType=0)
 
     def heal_single(self, healed):
         self.assignButtons()
@@ -316,7 +320,6 @@ class Client():
         self.turn_button.configure(text="END TURN")
         self.turn_button.configure(command=self.send_end_turn)
         if self.myUid == "1":
-            # #print("ASSINGED MONSTER")
             # monster
             attack = partial(self.mapFuncToButtons,
                              self.attack_single, "ATTACK")
@@ -328,12 +331,12 @@ class Client():
         else:
             # #print("ASSIGNED HERO")
             self.monsterRef = self.myPostOffice.players[0]
-            attack = partial(self.attack_single, self.monsterRef)
+            attack = partial(self.mapFuncToButtons,self.attack_single, "ATTACK")
             self.attack_button.configure(command=attack)
-            # block = partial(self.mapFuncToButtons,self.block_single, "BLOCK FOR")
-            self.block_button.configure(command=attack)
-            # heal = partial(self.mapFuncToButtons, self.heal_single, "HEAL")
-            self.heal_button.configure(command=attack)
+            block = partial(self.mapFuncToButtons,self.block_single, "BLOCK FOR")
+            self.block_button.configure(command=block)
+            heal = partial(self.mapFuncToButtons, self.heal_single, "HEAL")
+            self.heal_button.configure(command=heal)
 
     def send_start_game(self):
         # if i'm the host i can start the game  TODO: make it so that only hosts can use this button and maybe delete it after use (?)
@@ -341,6 +344,7 @@ class Client():
         self.cleanInitialList()
         self.start_button.destroy()
         self.GAME_STARTED = True
+        threading.Timer(16, self.unlockButtons).start()
 
     def loadImgs(self):
         path = "src/"+"sprites/"
@@ -474,7 +478,7 @@ class Client():
         self.turn_button.grid(row=1, column=1, sticky=tk.NSEW)
         self.turn_button["state"] = "disabled"
         self.assignButtons()
-        # self.lockButtons()
+        self.lockButtons()
 
         # TEXT MESSAGE SETUP
         self.text_frame = tk.Frame(

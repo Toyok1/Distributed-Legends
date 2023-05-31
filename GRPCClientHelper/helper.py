@@ -23,7 +23,9 @@ class PostOffice:
         self.ip = self._get_local_ip() #get('https://api.ipify.org').content.decode('utf8')
         self.fernet = Fernet(key)
         self.encIp = self.fernet.encrypt(self.ip.encode())
+        self.actionList = []
 
+        
         channel = grpc.insecure_channel(address + ':' + str(portAuth))
         self.conn_auth = lobby_auth_rpc.LobbyAuthServerStub(channel)
         
@@ -31,7 +33,7 @@ class PostOffice:
         local_channel = grpc.insecure_channel('localhost' + ':' + str(portGame))
         self.conn_my_local_service = clientController_rpc.ClientControllerStub(local_channel)
         
-        self.conn_enemys = []        
+        self.conn_enemies = []        
         self.privateInfo = lobby_auth.PrivateInfo()
         self.privateInfo.ip = self.encIp
         self.privateInfo.user = user
@@ -111,13 +113,13 @@ class PostOffice:
         # avviare le connessioni con grpc ai giocatori presenti in players tramite il campo ip
         for p in [x for x in self.players if x.getUid() != self.myPlayer.getUid()]:
             channel = grpc.insecure_channel(p.getIp() + ':' + str(portGame))
-            self.conn_enemys.append(clientController_rpc.ClientControllerStub(channel))
+            self.conn_enemies.append(clientController_rpc.ClientControllerStub(channel))
         
         # testing manual comunication write
-        self._send_tmp_attack()
+        #self._send_tmp_attack()
 
         # testing manual comunication read
-        for enemy in self.conn_enemys:
+        for enemy in self.conn_enemies:
             callback = partial(self._listen_enemy_action_stream, enemy)
             threading.Thread(target= callback, daemon=True).start()
         
@@ -127,19 +129,21 @@ class PostOffice:
         return 
 
     #testing
-    def _send_tmp_attack(self):
+    '''def _send_tmp_attack(self):
         n = clientController.Action()
         n.sender = 'pippo attacca'
         n.reciever = 'pluto prende'
         n.amount = 5
         n.action_type = 1
         self.conn_my_local_service.SendAction(n)
-        print('azione scritta correttamente')
+        print('azione scritta correttamente')'''
     #testing
     def _listen_enemy_action_stream(self, enemy):
         print('inizio a leggere gli attacchi')
         for action in enemy.ActionStream(clientController.Empty()):
             print('enemy', action)
+            self.actionList.append(action)
+        
 
     def ActionStream(self):
         return self.conn_my_local_service.ActionStream(clientController.Empty())
