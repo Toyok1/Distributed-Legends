@@ -5,7 +5,7 @@ import random
 class UserTypeDialog(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
-        self.result = random.randint(0, 3)
+
         self.title("Pick your class")
         classTypes = [("Knight", 0),
                       ("Priest", 2), ("Mage", 3), ("Monster", 1)]
@@ -17,7 +17,8 @@ class UserTypeDialog(tk.Toplevel):
 
         # Create radio buttons
         self.var = tk.IntVar()
-        self.var.set(0)
+        self.var.set(random.randint(0, 3))
+        self.result = self.var.get()
 
         tk.Label(self,
                  text="""Choose your class:""",
@@ -38,6 +39,7 @@ class UserTypeDialog(tk.Toplevel):
 
     def ok_event(self, event):
         self.ok()
+
     def ok(self):
         # Return the selected option
         self.result = self.var.get()

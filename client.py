@@ -26,14 +26,15 @@ class Client():
         self.imgs = []
         self.imgs_mirrored = []
         self.history_index = 0
-        #self.lavagnetta = ["Welcome to the game!"]
+        # self.lavagnetta = ["Welcome to the game!"]
         self.myPlayerType = userType
         self.username = user
         self.myTurn = False
         self.state = "idle"
         self.myUid = str(uuid.uuid4())
         self.labelrefs = {}
-        self.myPostOffice = helper.PostOffice(serverAddress, user, self.myUid, 'prova', userType)
+        self.myPostOffice = helper.PostOffice(
+            serverAddress, user, self.myUid, 'prova', userType)
         self.myPostOffice.Subscribe()
 
         self.__setup_ui()
@@ -67,7 +68,7 @@ class Client():
 
     def do_nothing(self):
         pass
-    
+
     def __listen_for_turns(self):
         while self.myPostOffice.myPlayer is None:
             pass
@@ -175,7 +176,7 @@ class Client():
 
     def __listen_for_actions(self):
         while True:
-            while len(self.myPostOffice.actionList)>self.history_index:
+            while len(self.myPostOffice.actionList) > self.history_index:
                 action = self.myPostOffice.actionList[self.history_index]
                 actor = player.transformFromJSON(action.sender)
                 victim = player.transformFromJSON(action.reciever)
@@ -191,10 +192,13 @@ class Client():
 
                 if action_type == 0:
                     mode = "attacks"
+                    victim.takeDamage(action_amount)
                 elif action_type == 1:
                     mode = "heals"
+                    victim.heal(action_amount)
                 elif action_type == 2:
                     mode = "blocks for"
+                    victim.block(action_amount)
                 else:
                     mode = "idles"
 
@@ -234,7 +238,6 @@ class Client():
     def send_end_turn(self):
         self.turn_button["state"] = "disabled"
         self.myPostOffice.SendEndTurn()
-        
 
     def closeGame(self):
         self.lockButtons()
@@ -307,7 +310,6 @@ class Client():
         self.turn_button.configure(text="BACK")
         self.turn_button.configure(command=self.assignButtons)
 
-
     def cleanInitialList(self):
         # [{"uid": adsd, health_label: label},{},{},{}]
         # {uid_1:...., uid_2....}
@@ -327,10 +329,10 @@ class Client():
                 self.monsterRef = u
                 self.monster.config(image=self.imgs_mirrored[u.getUsertype()])
                 new_el = {"health_label": self.monster_healthLabel,
-                            "image_label": self.monster, "username_label": self.monster_label}
+                          "image_label": self.monster, "username_label": self.monster_label}
                 self.labelrefs[u.getUid()] = new_el
                 self.myHp[0].set(u.getHp())
-            
+
             else:
                 v[i].config(text=u.getUsername())
                 v3[i].config(image=self.imgs[u.getUsertype()])
@@ -366,9 +368,11 @@ class Client():
         else:
             # #print("ASSIGNED HERO")
             self.monsterRef = self.myPostOffice.players[0]
-            attack = partial(self.mapFuncToButtons,self.attack_single, "ATTACK")
+            attack = partial(self.mapFuncToButtons,
+                             self.attack_single, "ATTACK")
             self.attack_button.configure(command=attack)
-            block = partial(self.mapFuncToButtons,self.block_single, "BLOCK FOR")
+            block = partial(self.mapFuncToButtons,
+                            self.block_single, "BLOCK FOR")
             self.block_button.configure(command=block)
             heal = partial(self.mapFuncToButtons, self.heal_single, "HEAL")
             self.heal_button.configure(command=heal)
@@ -381,7 +385,7 @@ class Client():
         self.GAME_STARTED = True
         threading.Timer(16, self.trueUnlock).start()
         self.entry_message.configure(text="Now Loading...")
-    
+
     def trueUnlock(self):
         self.unlockButtons()
         self.turn_button["state"] = "normal"
@@ -396,7 +400,8 @@ class Client():
         # for image in os.listdir(path):
         images = ["0.png", "1.png", "2.png", "3.png"]
         for image in images:
-            self.imgs_mirrored.append(ImageTk.PhotoImage(file=pathMirror+image))
+            self.imgs_mirrored.append(
+                ImageTk.PhotoImage(file=pathMirror+image))
 
     def __setup_ui(self):
         self.master_frame = tk.Frame(self.window)
@@ -536,8 +541,8 @@ class Client():
 
         if self.isHost == True:
             my_str = "Welcome to the game! Have your friends connect to your global IP: " + \
-                get('https://api.ipify.org').content.decode('utf8') + \
-                " \nor your local IP: " + self.get_local_ip()
+                "idk figure it out" + \
+                " \nor your local IP: " + self.get_local_ip()  # TODO: CHANGE THIS URGENTLY
             self.entry_message.config(text=my_str)
         else:
             self.entry_message.config(text="Welcome to the game!")
@@ -583,15 +588,15 @@ if __name__ == '__main__':
 
     userType_int = None
 
-    while True: 
+    while True:
         userType = userTypeDialog.UserTypeDialog(root)
         root.wait_window(userType)
         if userType.result != None:
             break
 
-    isHost = 1 #TODO: sono tutti host
+    isHost = 1  # TODO: sono tutti host
     serverAddress = None if isHost != 1 else "localhost"
-    
+
     while (serverAddress != "localhost") or (serverAddress is None):
         # retrieve a username so we can distinguish all the different clients
         serverAddress = simpledialog.askstring(
