@@ -10,6 +10,7 @@ message Note { // must be remove
 
 message PlayersList{
     string list = 1;
+    string id_first = 2;
 }
 
 message PrivateInfo{

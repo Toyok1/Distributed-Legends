@@ -5,6 +5,7 @@ from cryptography.fernet import Fernet
 key = b'ZhDach4lH7NbH-Gy9EfN2e2HNrWRfbBFD8zeCTBgdEA='
 fernet = Fernet(key)
 
+
 class Player:
 
     # ip, u_id, username, user_type, hp, block, ping_time
@@ -85,7 +86,8 @@ class Player:
             self.setHp(n_h)
         # hero
 
-    def block(self, amount):
+    def obtainBlock(self, amount: int = 0):
+        print("BLOCKING")
         new_b = self.getBlock() + amount
         self.setBlock(new_b)
 

@@ -19,6 +19,7 @@ from GRPCClientHelper.config import key
 class Client():
     def __init__(self, user: str, userType: int, serverAddress: str, window, isHost: int):
         self.GAME_STARTED = False
+        self.IS_IT_MY_TURN = False
         self.isHost = True if isHost == 1 else False
         self.window = window
         self.myHp = [tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar()]
@@ -100,25 +101,27 @@ class Client():
                     self.lockButtons()
                     # end the game right here
 
-            if what.getUid() == self.myPostOffice.myPlayer.getUid():  # for testing use this line
+            if what.getUid() == self.myPostOffice.myPlayer.getUid():
                 # if self.fernet.decrypt(turn.ip).decode() == self.ip:
                 # print("Mio turno: " + self.myPostOffice.myPlayer.getUsername())
                 self.turn_button["state"] = "normal"
-
+                self.IS_IT_MY_TURN = True
                 self.unlockButtons()  # unlock the buttons when it's my turn
                 # if miei hp <= 0 endturn + interfaccia "you died"
 
                 if self.myPostOffice.myPlayer.getHp() <= 0:
                     if self.myPostOffice.myPlayer.getUsertype() == 1:  # monster
                         self.entry_message.config(
-                            text="THE MONSTER IS DEAD! The game will end shortly.")
+                            text="THE MONSTER IS DEAD! this shouldn't happen, TODO change it")
                         self.lockButtons()
                         # end the game right here
                     else:
                         self.entry_message.config(
-                            text="YOU ARE DEAD! Wait for one of your allies to revive you.")
+                            text="YOU ARE DEAD! Better luck next time.")
                         self.lockButtons()
                         self.send_end_turn()
+            else:
+                self.IS_IT_MY_TURN = False
 
     def __check_for_start(self):
         try:
@@ -198,7 +201,7 @@ class Client():
                     victim.heal(action_amount)
                 elif action_type == 2:
                     mode = "blocks for"
-                    victim.block(action_amount)
+                    victim.obtainBlock(action_amount)
                 else:
                     mode = "idles"
 
@@ -211,12 +214,8 @@ class Client():
                     print_message_array).replace("  ", " ")
                 self.entry_message.config(text=print_message)
                 self.state = mode
-                ''' #print("--- MESSAGE ---")
-                #print(print_message)
-                #print("--- MESSAGE ---")'''
 
     def __listen_for_finish(self):
-
         while self.myPostOffice.isFinished == False:
             # doNothing
             pass
@@ -262,24 +261,20 @@ class Client():
         # attack people that are not your same class or friends
         self.assignButtons()
         self.lockButtons()
-        self.state = "attack"
-        # #print("MESSAGGIO CREATO")
         self.myPostOffice.SendAction(
             self.myPostOffice.myPlayer, attacked, actionType=0)
 
     def heal_single(self, healed):
         self.assignButtons()
         self.lockButtons()
-        self.state = "heal"
         self.myPostOffice.SendAction(
-            self.myPostOffice.players[int(self.myUid)-1], healed, actionType=1)
+            self.myPostOffice.myPlayer, healed, actionType=1)
 
     def block_single(self, blocked):
         self.assignButtons()
         self.lockButtons()
-        self.state = "protect"
         self.myPostOffice.SendAction(
-            self.myPostOffice.players[int(self.myUid)-1], blocked, actionType=2)
+            self.myPostOffice.myPlayer, blocked, actionType=2)
 
     def adjustLabels(self, pl):
         # #print("CHANGING LABELS FOR ", pl)
@@ -290,17 +285,18 @@ class Client():
     def mapFuncToButtons(self, function, shout):
         buttons = [self.attack_button, self.block_button, self.heal_button]
         # #print(len(self.myPostOffice.heroesList), " ", len(buttons))
-
-        for i in range(0, len(self.myPostOffice.players)):
+        not_me = [p for p in self.myPostOffice.players if p.getUid(
+        ) != self.myPostOffice.myPlayer.getUid()]
+        for i in range(0, len(not_me)):
             try:
                 buttons[i].configure(
-                    text=shout + '\n' + self.myPostOffice.players[i].getUsername())
-                func = partial(function, self.myPostOffice.players[i])
+                    text=shout + '\n' + not_me[i].getUsername())
+                func = partial(function, not_me[i])
                 buttons[i].configure(command=func)
             except:
                 buttons[i].configure(text="----")
                 buttons[i].configure(command=self.do_nothing)
-        for i in range(len(self.myPostOffice.players), len(buttons)):
+        for i in range(len(not_me), len(buttons)):
             try:
                 buttons[i].configure(text="----")
                 buttons[i].configure(command=self.do_nothing)
@@ -356,16 +352,16 @@ class Client():
         self.heal_button.configure(text="HEAL")
         self.turn_button.configure(text="END TURN")
         self.turn_button.configure(command=self.send_end_turn)
-        if self.myUid == "1":
-            # monster
-            attack = partial(self.mapFuncToButtons,
-                             self.attack_single, "ATTACK")
-            self.attack_button.configure(command=attack)
-            # block = partial(self.block_single, self.myPostOffice.myPlayer)
-            self.block_button.configure(command=attack)
-            # heal = partial(self.heal_single, self.myPostOffice.myPlayer)
-            self.heal_button.configure(command=attack)
-        else:
+        # if self.myUid == "1":
+        # monster
+        attack = partial(self.mapFuncToButtons,
+                         self.attack_single, "ATTACK")
+        self.attack_button.configure(command=attack)
+        block = partial(self.block_single, self.myPostOffice.myPlayer)
+        self.block_button.configure(command=block)
+        heal = partial(self.heal_single, self.myPostOffice.myPlayer)
+        self.heal_button.configure(command=heal)
+        '''else:
             # #print("ASSIGNED HERO")
             self.monsterRef = self.myPostOffice.players[0]
             attack = partial(self.mapFuncToButtons,
@@ -375,20 +371,22 @@ class Client():
                             self.block_single, "BLOCK FOR")
             self.block_button.configure(command=block)
             heal = partial(self.mapFuncToButtons, self.heal_single, "HEAL")
-            self.heal_button.configure(command=heal)
+            self.heal_button.configure(command=heal)'''
 
     def send_start_game(self):
         # if i'm the host i can start the game  TODO: make it so that only hosts can use this button and maybe delete it after use (?)
         self.myPostOffice.StartGame()
         self.cleanInitialList()
+        self.lockButtons()
         self.start_button.destroy()
         self.GAME_STARTED = True
-        threading.Timer(16, self.trueUnlock).start()
+        threading.Timer(16, self.trueStart).start()
         self.entry_message.configure(text="Now Loading...")
 
-    def trueUnlock(self):
-        self.unlockButtons()
-        self.turn_button["state"] = "normal"
+    def trueStart(self):
+        if self.IS_IT_MY_TURN == True:
+            self.unlockButtons()
+            self.turn_button["state"] = "normal"
 
     def loadImgs(self):
         path = "src/"+"sprites/"
@@ -578,7 +576,7 @@ if __name__ == '__main__':
     username = None
     # "localhost"  # None when we deploy but for testing localhost is fine
 
-    while username is None:
+    while username is None or username.strip() == "":
         # retrieve a username so we can distinguish all the different clients
         username = simpledialog.askstring(
             "Username", "What's your username?", parent=root)

@@ -17,30 +17,33 @@ import clientController_pb2_grpc as clientController_rpc
 import lobby_auth_pb2 as lobby_auth
 import lobby_auth_pb2_grpc as lobby_auth_rpc
 
+
 class PostOffice:
 
     def __init__(self, address: str, user, u_id, id_lobby, user_type):
-        self.ip = self._get_local_ip() #get('https://api.ipify.org').content.decode('utf8')
+        # get('https://api.ipify.org').content.decode('utf8')
+        self.ip = self._get_local_ip()
         self.fernet = Fernet(key)
         self.encIp = self.fernet.encrypt(self.ip.encode())
         self.actionList = []
 
-
         channel = grpc.insecure_channel(address + ':' + str(portAuth))
         self.conn_auth = lobby_auth_rpc.LobbyAuthServerStub(channel)
-        
-        #my local server for streaming action end turns
-        local_channel = grpc.insecure_channel('localhost' + ':' + str(portGame))
-        self.conn_my_local_service = clientController_rpc.ClientControllerStub(local_channel)
-        
-        self.conn_enemies = []        
+
+        # my local server for streaming action end turns
+        local_channel = grpc.insecure_channel(
+            'localhost' + ':' + str(portGame))
+        self.conn_my_local_service = clientController_rpc.ClientControllerStub(
+            local_channel)
+
+        self.conn_enemies = []
         self.privateInfo = lobby_auth.PrivateInfo()
         self.privateInfo.ip = self.encIp
         self.privateInfo.user = user
         self.privateInfo.u_id = u_id
         self.privateInfo.user_type = user_type
         self.privateInfo.id_lobby = id_lobby
-        
+
         self.players = []
         self.heroesList = []
         self.myPlayer = None
@@ -59,7 +62,7 @@ class PostOffice:
         finally:
             s.close()
         return IP
-    
+
     def __create_ping(self, sl_time, my_id):
         ping = clientController.Ping()  # create protobug message (called Ping)
         ping.ip = self.encIp
@@ -94,7 +97,8 @@ class PostOffice:
         self.__set_user_list()
 
     def Subscribe(self):
-        self.players = player.transformFullListFromJSON(self.conn_auth.SendPrivateInfo(self.privateInfo).list)
+        l = self.conn_auth.SendPrivateInfo(self.privateInfo)
+        self.players = player.transformFullListFromJSON(l.list)
 
     def SendEndTurn(self):
         mess_et = clientController.PlayerMessage()
@@ -103,34 +107,41 @@ class PostOffice:
         next = self.players[(index + 1) % len(self.players)]
         mess_et.json_str = player.transformIntoJSON(next)
         self.conn_my_local_service.EndTurn(mess_et)
-    
+
     def CheckStarted(self):
         return self.conn_auth.ReturnStarted(clientController.Empty())
 
     def StartGame(self):
-        self.players = player.transformFullListFromJSON(self.conn_auth.GetPlayerList(self.privateInfo).list)
+        l = self.conn_auth.GetPlayerList(self.privateInfo)
+        print('List', l)
+        self.players = player.transformFullListFromJSON(l.list)
         print('NewList', self.players)
         self.__set_user_list()
-        
+
         # avviare le connessioni con grpc ai giocatori presenti in players tramite il campo ip
         for p in [x for x in self.players if x.getUid() != self.myPlayer.getUid()]:
             channel = grpc.insecure_channel(p.getIp() + ':' + str(portGame))
-            self.conn_enemies.append(clientController_rpc.ClientControllerStub(channel))
-        
+            self.conn_enemies.append(
+                clientController_rpc.ClientControllerStub(channel))
+
         # testing manual comunication write
-        #self._send_tmp_attack()
+        # self._send_tmp_attack()
 
         # testing manual comunication read
         for enemy in self.conn_enemies:
             callback = partial(self._listen_enemy_action_stream, enemy)
-            threading.Thread(target= callback, daemon=True).start()
-        
-        #TODO: toglie il player dalla lobby del server dopo 60 secondi
+            threading.Thread(target=callback, daemon=True).start()
+
+        # TODO: toglie il player dalla lobby del server dopo 60 secondi
         callback = partial(self.conn_auth.StartGame, self.privateInfo)
         threading.Timer(15, callback).start()
-        return 
+        if l.id_first == self.privateInfo.u_id:
+            mess_et = clientController.PlayerMessage()
+            mess_et.json_str = player.transformIntoJSON(self.myPlayer)
+            self.conn_my_local_service.EndTurn(mess_et)
+        return
 
-    #testing
+    # testing
     '''def _send_tmp_attack(self):
         n = clientController.Action()
         n.sender = 'pippo attacca'
@@ -139,13 +150,13 @@ class PostOffice:
         n.action_type = 1
         self.conn_my_local_service.SendAction(n)
         print('azione scritta correttamente')'''
-    #testing
+    # testing
+
     def _listen_enemy_action_stream(self, enemy):
         print('inizio a leggere gli attacchi')
         for action in enemy.ActionStream(clientController.Empty()):
             print('enemy', action)
             self.actionList.append(action)
-        
 
     def ActionStream(self):
         return self.conn_my_local_service.ActionStream(clientController.Empty())
@@ -170,8 +181,7 @@ class PostOffice:
             values = {"attack": 8, "heal": 8, "block": 10}
         elif usr.getUsertype() == 1:
             # monster - does more damage, heals more and blocks more based on how many enemies he has. 1vs1 he is slightly better at most things but worse at one thing
-            values = {"attack": 9 + 2 * (len(self.players)-2), "heal": 9 + 2 * (
-                len(self.players)-2), "block": 9 + 2 * (len(self.players)-2)}
+            values = {"attack": 9, "heal": 9, "block": 9}
         elif usr.getUsertype() == 2:
             # priest
             values = {"attack": 8, "heal": 10, "block": 8}
@@ -185,14 +195,14 @@ class PostOffice:
         if actionType == 0:
             n.action_type = 0
             n.amount = values["attack"] + \
-                random.randint(-5, 5) 
+                random.randint(-5, 5)
         elif actionType == 1:
             n.action_type = 1
             n.amount = values["heal"] + \
-                random.randint(-5, 5) 
+                random.randint(-5, 5)
         elif actionType == 2:
             n.action_type = 2
-            n.amount = values["block"] 
+            n.amount = values["block"]
         else:
             n.action_type = 2
             n.amount = 0
@@ -208,7 +218,7 @@ class PostOffice:
     def FinishStream(self):
         return self.conn_my_local_service.FinishStream(clientController.Empty())
 
-    #TODO: connettersi agli altri player dopo lautenticazione
+    # TODO: connettersi agli altri player dopo lautenticazione
     '''
     def __connect_to_peers(self, req_ip: list, req_id: list):
         print("connecting to peers")

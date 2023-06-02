@@ -14,6 +14,7 @@ from GRPCClientHelper.config import portGame, key
 import clientController_pb2 as clientController
 import clientController_pb2_grpc as rpc
 
+
 class ClientController(rpc.ClientControllerServicer):
     def __init__(self, pId):
         self.clients = []
@@ -27,8 +28,8 @@ class ClientController(rpc.ClientControllerServicer):
         self.processId = pId
         self.TERMINATE = None
 
-        #threading.Thread(target=self.__clean_user_list, daemon=True).start()
-        #threading.Thread(target=self.__keep_alive, daemon=True).start()
+        # threading.Thread(target=self.__clean_user_list, daemon=True).start()
+        # threading.Thread(target=self.__keep_alive, daemon=True).start()
 
     def __updateUserList(self, req_ip, req_id):
         for usr in self.listUser:
@@ -103,10 +104,10 @@ class ClientController(rpc.ClientControllerServicer):
                 user.setHp(100)
             else:
                 user.setHp(50)
-    
+
     def SendAction(self, request: clientController.Action, context):
         # TODO: comment for testing manual comunication
-        n = request
+        '''n = request
         pl = player.transformFromJSON(n.reciever)
         am = n.amount
         action_type = n.action_type
@@ -119,7 +120,7 @@ class ClientController(rpc.ClientControllerServicer):
                 elif action_type == 2:
                     p.block(am)
                 else:
-                    print("OPS! Error with the actions.")
+                    print("OPS! Error with the actions.")'''
         self.actions.append(request)
         return clientController.Empty()
 
@@ -154,10 +155,10 @@ class ClientController(rpc.ClientControllerServicer):
         # #print(self.listUser)
         # something needs to be returned required by protobuf language, we just return empty msg
         return clientController.Empty()'''
-    
+
     def EndTurn(self, request: clientController.PlayerMessage, context):
-        n = request
-        #pl = player.transformFromJSON(n.json_str)
+        # n = request
+        # pl = player.transformFromJSON(n.json_str)
         self.turns.append(request)
         return clientController.Empty()
 
@@ -200,10 +201,12 @@ class ClientController(rpc.ClientControllerServicer):
                 lastindex += 1
                 yield n
 
+
 if __name__ == '__main__':
     server = grpc.server(futures.ThreadPoolExecutor(
-        max_workers=1000))  
-    rpc.add_ClientControllerServicer_to_server(ClientController(os.getpid()), server)  
+        max_workers=1000))
+    rpc.add_ClientControllerServicer_to_server(
+        ClientController(os.getpid()), server)
     print('Starting my clientController. Listening...')
     server.add_insecure_port('[::]:' + str(portGame))
     server.start()
