@@ -19,6 +19,16 @@ class ClientControllerStub(object):
                 request_serializer=clientController__pb2.Ping.SerializeToString,
                 response_deserializer=clientController__pb2.Pong.FromString,
                 )
+        self.RecieveList = channel.unary_unary(
+                '/grpc.ClientController/RecieveList',
+                request_serializer=clientController__pb2.PlayerMessage.SerializeToString,
+                response_deserializer=clientController__pb2.Empty.FromString,
+                )
+        self.RecieveUid = channel.unary_unary(
+                '/grpc.ClientController/RecieveUid',
+                request_serializer=clientController__pb2.PlayerMessage.SerializeToString,
+                response_deserializer=clientController__pb2.Empty.FromString,
+                )
         self.SendAction = channel.unary_unary(
                 '/grpc.ClientController/SendAction',
                 request_serializer=clientController__pb2.Action.SerializeToString,
@@ -50,6 +60,18 @@ class ClientControllerServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def SendPing(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RecieveList(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RecieveUid(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -92,6 +114,16 @@ def add_ClientControllerServicer_to_server(servicer, server):
                     servicer.SendPing,
                     request_deserializer=clientController__pb2.Ping.FromString,
                     response_serializer=clientController__pb2.Pong.SerializeToString,
+            ),
+            'RecieveList': grpc.unary_unary_rpc_method_handler(
+                    servicer.RecieveList,
+                    request_deserializer=clientController__pb2.PlayerMessage.FromString,
+                    response_serializer=clientController__pb2.Empty.SerializeToString,
+            ),
+            'RecieveUid': grpc.unary_unary_rpc_method_handler(
+                    servicer.RecieveUid,
+                    request_deserializer=clientController__pb2.PlayerMessage.FromString,
+                    response_serializer=clientController__pb2.Empty.SerializeToString,
             ),
             'SendAction': grpc.unary_unary_rpc_method_handler(
                     servicer.SendAction,
@@ -142,6 +174,40 @@ class ClientController(object):
         return grpc.experimental.unary_unary(request, target, '/grpc.ClientController/SendPing',
             clientController__pb2.Ping.SerializeToString,
             clientController__pb2.Pong.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def RecieveList(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/grpc.ClientController/RecieveList',
+            clientController__pb2.PlayerMessage.SerializeToString,
+            clientController__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def RecieveUid(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/grpc.ClientController/RecieveUid',
+            clientController__pb2.PlayerMessage.SerializeToString,
+            clientController__pb2.Empty.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

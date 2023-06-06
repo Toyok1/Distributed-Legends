@@ -23,6 +23,21 @@ class Lobby(lobby_auth_rpc.LobbyAuthServer):
         self.start_stream = []
         self.list_of_lobby = []
         self.dict_of_starters = {}
+        threading.Thread(target=self.__clean_lobbies, daemon=True).start()
+
+    def __clean_lobbies(self):
+        while True:
+            try:
+                for l in self.list_of_lobby:
+                    for p in l['listPlayers']:
+                        if time.time() - p.getPingTime() > 10:  # TODO change number of seconds of inactivity
+                            l['listPlayers'].remove(p)
+                    if len(l['listPlayers']) == 0:
+                        self.list_of_lobby.remove(l)
+            except Exception as e:
+                print(e)
+                pass
+            time.sleep(2.5)
 
     def _get_lobby(self, lobby_id):
         for lobby in self.list_of_lobby:
@@ -112,6 +127,15 @@ class Lobby(lobby_auth_rpc.LobbyAuthServer):
         l.list = player.transformFullListIntoJSON(myLobby)
         l.id_first = self.dict_of_starters[request.id_lobby]
         return l
+
+    def SendPingLobby(self, request: lobby_auth.Ping_Lobby, context):
+        # print(request)
+        myLobby = self._get_players_by_lobby_id(request.lobby_id)
+        # print("mylobby ", myLobby)
+        for player in myLobby:
+            if player.getUid() == request.u_id:
+                player.setPingTime(time.time())
+        return lobby_auth.Pong_Lobby(message="Thanks, friend!")
 
 
 if __name__ == '__main__':

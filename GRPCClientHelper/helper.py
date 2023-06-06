@@ -33,6 +33,7 @@ class PostOffice:
         # my local server for streaming action end turns
         local_channel = grpc.insecure_channel(
             'localhost' + ':' + str(portGame))
+
         self.conn_my_local_service = clientController_rpc.ClientControllerStub(
             local_channel)
 
@@ -51,6 +52,10 @@ class PostOffice:
         self.disconnected_players = []
         self.isFinished = False
 
+        m = clientController.PlayerMessage()
+        m.json_str = str(u_id)
+        self.conn_my_local_service.RecieveUid(m)
+
     def _get_local_ip(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
@@ -63,11 +68,27 @@ class PostOffice:
             s.close()
         return IP
 
+    def __pinging_lobby(self):
+        try:
+            self.Listen_for_PingPong_Lobby(self.privateInfo.u_id)
+        except Exception as e:
+            x = e.args[0]
+            print(x)  # TODO migliora gestione eccezioni
+
     def __create_ping(self, sl_time, my_id):
         ping = clientController.Ping()  # create protobug message (called Ping)
         ping.ip = self.encIp
         ping.id = my_id
         pong = self.conn_auth.SendPing(ping)
+        time.sleep(sl_time)
+        return pong
+
+    def __create_ping_lobby(self, sl_time, my_id):
+        ping = lobby_auth.Ping_Lobby()  # create protobug message (called Ping)
+        ping.ip = self.encIp
+        ping.u_id = my_id
+        ping.lobby_id = self.privateInfo.id_lobby
+        pong = self.conn_auth.SendPingLobby(ping)
         time.sleep(sl_time)
         return pong
 
@@ -80,6 +101,39 @@ class PostOffice:
             self.old_players = self.players
             self.heroesList = [u for u in self.players if u.getUsertype() != 1]
 
+    def __ping_peer(self, peer):
+        uid_sender = None
+        while True:
+            try:
+                ping = clientController.Ping()
+                ping.ip = self.encIp
+                ping.id = self.privateInfo.u_id
+                pong = peer.SendPing(ping)
+                uid_sender = pong.u_id_sender
+                '''recievedList = player.transformFullListFromJSON(
+                    pong.list_players)
+                for p in recievedList:
+                    if p.getUid() not in [u.getUid() for u in self.players]:
+                        self.players.remove(
+                            [q for q in self.players if p.getUid() == q.getUid()][0])'''
+                # self.players = player.transformFullListFromJSON(pong.list_players)
+                print(pong)
+                time.sleep(2.5)
+            except:
+                for p in self.players:
+                    if p.getUid() == uid_sender:
+                        self.disconnected_players.append(p)
+                        self.players.remove(p)
+
+    def Listen_for_PingPong_Lobby(self, my_id):
+        while True:
+            pong = self.__create_ping_lobby(1, my_id)
+            self.__set_user_list()
+            if pong.message == "Thanks, friend!":
+                pass
+            else:
+                raise Exception("Disconnect from the lobby!")
+
     def Listen_for_PingPong(self, my_id):
         while True:
             # low enough the labels become consistent TODO
@@ -90,7 +144,7 @@ class PostOffice:
             elif pong.message == "SET_FINISHED":
                 self.isFinished = True
             else:
-                raise Exception("Disconnect to the server!")
+                raise Exception("Disconnect from the server!")
 
     def ManualUpdateList(self, my_id):
         self.__create_ping(0, my_id)
@@ -99,6 +153,7 @@ class PostOffice:
     def Subscribe(self):
         l = self.conn_auth.SendPrivateInfo(self.privateInfo)
         self.players = player.transformFullListFromJSON(l.list)
+        threading.Thread(target=self.__pinging_lobby, daemon=True).start()
 
     def SendEndTurn(self):
         mess_et = clientController.PlayerMessage()
@@ -115,11 +170,15 @@ class PostOffice:
         l = self.conn_auth.GetPlayerList(self.privateInfo)
         print('List', l)
         self.players = player.transformFullListFromJSON(l.list)
+        mess = clientController.PlayerMessage()
+        mess.json_str = player.transformFullListIntoJSON(self.players)
+        self.conn_my_local_service.RecieveList(mess)
         print('NewList', self.players)
         self.__set_user_list()
 
         # avviare le connessioni con grpc ai giocatori presenti in players tramite il campo ip
         for p in [x for x in self.players if x.getUid() != self.myPlayer.getUid()]:
+            print(p, " ----------------------------------------------")
             channel = grpc.insecure_channel(p.getIp() + ':' + str(portGame))
             self.conn_enemies.append(
                 clientController_rpc.ClientControllerStub(channel))
@@ -129,6 +188,9 @@ class PostOffice:
 
         # testing manual comunication read
         for enemy in self.conn_enemies:
+            callback = partial(self.__ping_peer, enemy)
+            threading.Thread(target=callback, daemon=True).start()
+
             callback = partial(self._listen_enemy_action_stream, enemy)
             threading.Thread(target=callback, daemon=True).start()
 
@@ -153,10 +215,14 @@ class PostOffice:
     # testing
 
     def _listen_enemy_action_stream(self, enemy):
-        print('inizio a leggere gli attacchi')
-        for action in enemy.ActionStream(clientController.Empty()):
-            print('enemy', action)
-            self.actionList.append(action)
+        try:
+            print('inizio a leggere gli attacchi')
+            for action in enemy.ActionStream(clientController.Empty()):
+                print('enemy', action)
+                self.actionList.append(action)
+        except grpc._channel._Rendezvous as err:
+            print(err)
+            print("disconnect from enemy")
 
     def ActionStream(self):
         return self.conn_my_local_service.ActionStream(clientController.Empty())

@@ -19,7 +19,7 @@ class ClientController(rpc.ClientControllerServicer):
     def __init__(self, pId):
         self.clients = []
         self.actions = []
-        self.hp = []
+        self.Uid = None
         self.turns = []
         self.attack = []
         self.listBlock = []
@@ -28,7 +28,7 @@ class ClientController(rpc.ClientControllerServicer):
         self.processId = pId
         self.TERMINATE = None
 
-        # threading.Thread(target=self.__clean_user_list, daemon=True).start()
+        threading.Thread(target=self.__clean_user_list, daemon=True).start()
         # threading.Thread(target=self.__keep_alive, daemon=True).start()
 
     def __updateUserList(self, req_ip, req_id):
@@ -46,56 +46,54 @@ class ClientController(rpc.ClientControllerServicer):
     def __clean_user_list(self):
         # if a user (hero) is more than 10 seconds from its last ping we count it as dead and, if it is its turn we skip it and we go to the next user.
         while True:
-            if self.isStartedGame:
-                # print("Player List", self.listUser)
-                for user in self.listUser:
-                    if float(time.time()) - float(user.getPingTime()) > 10.0:
-                        # print("lost ping with ", user)
-                        # if it's the turn user, pick another
-                        if user.getUid() == self.LAST_USER_TURN.getUid():  # disconnected while it's my turn
-                            # add a turn message for the next guy
-                            # print("IT WAS MY TURN")
-                            for i in range(0, len(self.listUser)):
-                                if self.LAST_USER_TURN.getUid() == self.listUser[i].getUid():
-                                    userNext = self.listUser[(
-                                        i+1) % len(self.listUser)]
-                                    n = clientController.PlayerMessage()
-                                    n.json_str = player.transformIntoJSON(
-                                        userNext)
-                                    # TODO get this to work
-                                    self.turns.append(n)
-                        self.listUser.remove(user)
-                if len(self.listUser) == 1:
-                    # print("length userList == 1")
-                    n = clientController.EndNote()
-                    # only two messages that should ever be displayed
-                    n.MonsterWin = "YOU CAN RULE THE WORLD BECAUSE EVERYONE ELSE DISCONNECTED"
-                    # only two messages that should ever be displayed
-                    n.HeroesWin = "YOU SAVED THE WORLD BECAUSE EVERYONE ELSE DISCONNECTED"
-                    n.MonsterDefeat = "How did you get here?"
-                    n.HeroesDefeat = "Looking for easter eggs?"
-                    n.fin = True if self.listUser[0].getUsertype(
-                    ) == 1 else False
-                    self.finish.append(n)
-                    self.isStartedGame = False
-                    self.TERMINATE = True
-                    break
+            # print("Player List", self.listUser)
+            for user in self.listUser:
+                if float(time.time()) - float(user.getPingTime()) > 10.0:
+                    print("lost ping with ", user)
+                    # if it's the turn user, pick another
+                    '''if user.getUid() == self.LAST_USER_TURN.getUid():  # disconnected while it's my turn
+                        # add a turn message for the next guy
+                        # print("IT WAS MY TURN")
+                        for i in range(0, len(self.listUser)):
+                            if self.LAST_USER_TURN.getUid() == self.listUser[i].getUid():
+                                userNext = self.listUser[(
+                                    i+1) % len(self.listUser)]
+                                n = clientController.PlayerMessage()
+                                n.json_str = player.transformIntoJSON(
+                                    userNext)
+                                # TODO get this to work
+                                self.turns.append(n)'''
+                    self.listUser.remove(user)
+            '''if len(self.listUser) == 1:
+                # print("length userList == 1")
+                n = clientController.EndNote()
+                # only two messages that should ever be displayed
+                n.MonsterWin = "YOU ARE VICTORIOUS BECAUSE EVERYONE ELSE DISCONNECTED"
+                # only two messages that should ever be displayed
+                n.HeroesWin = "YOU ARE VICTORIOUS BECAUSE EVERYONE ELSE DISCONNECTED"
+                n.MonsterDefeat = "How did you get here?"
+                n.HeroesDefeat = "Looking for easter eggs?"
+                n.fin = True if self.listUser[0].getUsertype(
+                ) == 1 else False
+                # self.finish.append(n)
+                # self.isStartedGame = False
+                # self.TERMINATE = True
+                break'''
 
-                    # list of all types of users. If there is no monter the heroes win by default.
-                if not 1 in [int(u.getUsertype()) for u in self.listUser]:
-                    # print("NO MONSTERS")
-                    n = clientController.EndNote()
-                    n.MonsterWin = "Noone expects the spanish inquisition!"
-                    # the only message to ever be displayed
-                    n.HeroesWin = "YOU SAVED THE WORLD BECAUSE THE MONSTER DISCONNECTED"
-                    n.MonsterDefeat = "How did you get here?"
-                    n.HeroesDefeat = "Looking for easter eggs?"
-                    n.fin = False
-                    self.finish.append(n)
-                    self.isStartedGame = False
-                    self.TERMINATE = True
-                    break
-
+            # list of all types of users. If there is no monter the heroes win by default.
+            '''if not 1 in [int(u.getUsertype()) for u in self.listUser]:
+                # print("NO MONSTERS")
+                n = clientController.EndNote()
+                n.MonsterWin = "Noone expects the spanish inquisition!"
+                # the only message to ever be displayed
+                n.HeroesWin = "YOU SAVED THE WORLD BECAUSE THE MONSTER DISCONNECTED"
+                n.MonsterDefeat = "How did you get here?"
+                n.HeroesDefeat = "Looking for easter eggs?"
+                n.fin = False
+                self.finish.append(n)
+                self.isStartedGame = False
+                self.TERMINATE = True
+                break'''
             time.sleep(2.5)
 
     def __distributeHealth(self):
@@ -122,6 +120,10 @@ class ClientController(rpc.ClientControllerServicer):
                 else:
                     print("OPS! Error with the actions.")'''
         self.actions.append(request)
+        return clientController.Empty()
+
+    def RecieveUid(self, request: clientController.PlayerMessage, context):
+        self.Uid = request.json_str
         return clientController.Empty()
 
     def ActionStream(self, request_iterator, context):
@@ -174,7 +176,15 @@ class ClientController(rpc.ClientControllerServicer):
         """ Fulfills SendPing RPC defined in ping.proto """
         self.__updateUserList(self.fernet.decrypt(
             request.ip).decode(), request.id)
-        return clientController.Pong(message="Thanks, friend!" if self.TERMINATE != True else "SET_FINISHED", list_players=player.transformFullListIntoJSON(self.listUser))
+        pong = clientController.Pong()
+        pong.message = "Thanks, friend!" if self.TERMINATE != True else "SET_FINISHED"
+        pong.u_id_sender = self.Uid
+        print("sending pong ", pong)
+        return pong
+
+    def RecieveList(self, request, context):
+        self.listUser = player.transformFullListFromJSON(request.json_str)
+        return clientController.Empty()
 
     def FinishGame(self, request_iterator, context):
         # #print("FinishGame called")

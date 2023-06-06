@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x10lobby_auth.proto\x12\x04grpc\"\r\n\x0b\x45mpty_Lobby\"%\n\x04Note\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\"-\n\x0bPlayersList\x12\x0c\n\x04list\x18\x01 \x01(\t\x12\x10\n\x08id_first\x18\x02 \x01(\t\"Z\n\x0bPrivateInfo\x12\n\n\x02ip\x18\x01 \x01(\x0c\x12\x0c\n\x04user\x18\x02 \x01(\t\x12\x0c\n\x04u_id\x18\x03 \x01(\t\x12\x11\n\tuser_type\x18\x04 \x01(\x05\x12\x10\n\x08id_lobby\x18\x05 \x01(\t2\xb4\x01\n\x0fLobbyAuthServer\x12\x37\n\x0fSendPrivateInfo\x12\x11.grpc.PrivateInfo\x1a\x11.grpc.PlayersList\x12\x31\n\tStartGame\x12\x11.grpc.PrivateInfo\x1a\x11.grpc.Empty_Lobby\x12\x35\n\rGetPlayerList\x12\x11.grpc.PrivateInfo\x1a\x11.grpc.PlayersListb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x10lobby_auth.proto\x12\x04grpc\"\r\n\x0b\x45mpty_Lobby\"%\n\x04Note\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\"-\n\x0bPlayersList\x12\x0c\n\x04list\x18\x01 \x01(\t\x12\x10\n\x08id_first\x18\x02 \x01(\t\"8\n\nPing_Lobby\x12\n\n\x02ip\x18\x01 \x01(\x0c\x12\x0c\n\x04u_id\x18\x02 \x01(\t\x12\x10\n\x08lobby_id\x18\x03 \x01(\t\"\x1d\n\nPong_Lobby\x12\x0f\n\x07message\x18\x01 \x01(\t\"Z\n\x0bPrivateInfo\x12\n\n\x02ip\x18\x01 \x01(\x0c\x12\x0c\n\x04user\x18\x02 \x01(\t\x12\x0c\n\x04u_id\x18\x03 \x01(\t\x12\x11\n\tuser_type\x18\x04 \x01(\x05\x12\x10\n\x08id_lobby\x18\x05 \x01(\t2\xe9\x01\n\x0fLobbyAuthServer\x12\x37\n\x0fSendPrivateInfo\x12\x11.grpc.PrivateInfo\x1a\x11.grpc.PlayersList\x12\x31\n\tStartGame\x12\x11.grpc.PrivateInfo\x1a\x11.grpc.Empty_Lobby\x12\x35\n\rGetPlayerList\x12\x11.grpc.PrivateInfo\x1a\x11.grpc.PlayersList\x12\x33\n\rSendPingLobby\x12\x10.grpc.Ping_Lobby\x1a\x10.grpc.Pong_Lobbyb\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'lobby_auth_pb2', globals())
@@ -26,8 +26,12 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _NOTE._serialized_end=78
   _PLAYERSLIST._serialized_start=80
   _PLAYERSLIST._serialized_end=125
-  _PRIVATEINFO._serialized_start=127
-  _PRIVATEINFO._serialized_end=217
-  _LOBBYAUTHSERVER._serialized_start=220
-  _LOBBYAUTHSERVER._serialized_end=400
+  _PING_LOBBY._serialized_start=127
+  _PING_LOBBY._serialized_end=183
+  _PONG_LOBBY._serialized_start=185
+  _PONG_LOBBY._serialized_end=214
+  _PRIVATEINFO._serialized_start=216
+  _PRIVATEINFO._serialized_end=306
+  _LOBBYAUTHSERVER._serialized_start=309
+  _LOBBYAUTHSERVER._serialized_end=542
 # @@protoc_insertion_point(module_scope)

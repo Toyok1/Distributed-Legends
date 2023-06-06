@@ -236,6 +236,7 @@ class Client():
 
     def send_end_turn(self):
         self.turn_button["state"] = "disabled"
+        self.lockButtons()
         self.myPostOffice.SendEndTurn()
 
     def closeGame(self):
@@ -320,7 +321,7 @@ class Client():
             if u.getUid() == self.myPostOffice.myPlayer.getUid():
                 self.myPostOffice.myPlayer = u
                 self.myPlayerType = u.getUsertype()
-                print("My player is ", u)
+                # print("My player is ", u)
                 self.monster_label.config(text=u.getUsername())
                 self.monsterRef = u
                 self.monster.config(image=self.imgs_mirrored[u.getUsertype()])

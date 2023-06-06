@@ -23,6 +23,7 @@ message Ping {
 
 message Pong {
     string message = 1;
+    string u_id_sender = 2;
 }
 
 message Action{
@@ -34,6 +35,8 @@ message Action{
 
 service ClientController {
     rpc SendPing(Ping) returns (Pong);
+    rpc RecieveList(PlayerMessage) returns(Empty);
+    rpc RecieveUid(PlayerMessage) returns(Empty);
     rpc SendAction(Action) returns(Empty);
     rpc ActionStream(Empty) returns(stream Action);
     rpc FinishStream(Empty) returns(stream EndNote);

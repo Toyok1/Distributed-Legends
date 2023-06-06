@@ -29,6 +29,11 @@ class LobbyAuthServerStub(object):
                 request_serializer=lobby__auth__pb2.PrivateInfo.SerializeToString,
                 response_deserializer=lobby__auth__pb2.PlayersList.FromString,
                 )
+        self.SendPingLobby = channel.unary_unary(
+                '/grpc.LobbyAuthServer/SendPingLobby',
+                request_serializer=lobby__auth__pb2.Ping_Lobby.SerializeToString,
+                response_deserializer=lobby__auth__pb2.Pong_Lobby.FromString,
+                )
 
 
 class LobbyAuthServerServicer(object):
@@ -52,6 +57,12 @@ class LobbyAuthServerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def SendPingLobby(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_LobbyAuthServerServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -69,6 +80,11 @@ def add_LobbyAuthServerServicer_to_server(servicer, server):
                     servicer.GetPlayerList,
                     request_deserializer=lobby__auth__pb2.PrivateInfo.FromString,
                     response_serializer=lobby__auth__pb2.PlayersList.SerializeToString,
+            ),
+            'SendPingLobby': grpc.unary_unary_rpc_method_handler(
+                    servicer.SendPingLobby,
+                    request_deserializer=lobby__auth__pb2.Ping_Lobby.FromString,
+                    response_serializer=lobby__auth__pb2.Pong_Lobby.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -128,5 +144,22 @@ class LobbyAuthServer(object):
         return grpc.experimental.unary_unary(request, target, '/grpc.LobbyAuthServer/GetPlayerList',
             lobby__auth__pb2.PrivateInfo.SerializeToString,
             lobby__auth__pb2.PlayersList.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SendPingLobby(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/grpc.LobbyAuthServer/SendPingLobby',
+            lobby__auth__pb2.Ping_Lobby.SerializeToString,
+            lobby__auth__pb2.Pong_Lobby.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

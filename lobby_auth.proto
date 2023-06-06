@@ -13,6 +13,16 @@ message PlayersList{
     string id_first = 2;
 }
 
+message Ping_Lobby {
+    bytes ip = 1;
+    string u_id = 2;
+    string lobby_id = 3;
+}
+
+message Pong_Lobby {
+    string message = 1;
+}
+
 message PrivateInfo{
     bytes ip = 1;
     string user = 2;
@@ -25,6 +35,7 @@ service LobbyAuthServer {
     rpc SendPrivateInfo (PrivateInfo) returns (PlayersList);
     rpc StartGame(PrivateInfo) returns(Empty_Lobby);
     rpc GetPlayerList(PrivateInfo) returns(PlayersList);
+    rpc SendPingLobby(Ping_Lobby) returns (Pong_Lobby);
 }
 
 // python3 -m grpc_tools.protoc -I=. --python_out=. --grpc_python_out=. lobby_auth.proto 
