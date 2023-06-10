@@ -46,6 +46,7 @@ class PostOffice:
         self.privateInfo.id_lobby = id_lobby
 
         self.players = []
+        self.playersCheck = []
         self.heroesList = []
         self.myPlayer = None
         self.old_players = []
@@ -117,7 +118,7 @@ class PostOffice:
                         self.players.remove(
                             [q for q in self.players if p.getUid() == q.getUid()][0])'''
                 # self.players = player.transformFullListFromJSON(pong.list_players)
-                print(pong)
+                #print(pong)
                 time.sleep(2.5)
             except:
                 for p in self.players:
@@ -153,15 +154,20 @@ class PostOffice:
     def Subscribe(self):
         l = self.conn_auth.SendPrivateInfo(self.privateInfo)
         self.players = player.transformFullListFromJSON(l.list)
+        self.playersCheck = self.players.copy()
         threading.Thread(target=self.__pinging_lobby, daemon=True).start()
 
     def SendEndTurn(self):
         mess_et = clientController.PlayerMessage()
         # #print(last_turn, "last_turn")
+        for i in range(len(self.players)):
+            if self.players[i].getHp()<1:
+                self.playersCheck.remove(self.players[i])
         index = self.players.index(self.myPlayer)
         next = self.players[(index + 1) % len(self.players)]
         mess_et.json_str = player.transformIntoJSON(next)
         self.conn_my_local_service.EndTurn(mess_et)
+
 
     def CheckStarted(self):
         return self.conn_auth.ReturnStarted(clientController.Empty())
@@ -170,6 +176,7 @@ class PostOffice:
         l = self.conn_auth.GetPlayerList(self.privateInfo)
         print('List', l)
         self.players = player.transformFullListFromJSON(l.list)
+        self.playersCheck = self.players.copy()
         mess = clientController.PlayerMessage()
         mess.json_str = player.transformFullListIntoJSON(self.players)
         self.conn_my_local_service.RecieveList(mess)
@@ -277,7 +284,7 @@ class PostOffice:
         self.conn_my_local_service.SendAction(n)
 
     def SendFinishGame(self, f):
-        n = clientController.FinishedBool()
+        n = clientController.EndNote()
         n.fin = f
         self.conn_my_local_service.FinishGame(n)
 

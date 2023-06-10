@@ -19,6 +19,7 @@ class ClientController(rpc.ClientControllerServicer):
     def __init__(self, pId):
         self.clients = []
         self.actions = []
+        self.finish = []
         self.Uid = None
         self.turns = []
         self.attack = []
@@ -64,36 +65,20 @@ class ClientController(rpc.ClientControllerServicer):
                                 # TODO get this to work
                                 self.turns.append(n)'''
                     self.listUser.remove(user)
-            '''if len(self.listUser) == 1:
+            #DISCONNECTION HANDLER
+            if len(self.listUser) == 1:
                 # print("length userList == 1")
                 n = clientController.EndNote()
-                # only two messages that should ever be displayed
-                n.MonsterWin = "YOU ARE VICTORIOUS BECAUSE EVERYONE ELSE DISCONNECTED"
-                # only two messages that should ever be displayed
-                n.HeroesWin = "YOU ARE VICTORIOUS BECAUSE EVERYONE ELSE DISCONNECTED"
-                n.MonsterDefeat = "How did you get here?"
-                n.HeroesDefeat = "Looking for easter eggs?"
-                n.fin = True if self.listUser[0].getUsertype(
-                ) == 1 else False
-                # self.finish.append(n)
-                # self.isStartedGame = False
-                # self.TERMINATE = True
-                break'''
-
-            # list of all types of users. If there is no monter the heroes win by default.
-            '''if not 1 in [int(u.getUsertype()) for u in self.listUser]:
-                # print("NO MONSTERS")
-                n = clientController.EndNote()
-                n.MonsterWin = "Noone expects the spanish inquisition!"
-                # the only message to ever be displayed
-                n.HeroesWin = "YOU SAVED THE WORLD BECAUSE THE MONSTER DISCONNECTED"
-                n.MonsterDefeat = "How did you get here?"
-                n.HeroesDefeat = "Looking for easter eggs?"
-                n.fin = False
+                # only two messages that should ever be displayed    
+                n.fin = self.listUser[0].getUsername() 
                 self.finish.append(n)
                 self.isStartedGame = False
                 self.TERMINATE = True
-                break'''
+                break
+
+            # list of all types of users. If there is no monster the heroes win by default.
+            #NORMAL END GAME HANDLER (ONLY 1 PLAYER WITH MORE THAN 0 HP)
+            n = clientController.EndNote()
             time.sleep(2.5)
 
     def __distributeHealth(self):
@@ -179,7 +164,7 @@ class ClientController(rpc.ClientControllerServicer):
         pong = clientController.Pong()
         pong.message = "Thanks, friend!" if self.TERMINATE != True else "SET_FINISHED"
         pong.u_id_sender = self.Uid
-        print("sending pong ", pong)
+       
         return pong
 
     def RecieveList(self, request, context):
@@ -190,10 +175,6 @@ class ClientController(rpc.ClientControllerServicer):
         # #print("FinishGame called")
         self.isStartedGame = False
         n = clientController.EndNote()
-        n.MonsterWin = "YOU CAN RULE THE WORLD"
-        n.HeroesWin = "YOU SAVED THE WORLD"
-        n.MonsterDefeat = "THE HEROES PREVENTED YOU FROM TAKING OVER THE WORLD"
-        n.HeroesDefeat = "YOU FAILED TO SAVE THE WORLD"
         n.fin = request_iterator.fin
         self.finish.append(n)
         return clientController.Empty()

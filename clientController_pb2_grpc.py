@@ -54,6 +54,11 @@ class ClientControllerStub(object):
                 request_serializer=clientController__pb2.Empty.SerializeToString,
                 response_deserializer=clientController__pb2.PlayerMessage.FromString,
                 )
+        self.FinishGame = channel.unary_unary(
+                '/grpc.ClientController/FinishGame',
+                request_serializer=clientController__pb2.EndNote.SerializeToString,
+                response_deserializer=clientController__pb2.Empty.FromString,
+                )
 
 
 class ClientControllerServicer(object):
@@ -107,6 +112,12 @@ class ClientControllerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def FinishGame(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ClientControllerServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -149,6 +160,11 @@ def add_ClientControllerServicer_to_server(servicer, server):
                     servicer.TurnStream,
                     request_deserializer=clientController__pb2.Empty.FromString,
                     response_serializer=clientController__pb2.PlayerMessage.SerializeToString,
+            ),
+            'FinishGame': grpc.unary_unary_rpc_method_handler(
+                    servicer.FinishGame,
+                    request_deserializer=clientController__pb2.EndNote.FromString,
+                    response_serializer=clientController__pb2.Empty.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -293,5 +309,22 @@ class ClientController(object):
         return grpc.experimental.unary_stream(request, target, '/grpc.ClientController/TurnStream',
             clientController__pb2.Empty.SerializeToString,
             clientController__pb2.PlayerMessage.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def FinishGame(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/grpc.ClientController/FinishGame',
+            clientController__pb2.EndNote.SerializeToString,
+            clientController__pb2.Empty.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
