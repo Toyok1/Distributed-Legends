@@ -48,10 +48,6 @@ class Client():
                 text="Connection lost :(")
             self.closeGame()'''
 
-        threading.Thread(target=self.__listen_for_turns, daemon=True).start()
-        threading.Thread(target=self.__listen_for_actions, daemon=True).start()
-        threading.Thread(target=self.__listen_for_finish, daemon=True).start()
-
         '''if userType != 1:
             threading.Thread(target=self.__check_for_start, daemon=True).start()'''
         self.window.mainloop()
@@ -380,6 +376,9 @@ class Client():
 
     def trueStart(self):
         self.GAME_STARTED = True
+        threading.Thread(target=self.__listen_for_turns, daemon=True).start()
+        threading.Thread(target=self.__listen_for_actions, daemon=True).start()
+        threading.Thread(target=self.__listen_for_finish, daemon=True).start()
         if self.IS_IT_MY_TURN == True:
             self.unlockButtons()
             self.turn_button["state"] = "normal"
