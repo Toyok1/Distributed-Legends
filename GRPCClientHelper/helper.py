@@ -71,9 +71,9 @@ class PostOffice:
 
     def __listen_for_terminated(self, enemy):
         try:
-            print('inizio a leggere gli attacchi')
+            print('inizio a leggere i terminati')
             for disconnected in enemy.TerminatedStream(clientController.Empty()):
-                # print('enemy', action)
+                print('terminated ', disconnected)
                 target = player.transformFromJSON(disconnected.json_str)
                 for p in self.players:
                     if p.getUid() == target.getUid():
@@ -245,7 +245,7 @@ class PostOffice:
                 self.actionList.append(action)
         except grpc._channel._Rendezvous as err:
             print(err)
-            print("disconnect from enemy")
+            print("disconnect from enemy - action")
 
     def ActionStream(self):
         return self.conn_my_local_service.ActionStream(clientController.Empty())
