@@ -224,7 +224,6 @@ class PostOffice:
             mess_et = clientController.PlayerMessage()
             mess_et.json_str = player.transformIntoJSON(self.myPlayer)
             self.conn_my_local_service.EndTurn(mess_et)
-
         # self.conn_auth.close()
         return
 
@@ -247,7 +246,7 @@ class PostOffice:
                 self.actionList.append(action)
         except grpc._channel._Rendezvous as err:
             print(err)
-            print("disconnect from enemy - action")
+            print("disconnected from enemy - action")
 
     def ActionStream(self):
         return self.conn_my_local_service.ActionStream(clientController.Empty())
