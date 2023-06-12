@@ -75,7 +75,7 @@ class Client():
         while self.myPostOffice.myPlayer is None:
             pass
         for turn in self.myPostOffice.TurnStream():
-            # print("TURNO - ", turn)
+            print("TURNO - ", turn)
             if self.myPostOffice.isFinished == True:
                 break
             what = player.transformFromJSON(turn.json_str)
@@ -214,12 +214,14 @@ class Client():
             time.sleep(0.5)
         numberAlive = 5
         while numberAlive > 1:
-            if len(self.myPostOffice.players) == 1:
-                break
             numberAlive = 0
             for i in range(len(self.myPostOffice.players)):
-                numberAlive += 1 if self.myPostOffice.players[i].getHp(
-                ) > 0 else 0
+                try:
+                    numberAlive += 1 if self.myPostOffice.players[i].getHp(
+                    ) > 0 else 0
+                except:
+                    numberAlive = 0
+                    break
             # print("Number of players alive: ", numberAlive)
         print("Game is finished BY LISTEN FOR FINISH")
         for finish in self.myPostOffice.FinishStream():
