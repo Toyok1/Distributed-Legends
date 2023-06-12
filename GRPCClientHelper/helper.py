@@ -26,6 +26,7 @@ class PostOffice:
         self.fernet = Fernet(key)
         self.encIp = self.fernet.encrypt(self.ip.encode())
         self.actionList = []
+        self.turnList = []
 
         channel = grpc.insecure_channel(address + ':' + str(portAuth))
         self.conn_auth = lobby_auth_rpc.LobbyAuthServerStub(channel)
@@ -214,6 +215,9 @@ class PostOffice:
             callback = partial(self._listen_enemy_action_stream, enemy)
             threading.Thread(target=callback, daemon=True).start()
 
+            callback = partial(self._listen_enemy_turn_stream, enemy)
+            threading.Thread(target=callback, daemon=True).start()
+
         threading.Thread(target=self.__listen_for_terminated,
                          daemon=True).start()
 
@@ -247,6 +251,16 @@ class PostOffice:
         except grpc._channel._Rendezvous as err:
             print(err)
             print("disconnected from enemy - action")
+
+    def _listen_enemy_turn_stream(self, enemy):
+        try:
+            print('inizio a leggere gli attacchi')
+            for turn in enemy.TurnStream(clientController.Empty()):
+                print('turn', turn)
+                self.turnList.append(turn)
+        except grpc._channel._Rendezvous as err:
+            print(err)
+            print("disconnected from enemy - turns")
 
     def ActionStream(self):
         return self.conn_my_local_service.ActionStream(clientController.Empty())

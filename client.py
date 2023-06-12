@@ -27,6 +27,7 @@ class Client():
         self.imgs = []
         self.imgs_mirrored = []
         self.history_index = 0
+        self.history_index_turns = 0
         # self.lavagnetta = ["Welcome to the game!"]
         self.myPlayerType = userType
         self.username = user
@@ -70,26 +71,29 @@ class Client():
     def __listen_for_turns(self):
         while self.myPostOffice.myPlayer is None:
             pass
-        for turn in self.myPostOffice.TurnStream():
-            print("TURNO - ", turn)
-            if self.myPostOffice.isFinished == True:
-                break
-            what = player.transformFromJSON(turn.json_str)
-
-            if self.GAME_STARTED:
-                for pl in self.myPostOffice.players:
-                    self.adjustLabels(pl)
-                # list of all types of users. If there is no monster the heroes win by default.
-                # NORMAL END GAME HANDLER (ONLY 1 PLAYER WITH MORE THAN 0 HP)
-                if len(self.myPostOffice.playersCheck) <= 1:
-                    print(self.myPostOffice.playersCheck[0].getUsername())
-                    self.isStartedGame = False
-                    self.TERMINATE = True
-                    self.myPostOffice.SendFinishGame(
-                        self.myPostOffice.playersCheck[0].getUsername())
-                    print("GAME FINISHED"+" should send " +
-                          self.myPostOffice.playersCheck[0].getUsername()+" to FinishGame")
+        while True:
+            while len(self.myPostOffice.turnList) > self.history_index_turns:
+                turn = self.myPostOffice.turnList[self.history_index]
+                self.history_index_turns += 1
+                print("TURNO - ", turn)
+                if self.myPostOffice.isFinished == True:
                     break
+                what = player.transformFromJSON(turn.json_str)
+
+                if self.GAME_STARTED:
+                    for pl in self.myPostOffice.players:
+                        self.adjustLabels(pl)
+                    # list of all types of users. If there is no monster the heroes win by default.
+                    # NORMAL END GAME HANDLER (ONLY 1 PLAYER WITH MORE THAN 0 HP)
+                    if len(self.myPostOffice.playersCheck) <= 1:
+                        print(self.myPostOffice.playersCheck[0].getUsername())
+                        self.isStartedGame = False
+                        self.TERMINATE = True
+                        self.myPostOffice.SendFinishGame(
+                            self.myPostOffice.playersCheck[0].getUsername())
+                        print("GAME FINISHED"+" should send " +
+                              self.myPostOffice.playersCheck[0].getUsername()+" to FinishGame")
+                        break
 
             if what.getUid() == self.myPostOffice.myPlayer.getUid():
                 # if self.fernet.decrypt(turn.ip).decode() == self.ip:
@@ -204,6 +208,18 @@ class Client():
                     print_message_array).replace("  ", " ")
                 self.entry_message.config(text=print_message)
                 self.state = mode
+
+    '''def __listen_for_turns(self):
+        while True:
+            while len(self.myPostOffice.turnList) > self.history_index_turns:
+                turn = self.myPostOffice.turnList[self.history_index]
+                actor = player.transformFromJSON(turn.json_str)
+                self.history_index_turns += 1
+                if actor.getUid() == self.myPostOffice.myPlayer.getUid():
+                    print("MY TURN!")
+                    self.unlockButtons()
+                    self.turn_button["state"] = "normal"
+                    # TODO: gestire quando uno si disconnette mentre è il suo turno'''
 
     def __listen_for_finish(self):
         while not self.GAME_STARTED:
