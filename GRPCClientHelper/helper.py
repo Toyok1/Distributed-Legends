@@ -118,7 +118,7 @@ class PostOffice:
                         self.players.remove(
                             [q for q in self.players if p.getUid() == q.getUid()][0])'''
                 # self.players = player.transformFullListFromJSON(pong.list_players)
-                #print(pong)
+                # print(pong)
                 time.sleep(2.5)
             except:
                 for p in self.players:
@@ -161,13 +161,12 @@ class PostOffice:
         mess_et = clientController.PlayerMessage()
         # #print(last_turn, "last_turn")
         for i in range(len(self.players)):
-            if self.players[i].getHp()<1:
+            if self.players[i].getHp() < 1:
                 self.playersCheck.remove(self.players[i])
         index = self.players.index(self.myPlayer)
         next = self.players[(index + 1) % len(self.players)]
         mess_et.json_str = player.transformIntoJSON(next)
         self.conn_my_local_service.EndTurn(mess_et)
-
 
     def CheckStarted(self):
         return self.conn_auth.ReturnStarted(clientController.Empty())
@@ -291,7 +290,7 @@ class PostOffice:
     def FinishStream(self):
         return self.conn_my_local_service.FinishStream(clientController.Empty())
 
-    # TODO: connettersi agli altri player dopo lautenticazione
+    # TODO: connettersi agli altri player dopo l'autenticazione
     '''
     def __connect_to_peers(self, req_ip: list, req_id: list):
         print("connecting to peers")

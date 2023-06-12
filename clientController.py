@@ -65,19 +65,20 @@ class ClientController(rpc.ClientControllerServicer):
                                 # TODO get this to work
                                 self.turns.append(n)'''
                     self.listUser.remove(user)
-            #DISCONNECTION HANDLER
+                    print("NEW LIST ", self.listUser)
+            # DISCONNECTION HANDLER
             if len(self.listUser) == 1:
                 # print("length userList == 1")
                 n = clientController.EndNote()
-                # only two messages that should ever be displayed    
-                n.fin = self.listUser[0].getUsername() 
+                # only two messages that should ever be displayed
+                n.fin = self.listUser[0].getUsername()
                 self.finish.append(n)
                 self.isStartedGame = False
                 self.TERMINATE = True
                 break
 
             # list of all types of users. If there is no monster the heroes win by default.
-            #NORMAL END GAME HANDLER (ONLY 1 PLAYER WITH MORE THAN 0 HP)
+            # NORMAL END GAME HANDLER (ONLY 1 PLAYER WITH MORE THAN 0 HP)
             n = clientController.EndNote()
             time.sleep(2.5)
 
@@ -164,7 +165,7 @@ class ClientController(rpc.ClientControllerServicer):
         pong = clientController.Pong()
         pong.message = "Thanks, friend!" if self.TERMINATE != True else "SET_FINISHED"
         pong.u_id_sender = self.Uid
-       
+
         return pong
 
     def RecieveList(self, request, context):

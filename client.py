@@ -52,7 +52,6 @@ class Client():
         threading.Thread(target=self.__listen_for_actions, daemon=True).start()
         threading.Thread(target=self.__listen_for_finish, daemon=True).start()
 
-
         '''if userType != 1:
             threading.Thread(target=self.__check_for_start, daemon=True).start()'''
         self.window.mainloop()
@@ -76,7 +75,7 @@ class Client():
         while self.myPostOffice.myPlayer is None:
             pass
         for turn in self.myPostOffice.TurnStream():
-            #print("TURNO - ", turn)
+            # print("TURNO - ", turn)
             if self.myPostOffice.isFinished == True:
                 break
             what = player.transformFromJSON(turn.json_str)
@@ -85,13 +84,15 @@ class Client():
                 for pl in self.myPostOffice.players:
                     self.adjustLabels(pl)
                 # list of all types of users. If there is no monster the heroes win by default.
-                #NORMAL END GAME HANDLER (ONLY 1 PLAYER WITH MORE THAN 0 HP)
+                # NORMAL END GAME HANDLER (ONLY 1 PLAYER WITH MORE THAN 0 HP)
                 if len(self.myPostOffice.playersCheck) <= 1:
                     print(self.myPostOffice.playersCheck[0].getUsername())
                     self.isStartedGame = False
                     self.TERMINATE = True
-                    self.myPostOffice.SendFinishGame(self.myPostOffice.playersCheck[0].getUsername())
-                    print("GAME FINISHED"+" should send "+self.myPostOffice.playersCheck[0].getUsername()+" to FinishGame")
+                    self.myPostOffice.SendFinishGame(
+                        self.myPostOffice.playersCheck[0].getUsername())
+                    print("GAME FINISHED"+" should send " +
+                          self.myPostOffice.playersCheck[0].getUsername()+" to FinishGame")
                     break
 
             if what.getUid() == self.myPostOffice.myPlayer.getUid():
@@ -209,16 +210,20 @@ class Client():
                 self.state = mode
 
     def __listen_for_finish(self):
+        while not self.GAME_STARTED:
+            pass
+
         numberAlive = 5
-        while numberAlive >1:
+        while numberAlive > 1:
             numberAlive = 0
             for i in range(len(self.myPostOffice.players)):
-                numberAlive += 1 if self.myPostOffice.players[i].getHp() > 0 else 0
+                numberAlive += 1 if self.myPostOffice.players[i].getHp(
+                ) > 0 else 0
             print("Number of players alive: ", numberAlive)
         print("Game is finished BY LISTEN FOR FINISH")
         for finish in self.myPostOffice.FinishStream():
             print("Game is finished ", finish.fin)
-            self.entry_message.config(text= finish.fin + " won the game")
+            self.entry_message.config(text=finish.fin + " won the game")
             break
 
     def send_end_turn(self):
@@ -367,11 +372,11 @@ class Client():
         self.cleanInitialList()
         self.lockButtons()
         self.start_button.destroy()
-        self.GAME_STARTED = True
         threading.Timer(16, self.trueStart).start()
         self.entry_message.configure(text="Now Loading...")
 
     def trueStart(self):
+        self.GAME_STARTED = True
         if self.IS_IT_MY_TURN == True:
             self.unlockButtons()
             self.turn_button["state"] = "normal"
