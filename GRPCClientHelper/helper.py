@@ -228,6 +228,7 @@ class PostOffice:
             mess_et = clientController.PlayerMessage()
             mess_et.json_str = player.transformIntoJSON(self.myPlayer)
             self.conn_my_local_service.EndTurn(mess_et)
+            self.turnList.append(mess_et)
         # self.conn_auth.close()
         return
 

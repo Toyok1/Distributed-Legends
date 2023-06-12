@@ -95,27 +95,27 @@ class Client():
                               self.myPostOffice.playersCheck[0].getUsername()+" to FinishGame")
                         break
 
-            if what.getUid() == self.myPostOffice.myPlayer.getUid():
-                # if self.fernet.decrypt(turn.ip).decode() == self.ip:
-                # print("Mio turno: " + self.myPostOffice.myPlayer.getUsername())
-                self.turn_button["state"] = "normal"
-                self.IS_IT_MY_TURN = True
-                self.unlockButtons()  # unlock the buttons when it's my turn
-                # if miei hp <= 0 endturn + interfaccia "you died"
+                if what.getUid() == self.myPostOffice.myPlayer.getUid():
+                    # if self.fernet.decrypt(turn.ip).decode() == self.ip:
+                    # print("Mio turno: " + self.myPostOffice.myPlayer.getUsername())
+                    self.turn_button["state"] = "normal"
+                    self.IS_IT_MY_TURN = True
+                    self.unlockButtons()  # unlock the buttons when it's my turn
+                    # if miei hp <= 0 endturn + interfaccia "you died"
 
-                if self.myPostOffice.myPlayer.getHp() <= 0:
-                    if self.myPostOffice.myPlayer.getUsertype() == 1:  # monster
-                        self.entry_message.config(
-                            text="THE MONSTER IS DEAD! this shouldn't happen, TODO change it")
-                        self.lockButtons()
-                        # end the game right here
-                    else:
-                        self.entry_message.config(
-                            text="YOU ARE DEAD! Better luck next time.")
-                        self.lockButtons()
-                        self.send_end_turn()
-            else:
-                self.IS_IT_MY_TURN = False
+                    if self.myPostOffice.myPlayer.getHp() <= 0:
+                        if self.myPostOffice.myPlayer.getUsertype() == 1:  # monster
+                            self.entry_message.config(
+                                text="THE MONSTER IS DEAD! this shouldn't happen, TODO change it")
+                            self.lockButtons()
+                            # end the game right here
+                        else:
+                            self.entry_message.config(
+                                text="YOU ARE DEAD! Better luck next time.")
+                            self.lockButtons()
+                            self.send_end_turn()
+                else:
+                    self.IS_IT_MY_TURN = False
 
     def __check_for_start(self):
         try:
