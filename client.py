@@ -210,9 +210,11 @@ class Client():
                 self.state = mode
 
     def __listen_for_finish(self):
+        while not self.GAME_STARTED:
+            time.sleep(0.5)
         numberAlive = 5
         while numberAlive > 1:
-            if len(self.myPostOffice.players) == 1 and self.GAME_STARTED:
+            if len(self.myPostOffice.players) == 1:
                 break
             numberAlive = 0
             for i in range(len(self.myPostOffice.players)):
