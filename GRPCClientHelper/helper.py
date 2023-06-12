@@ -69,10 +69,10 @@ class PostOffice:
             s.close()
         return IP
 
-    def __listen_for_terminated(self, enemy):
+    def __listen_for_terminated(self):
         try:
             print('inizio a leggere i terminati')
-            for disconnected in enemy.TerminatedStream(clientController.Empty()):
+            for disconnected in self.conn_my_local_service.TerminatedStream(clientController.Empty()):
                 print('terminated ', disconnected)
                 target = player.transformFromJSON(disconnected.json_str)
                 for p in self.players:
@@ -214,8 +214,8 @@ class PostOffice:
             callback = partial(self._listen_enemy_action_stream, enemy)
             threading.Thread(target=callback, daemon=True).start()
 
-            callback = partial(self.__listen_for_terminated, enemy)
-            threading.Thread(target=callback, daemon=True).start()
+        threading.Thread(target=self.__listen_for_terminated,
+                         daemon=True).start()
 
         # TODO: toglie il player dalla lobby del server dopo 60 secondi
         callback = partial(self.conn_auth.StartGame, self.privateInfo)
