@@ -44,6 +44,11 @@ class ClientControllerStub(object):
                 request_serializer=clientController__pb2.Empty.SerializeToString,
                 response_deserializer=clientController__pb2.EndNote.FromString,
                 )
+        self.TerminatedStream = channel.unary_stream(
+                '/grpc.ClientController/TerminatedStream',
+                request_serializer=clientController__pb2.Empty.SerializeToString,
+                response_deserializer=clientController__pb2.PlayerMessage.FromString,
+                )
         self.EndTurn = channel.unary_unary(
                 '/grpc.ClientController/EndTurn',
                 request_serializer=clientController__pb2.PlayerMessage.SerializeToString,
@@ -100,6 +105,12 @@ class ClientControllerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def TerminatedStream(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def EndTurn(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -150,6 +161,11 @@ def add_ClientControllerServicer_to_server(servicer, server):
                     servicer.FinishStream,
                     request_deserializer=clientController__pb2.Empty.FromString,
                     response_serializer=clientController__pb2.EndNote.SerializeToString,
+            ),
+            'TerminatedStream': grpc.unary_stream_rpc_method_handler(
+                    servicer.TerminatedStream,
+                    request_deserializer=clientController__pb2.Empty.FromString,
+                    response_serializer=clientController__pb2.PlayerMessage.SerializeToString,
             ),
             'EndTurn': grpc.unary_unary_rpc_method_handler(
                     servicer.EndTurn,
@@ -275,6 +291,23 @@ class ClientController(object):
         return grpc.experimental.unary_stream(request, target, '/grpc.ClientController/FinishStream',
             clientController__pb2.Empty.SerializeToString,
             clientController__pb2.EndNote.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def TerminatedStream(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(request, target, '/grpc.ClientController/TerminatedStream',
+            clientController__pb2.Empty.SerializeToString,
+            clientController__pb2.PlayerMessage.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

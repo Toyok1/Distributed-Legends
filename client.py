@@ -219,7 +219,7 @@ class Client():
             for i in range(len(self.myPostOffice.players)):
                 numberAlive += 1 if self.myPostOffice.players[i].getHp(
                 ) > 0 else 0
-            print("Number of players alive: ", numberAlive)
+            # print("Number of players alive: ", numberAlive)
         print("Game is finished BY LISTEN FOR FINISH")
         for finish in self.myPostOffice.FinishStream():
             print("Game is finished ", finish.fin)

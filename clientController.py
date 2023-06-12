@@ -25,6 +25,7 @@ class ClientController(rpc.ClientControllerServicer):
         self.attack = []
         self.listBlock = []
         self.listUser = []
+        self.terminated = []
         self.fernet = Fernet(key)
         self.processId = pId
         self.TERMINATE = None
@@ -48,7 +49,7 @@ class ClientController(rpc.ClientControllerServicer):
         # if a user (hero) is more than 10 seconds from its last ping we count it as dead and, if it is its turn we skip it and we go to the next user.
         while True:
             # print("Player List", self.listUser)
-            for user in self.listUser:
+            for user in [x for x in self.listUser if x.getUid() != self.Uid]:
                 if float(time.time()) - float(user.getPingTime()) > 10.0:
                     print("lost ping with ", user)
                     # if it's the turn user, pick another
@@ -66,6 +67,9 @@ class ClientController(rpc.ClientControllerServicer):
                                 self.turns.append(n)'''
                     self.listUser.remove(user)
                     print("NEW LIST ", self.listUser)
+                    m = clientController.PlayerMessage()
+                    m.json_str = player.transformIntoJSON(user)
+                    self.terminated.append(m)
             # DISCONNECTION HANDLER
             if len(self.listUser) == 1:
                 # print("length userList == 1")
@@ -117,6 +121,14 @@ class ClientController(rpc.ClientControllerServicer):
         while True:
             while len(self.actions) > lastindex:
                 n = self.actions[lastindex]
+                lastindex += 1
+                yield n
+
+    def TerminatedStream(self, request_iterator, context):
+        lastindex = 0
+        while True:
+            while len(self.terminated) > lastindex:
+                n = self.terminated[lastindex]
                 lastindex += 1
                 yield n
 

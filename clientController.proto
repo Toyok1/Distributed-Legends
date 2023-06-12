@@ -36,6 +36,7 @@ service ClientController {
     rpc SendAction(Action) returns(Empty);
     rpc ActionStream(Empty) returns(stream Action);
     rpc FinishStream(Empty) returns(stream EndNote);
+    rpc TerminatedStream(Empty) returns(stream PlayerMessage);
     rpc EndTurn(PlayerMessage) returns(Empty);
     rpc TurnStream (Empty) returns(stream PlayerMessage);
     rpc FinishGame (EndNote) returns (Empty);

@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16\x63lientController.proto\x12\x04grpc\"\x07\n\x05\x45mpty\"\x16\n\x07\x45ndNote\x12\x0b\n\x03\x66in\x18\x01 \x01(\t\"!\n\rPlayerMessage\x12\x10\n\x08json_str\x18\x01 \x01(\t\"\x1e\n\x04Ping\x12\n\n\x02ip\x18\x01 \x01(\x0c\x12\n\n\x02id\x18\x02 \x01(\t\"\x1e\n\x0c\x46inishedBool\x12\x0e\n\x06winner\x18\x01 \x01(\t\",\n\x04Pong\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x13\n\x0bu_id_sender\x18\x02 \x01(\t\"O\n\x06\x41\x63tion\x12\x0e\n\x06sender\x18\x01 \x01(\t\x12\x10\n\x08reciever\x18\x02 \x01(\t\x12\x0e\n\x06\x61mount\x18\x03 \x01(\x05\x12\x13\n\x0b\x61\x63tion_type\x18\x04 \x01(\x05\x32\xa4\x03\n\x10\x43lientController\x12\"\n\x08SendPing\x12\n.grpc.Ping\x1a\n.grpc.Pong\x12/\n\x0bRecieveList\x12\x13.grpc.PlayerMessage\x1a\x0b.grpc.Empty\x12.\n\nRecieveUid\x12\x13.grpc.PlayerMessage\x1a\x0b.grpc.Empty\x12\'\n\nSendAction\x12\x0c.grpc.Action\x1a\x0b.grpc.Empty\x12+\n\x0c\x41\x63tionStream\x12\x0b.grpc.Empty\x1a\x0c.grpc.Action0\x01\x12,\n\x0c\x46inishStream\x12\x0b.grpc.Empty\x1a\r.grpc.EndNote0\x01\x12+\n\x07\x45ndTurn\x12\x13.grpc.PlayerMessage\x1a\x0b.grpc.Empty\x12\x30\n\nTurnStream\x12\x0b.grpc.Empty\x1a\x13.grpc.PlayerMessage0\x01\x12(\n\nFinishGame\x12\r.grpc.EndNote\x1a\x0b.grpc.Emptyb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16\x63lientController.proto\x12\x04grpc\"\x07\n\x05\x45mpty\"\x16\n\x07\x45ndNote\x12\x0b\n\x03\x66in\x18\x01 \x01(\t\"!\n\rPlayerMessage\x12\x10\n\x08json_str\x18\x01 \x01(\t\"\x1e\n\x04Ping\x12\n\n\x02ip\x18\x01 \x01(\x0c\x12\n\n\x02id\x18\x02 \x01(\t\",\n\x04Pong\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x13\n\x0bu_id_sender\x18\x02 \x01(\t\"O\n\x06\x41\x63tion\x12\x0e\n\x06sender\x18\x01 \x01(\t\x12\x10\n\x08reciever\x18\x02 \x01(\t\x12\x0e\n\x06\x61mount\x18\x03 \x01(\x05\x12\x13\n\x0b\x61\x63tion_type\x18\x04 \x01(\x05\x32\xdc\x03\n\x10\x43lientController\x12\"\n\x08SendPing\x12\n.grpc.Ping\x1a\n.grpc.Pong\x12/\n\x0bRecieveList\x12\x13.grpc.PlayerMessage\x1a\x0b.grpc.Empty\x12.\n\nRecieveUid\x12\x13.grpc.PlayerMessage\x1a\x0b.grpc.Empty\x12\'\n\nSendAction\x12\x0c.grpc.Action\x1a\x0b.grpc.Empty\x12+\n\x0c\x41\x63tionStream\x12\x0b.grpc.Empty\x1a\x0c.grpc.Action0\x01\x12,\n\x0c\x46inishStream\x12\x0b.grpc.Empty\x1a\r.grpc.EndNote0\x01\x12\x36\n\x10TerminatedStream\x12\x0b.grpc.Empty\x1a\x13.grpc.PlayerMessage0\x01\x12+\n\x07\x45ndTurn\x12\x13.grpc.PlayerMessage\x1a\x0b.grpc.Empty\x12\x30\n\nTurnStream\x12\x0b.grpc.Empty\x1a\x13.grpc.PlayerMessage0\x01\x12(\n\nFinishGame\x12\r.grpc.EndNote\x1a\x0b.grpc.Emptyb\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'clientController_pb2', globals())
@@ -28,12 +28,10 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _PLAYERMESSAGE._serialized_end=98
   _PING._serialized_start=100
   _PING._serialized_end=130
-  _FINISHEDBOOL._serialized_start=132
-  _FINISHEDBOOL._serialized_end=162
-  _PONG._serialized_start=164
-  _PONG._serialized_end=208
-  _ACTION._serialized_start=210
-  _ACTION._serialized_end=289
-  _CLIENTCONTROLLER._serialized_start=292
-  _CLIENTCONTROLLER._serialized_end=712
+  _PONG._serialized_start=132
+  _PONG._serialized_end=176
+  _ACTION._serialized_start=178
+  _ACTION._serialized_end=257
+  _CLIENTCONTROLLER._serialized_start=260
+  _CLIENTCONTROLLER._serialized_end=736
 # @@protoc_insertion_point(module_scope)

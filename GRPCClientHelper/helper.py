@@ -69,6 +69,20 @@ class PostOffice:
             s.close()
         return IP
 
+    def __listen_for_terminated(self, enemy):
+        try:
+            print('inizio a leggere gli attacchi')
+            for disconnected in enemy.TerminatedStream(clientController.Empty()):
+                # print('enemy', action)
+                target = player.transformFromJSON(disconnected.json_str)
+                for p in self.players:
+                    if p.getUid() == target.getUid():
+                        self.players.remove(p)
+
+        except grpc._channel._Rendezvous as err:
+            print(err)
+            print("disconnect from enemy")
+
     def __pinging_lobby(self):
         try:
             self.Listen_for_PingPong_Lobby(self.privateInfo.u_id)
@@ -198,6 +212,9 @@ class PostOffice:
             threading.Thread(target=callback, daemon=True).start()
 
             callback = partial(self._listen_enemy_action_stream, enemy)
+            threading.Thread(target=callback, daemon=True).start()
+
+            callback = partial(self.__listen_for_terminated, enemy)
             threading.Thread(target=callback, daemon=True).start()
 
         # TODO: toglie il player dalla lobby del server dopo 60 secondi
