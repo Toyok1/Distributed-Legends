@@ -95,20 +95,7 @@ class ClientController(rpc.ClientControllerServicer):
 
     def SendAction(self, request: clientController.Action, context):
         # TODO: comment for testing manual comunication
-        '''n = request
-        pl = player.transformFromJSON(n.reciever)
-        am = n.amount
-        action_type = n.action_type
-        for p in self.listUser:
-            if p.getUid() == pl.getUid():
-                if action_type == 0:
-                    p.takeDamage(am)
-                elif action_type == 1:
-                    p.heal(am)
-                elif action_type == 2:
-                    p.block(am)
-                else:
-                    print("OPS! Error with the actions.")'''
+        
         self.actions.append(request)
         return clientController.Empty()
 

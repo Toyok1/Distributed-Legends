@@ -269,10 +269,11 @@ class PostOffice:
     def TurnStream(self):
         return self.conn_my_local_service.TurnStream(clientController.Empty())
 
-    def SendAction(self, send: player.Player, recieve: player.Player, actionType: int):
+    def SendAction(self, send: player.Player, recieve: player.Player, actionType: int, amount: int):
         n = clientController.Action()
         n.sender = ""
         n.reciever = ""
+        n.amount = amount
 
         for p in self.players:
             if p.getUid() == send.getUid():
@@ -281,36 +282,16 @@ class PostOffice:
             if p.getUid() == recieve.getUid():
                 n.reciever = player.transformIntoJSON(p)
 
-        if usr.getUsertype() == 0:
-            # knight
-            values = {"attack": 8, "heal": 8, "block": 10}
-        elif usr.getUsertype() == 1:
-            # monster - does more damage, heals more and blocks more based on how many enemies he has. 1vs1 he is slightly better at most things but worse at one thing
-            values = {"attack": 9, "heal": 9, "block": 9}
-        elif usr.getUsertype() == 2:
-            # priest
-            values = {"attack": 8, "heal": 10, "block": 8}
-        elif usr.getUsertype() == 3:
-            # mage
-            values = {"attack": 10, "heal": 8, "block": 8}
-        else:
-            # default
-            values = {"attack": 0, "heal": 0, "block": 0}
-
-        if actionType == 0:
-            n.action_type = 0
-            n.amount = values["attack"] + \
-                random.randint(-5, 5)
-        elif actionType == 1:
-            n.action_type = 1
-            n.amount = values["heal"] + \
-                random.randint(-5, 5)
-        elif actionType == 2:
-            n.action_type = 2
-            n.amount = values["block"]
-        else:
-            n.action_type = 2
-            n.amount = 0
+        for p in self.players:
+            if p.getUid() == recieve.getUid():
+                if n.action_type == 0:
+                    p.takeDamage(int(n.amount))
+                elif n.action_type == 1:
+                    p.heal(int(n.amount))
+                elif n.action_type == 2:
+                    p.block(int(n.amount))
+                else:
+                    print("OPS! Error with the actions.")
 
         # #print(n)
         self.conn_my_local_service.SendAction(n)

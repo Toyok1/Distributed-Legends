@@ -7,6 +7,7 @@ import sys
 import re
 from functools import partial
 import socket
+import random
 from requests import get
 
 from PIL import ImageTk, Image, ImageOps
@@ -244,6 +245,8 @@ class Client():
     def send_end_turn(self):
         self.turn_button["state"] = "disabled"
         self.lockButtons()
+        for p in self.myPostOffice.players:
+                self.adjustLabels(p)
         self.myPostOffice.SendEndTurn()
 
     def closeGame(self):
@@ -263,26 +266,79 @@ class Client():
         self.heal_button["state"] = "normal"
         self.block_button["state"] = "normal"
         self.lavagnetta = []
-        self.entry_message.config(text="Do something!")
+        #self.entry_message.config(text="Do something!")
 
     def attack_single(self, attacked):
+        if self.myPostOffice.myPlayer.getUsertype() == 0:
+            # knight
+            values = {"attack": 8, "heal": 8, "block": 10}
+        elif self.myPostOffice.myPlayer.getUsertype() == 1:
+            # monster - does more damage, heals more and blocks more based on how many enemies he has. 1vs1 he is slightly better at most things but worse at one thing
+            values = {"attack": 9, "heal": 9, "block": 9}
+        elif self.myPostOffice.myPlayer.getUsertype() == 2:
+            # priest
+            values = {"attack": 8, "heal": 10, "block": 8}
+        elif self.myPostOffice.myPlayer.getUsertype() == 3:
+            # mage
+            values = {"attack": 10, "heal": 8, "block": 8}
+        else:
+            # default
+            values = {"attack": 0, "heal": 0, "block": 0}
         # attack people that are not your same class or friends
+        amount = values["attack"] + random.randint(-5, 5)
         self.assignButtons()
         self.lockButtons()
+        self.entry_message.config("You are Attacking " + attacked.getUsername())
         self.myPostOffice.SendAction(
-            self.myPostOffice.myPlayer, attacked, actionType=0)
+            self.myPostOffice.myPlayer, attacked, actionType=0, amount=amount)
 
     def heal_single(self, healed):
+        if self.myPostOffice.myPlayer.getUsertype() == 0:
+            # knight
+            values = {"attack": 8, "heal": 8, "block": 10}
+        elif self.myPostOffice.myPlayer.getUsertype() == 1:
+            # monster - does more damage, heals more and blocks more based on how many enemies he has. 1vs1 he is slightly better at most things but worse at one thing
+            values = {"attack": 9, "heal": 9, "block": 9}
+        elif self.myPostOffice.myPlayer.getUsertype() == 2:
+            # priest
+            values = {"attack": 8, "heal": 10, "block": 8}
+        elif self.myPostOffice.myPlayer.getUsertype() == 3:
+            # mage
+            values = {"attack": 10, "heal": 8, "block": 8}
+        else:
+            # default
+            values = {"attack": 0, "heal": 0, "block": 0}
+        
+        amount = values["heal"] + random.randint(-5, 5)
+
         self.assignButtons()
         self.lockButtons()
+        self.entry_message.config("You are recovering from damages")
         self.myPostOffice.SendAction(
-            self.myPostOffice.myPlayer, healed, actionType=1)
+            self.myPostOffice.myPlayer, healed, actionType=1, amount=amount)
 
     def block_single(self, blocked):
+        if self.myPostOffice.myPlayer.getUsertype() == 0:
+            # knight
+            values = {"attack": 8, "heal": 8, "block": 10}
+        elif self.myPostOffice.myPlayer.getUsertype() == 1:
+            # monster - does more damage, heals more and blocks more based on how many enemies he has. 1vs1 he is slightly better at most things but worse at one thing
+            values = {"attack": 9, "heal": 9, "block": 9}
+        elif self.myPostOffice.myPlayer.getUsertype() == 2:
+            # priest
+            values = {"attack": 8, "heal": 10, "block": 8}
+        elif self.myPostOffice.myPlayer.getUsertype() == 3:
+            # mage
+            values = {"attack": 10, "heal": 8, "block": 8}
+        else:
+            # default
+            values = {"attack": 0, "heal": 0, "block": 0}
+        
         self.assignButtons()
         self.lockButtons()
+        self.entry_message.config("Preparing to block")
         self.myPostOffice.SendAction(
-            self.myPostOffice.myPlayer, blocked, actionType=2)
+            self.myPostOffice.myPlayer, blocked, actionType=2,amount=values["block"])
 
     def adjustLabels(self, pl):
         # #print("CHANGING LABELS FOR ", pl)
@@ -603,7 +659,7 @@ if __name__ == '__main__':
         if userType.result != None:
             break
 
-    isHost = 1  # TODO: sono tutti host
+    isHost = 0  # TODO: sono tutti host
     serverAddress = None if isHost != 1 else "localhost"
 
     while (serverAddress != "localhost") or (serverAddress is None):
@@ -612,7 +668,7 @@ if __name__ == '__main__':
             "Game's address", "What's the address?", parent=root)
         if re.match(r"^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$", serverAddress):
             break
-    # isHost = 1
+    isHost = 1
     root.deiconify()  # Makes the window visible again
     # this starts a client and thus a thread which keeps connection to server open
     c = Client(username, userType.result if userType_int is None else userType_int,
