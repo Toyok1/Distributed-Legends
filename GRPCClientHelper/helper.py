@@ -274,7 +274,7 @@ class PostOffice:
         n.sender = ""
         n.reciever = ""
         n.amount = amount
-
+        n.action_type = actionType
         for p in self.players:
             if p.getUid() == send.getUid():
                 n.sender = player.transformIntoJSON(p)
@@ -289,7 +289,7 @@ class PostOffice:
                 elif n.action_type == 1:
                     p.heal(int(n.amount))
                 elif n.action_type == 2:
-                    p.block(int(n.amount))
+                    p.obtainBlock(int(n.amount))
                 else:
                     print("OPS! Error with the actions.")
 
