@@ -288,7 +288,7 @@ class Client():
         amount = values["attack"] + random.randint(-5, 5)
         self.assignButtons()
         self.lockButtons()
-        self.entry_message.config("You are Attacking " + attacked.getUsername())
+        self.entry_message.config(text="You are Attacking " + attacked.getUsername()+ " for " + str(amount) + " points!")
         self.myPostOffice.SendAction(
             self.myPostOffice.myPlayer, attacked, actionType=0, amount=amount)
 
@@ -313,7 +313,7 @@ class Client():
 
         self.assignButtons()
         self.lockButtons()
-        self.entry_message.config("You are recovering from damages")
+        self.entry_message.config(text="You are recovering from damages" + " for " + str(amount) + " points!")
         self.myPostOffice.SendAction(
             self.myPostOffice.myPlayer, healed, actionType=1, amount=amount)
 
@@ -336,7 +336,7 @@ class Client():
         
         self.assignButtons()
         self.lockButtons()
-        self.entry_message.config("Preparing to block")
+        self.entry_message.config(text="Preparing to block" +  " for " + str(values["block"]) + " points!")
         self.myPostOffice.SendAction(
             self.myPostOffice.myPlayer, blocked, actionType=2,amount=values["block"])
 
