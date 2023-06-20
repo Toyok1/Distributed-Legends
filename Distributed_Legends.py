@@ -11,7 +11,7 @@ if __name__ == "__main__":
         root.iconbitmap("./src/icon/icon.ico")
     except:
         pass
-    root.title("Distributed Legends - Host choice")
+    root.title("Distributed Legends p2p")
     root.withdraw()
 
     while True:  # in the future this is replaced by the script that opens up the server together with the client
@@ -21,8 +21,6 @@ if __name__ == "__main__":
             break
 
     if isHost.result == 1:
-        '''os.system("(python SERVER.py || python3 SERVER.py) ")
-        os.system("(python client.py 1 ||python3 client.py 1 )")'''
         threading.Thread(target=lambda: os.system(
             "(python SERVER.py || python3 SERVER.py) "), daemon=True).start()
         threading.Thread(target=lambda: os.system(

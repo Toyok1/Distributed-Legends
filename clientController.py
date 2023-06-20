@@ -52,19 +52,6 @@ class ClientController(rpc.ClientControllerServicer):
             for user in [x for x in self.listUser if x.getUid() != self.Uid]:
                 if float(time.time()) - float(user.getPingTime()) > 10.0:
                     print("lost ping with ", user)
-                    # if it's the turn user, pick another
-                    '''if user.getUid() == self.LAST_USER_TURN.getUid():  # disconnected while it's my turn
-                        # add a turn message for the next guy
-                        # print("IT WAS MY TURN")
-                        for i in range(0, len(self.listUser)):
-                            if self.LAST_USER_TURN.getUid() == self.listUser[i].getUid():
-                                userNext = self.listUser[(
-                                    i+1) % len(self.listUser)]
-                                n = clientController.PlayerMessage()
-                                n.json_str = player.transformIntoJSON(
-                                    userNext)
-                                # TODO get this to work
-                                self.turns.append(n)'''
                     self.listUser.remove(user)
                     print("NEW LIST ", self.listUser)
                     m = clientController.PlayerMessage()
@@ -118,30 +105,6 @@ class ClientController(rpc.ClientControllerServicer):
                 n = self.terminated[lastindex]
                 lastindex += 1
                 yield n
-
-    '''def SendPrivateInfo(self, request: clientController.PrivateInfo, context):
-        encMessage = request.ip
-        user = request.user
-        decMessage = self.fernet.decrypt(encMessage).decode()
-        u_id = request.u_id
-        user_type = request.user_type
-        new_user = player.Player(
-            ip=decMessage, unique_id=u_id, username=user, user_type=user_type, ping_time=time.time())
-
-        if user_type == 1:
-            self.HOST = new_user
-        if len(self.listUser) == 0:
-            b = clientController.PlayerMessage()
-            b.json_str = player.transformIntoJSON(new_user)
-            self.turns.append(b)
-            self.LAST_USER_TURN = new_user
-        if len(self.listUser) < 4 and not new_user in self.listUser and self.isStartedGame == False:
-            self.listUser.append(new_user)
-        else:
-            print("User already in the game or game already started")
-        # #print(self.listUser)
-        # something needs to be returned required by protobuf language, we just return empty msg
-        return clientController.Empty()'''
 
     def EndTurn(self, request: clientController.PlayerMessage, context):
         # n = request

@@ -41,17 +41,6 @@ class Client():
         self.myPostOffice.Subscribe()
 
         self.__setup_ui()
-
-        '''try:
-            threading.Thread(target=self.myPostOffice.Listen_for_PingPong, args=(
-                self.myUid,), daemon=True).start()
-        except:
-            self.entry_message.config(
-                text="Connection lost :(")
-            self.closeGame()'''
-
-        '''if userType != 1:
-            threading.Thread(target=self.__check_for_start, daemon=True).start()'''
         self.window.mainloop()
 
     def get_local_ip(self):
@@ -92,18 +81,13 @@ class Client():
                         self.TERMINATE = True
                         self.myPostOffice.SendFinishGame(
                             self.myPostOffice.playersCheck[0].getUsername())
-                        print("GAME FINISHED"+" should send " +
-                              self.myPostOffice.playersCheck[0].getUsername()+" to FinishGame")
+                        print("GAME FINISHED"+" should send " + self.myPostOffice.playersCheck[0].getUsername()+" to FinishGame")
                         break
 
                 if what.getUid() == self.myPostOffice.myPlayer.getUid():
-                    # if self.fernet.decrypt(turn.ip).decode() == self.ip:
-                    # print("Mio turno: " + self.myPostOffice.myPlayer.getUsername())
                     self.turn_button["state"] = "normal"
                     self.IS_IT_MY_TURN = True
                     self.unlockButtons()  # unlock the buttons when it's my turn
-                    # if miei hp <= 0 endturn + interfaccia "you died"
-
                     if self.myPostOffice.myPlayer.getHp() <= 0:
                         if self.myPostOffice.myPlayer.getUsertype() == 1:  # monster
                             self.entry_message.config(
@@ -209,18 +193,6 @@ class Client():
                     print_message_array).replace("  ", " ")
                 self.entry_message.config(text=print_message)
                 self.state = mode
-
-    '''def __listen_for_turns(self):
-        while True:
-            while len(self.myPostOffice.turnList) > self.history_index_turns:
-                turn = self.myPostOffice.turnList[self.history_index]
-                actor = player.transformFromJSON(turn.json_str)
-                self.history_index_turns += 1
-                if actor.getUid() == self.myPostOffice.myPlayer.getUid():
-                    print("MY TURN!")
-                    self.unlockButtons()
-                    self.turn_button["state"] = "normal"
-                    # TODO: gestire quando uno si disconnette mentre è il suo turno'''
 
     def __listen_for_finish(self):
         while not self.GAME_STARTED:
@@ -425,17 +397,6 @@ class Client():
         self.block_button.configure(command=block)
         heal = partial(self.heal_single, self.myPostOffice.myPlayer)
         self.heal_button.configure(command=heal)
-        '''else:
-            # #print("ASSIGNED HERO")
-            self.monsterRef = self.myPostOffice.players[0]
-            attack = partial(self.mapFuncToButtons,
-                             self.attack_single, "ATTACK")
-            self.attack_button.configure(command=attack)
-            block = partial(self.mapFuncToButtons,
-                            self.block_single, "BLOCK FOR")
-            self.block_button.configure(command=block)
-            heal = partial(self.mapFuncToButtons, self.heal_single, "HEAL")
-            self.heal_button.configure(command=heal)'''
 
     def send_start_game(self):
         # if i'm the host i can start the game  TODO: make it so that only hosts can use this button and maybe delete it after use (?)
