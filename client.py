@@ -65,7 +65,7 @@ class Client():
             while len(self.myPostOffice.turnList) > self.history_index_turns:
                 turn = self.myPostOffice.turnList[self.history_index]
                 self.history_index_turns += 1
-                print("TURNO - ", turn)
+                #print("TURNO - ", turn)
                 if self.myPostOffice.isFinished == True:
                     break
                 what = player.transformFromJSON(turn.json_str)
@@ -76,12 +76,12 @@ class Client():
                     # list of all types of users. If there is no monster the heroes win by default.
                     # NORMAL END GAME HANDLER (ONLY 1 PLAYER WITH MORE THAN 0 HP)
                     if len(self.myPostOffice.playersCheck) <= 1:
-                        print(self.myPostOffice.playersCheck[0].getUsername())
+                        #print(self.myPostOffice.playersCheck[0].getUsername())
                         self.isStartedGame = False
                         self.TERMINATE = True
                         self.myPostOffice.SendFinishGame(
                             self.myPostOffice.playersCheck[0].getUsername())
-                        print("GAME FINISHED"+" should send " + self.myPostOffice.playersCheck[0].getUsername()+" to FinishGame")
+                        #print("GAME FINISHED"+" should send " + self.myPostOffice.playersCheck[0].getUsername()+" to FinishGame")
                         break
 
                 if what.getUid() == self.myPostOffice.myPlayer.getUid():
@@ -119,7 +119,7 @@ class Client():
         while True:
             while len(self.myPostOffice.peers_actions) < len(self.peers) + 1:
                 time.sleep(0.5)
-            print("completing turn")
+            #print("completing turn")
             for action in self.peers_actions:
                 actor = player.transformFromJSON(action.sender)
                 victim = player.transformFromJSON(action.reciever)
@@ -208,9 +208,9 @@ class Client():
                     numberAlive = 0
                     break
             # print("Number of players alive: ", numberAlive)
-        print("Game is finished BY LISTEN FOR FINISH")
+        #print("Game is finished BY LISTEN FOR FINISH")
         for finish in self.myPostOffice.FinishStream():
-            print("Game is finished ", finish.fin)
+            #print("Game is finished ", finish.fin)
             self.entry_message.config(text=finish.fin + " won the game")
             break
 

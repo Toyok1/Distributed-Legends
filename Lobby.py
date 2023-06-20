@@ -70,7 +70,7 @@ class Lobby(lobby_auth_rpc.LobbyAuthServer):
         lobby_remove = None
         for lobby in self.list_of_lobby:
             if lobby['id_lobby'] == lobby_id:
-                print('---listPlayers', lobby['listPlayers'])
+                #print('---listPlayers', lobby['listPlayers'])
                 lobby['listPlayers'].remove(player)
                 if len(lobby['listPlayers']) == 0:
                     lobby_remove = lobby
@@ -103,7 +103,7 @@ class Lobby(lobby_auth_rpc.LobbyAuthServer):
             self.dict_of_starters[request.id_lobby] = new_user.getUid()
         else:
             self._add_player_to_lobby(request.id_lobby, new_user)
-        print(self.list_of_lobby)
+        #print(self.list_of_lobby)
 
         l = lobby_auth.PlayersList()
         l.list = player.transformFullListIntoJSON(self._get_players_by_lobby_id(
@@ -114,11 +114,9 @@ class Lobby(lobby_auth_rpc.LobbyAuthServer):
     def StartGame(self, request: lobby_auth.PrivateInfo, context):
         playerObj = self._get_player_by_lobby_id(
             request.u_id, request.id_lobby)
-        print('player', playerObj, 'id_lobby',
-              request.id_lobby, 'lobbys', self.list_of_lobby)
+        #print('player', playerObj, 'id_lobby', request.id_lobby, 'lobbys', self.list_of_lobby)
         self._remove_player_from_list(request.id_lobby, playerObj)
-        print('player 2', playerObj, 'id_lobby 2',
-              request.id_lobby, 'lobbys 2', self.list_of_lobby)
+        #print('player 2', playerObj, 'id_lobby 2', request.id_lobby, 'lobbys 2', self.list_of_lobby)
         return lobby_auth.Empty_Lobby()
 
     def GetPlayerList(self, request: lobby_auth.PrivateInfo, context):
@@ -144,7 +142,7 @@ if __name__ == '__main__':
         Lobby(os.getpid()), server)
     server.add_insecure_port('[::]:' + str(portAuth))
     server.start()
-    print('Lobby started. Listening...')
+    #print('Lobby started. Listening...')
     # print("Connect here: ", get('https://api.ipify.org').content.decode('utf8'))
     try:
         while True:

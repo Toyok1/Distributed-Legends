@@ -51,9 +51,9 @@ class ClientController(rpc.ClientControllerServicer):
             # print("Player List", self.listUser)
             for user in [x for x in self.listUser if x.getUid() != self.Uid]:
                 if float(time.time()) - float(user.getPingTime()) > 10.0:
-                    print("lost ping with ", user)
+                    #print("lost ping with ", user)
                     self.listUser.remove(user)
-                    print("NEW LIST ", self.listUser)
+                    #print("NEW LIST ", self.listUser)
                     m = clientController.PlayerMessage()
                     m.json_str = player.transformIntoJSON(user)
                     self.terminated.append(m)
@@ -161,7 +161,7 @@ if __name__ == '__main__':
         max_workers=1000))
     rpc.add_ClientControllerServicer_to_server(
         ClientController(os.getpid()), server)
-    print('Starting my clientController. Listening...')
+    #print('Starting my clientController. Listening...')
     server.add_insecure_port('[::]:' + str(portGame))
     server.start()
     try:

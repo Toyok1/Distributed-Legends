@@ -87,7 +87,7 @@ class Player:
         # hero
 
     def obtainBlock(self, amount: int = 0):
-        print("BLOCKING")
+        #print("BLOCKING")
         new_b = self.getBlock() + amount
         self.setBlock(new_b)
 

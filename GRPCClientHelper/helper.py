@@ -72,9 +72,7 @@ class PostOffice:
 
     def __listen_for_terminated(self):
         try:
-            print('inizio a leggere i terminati')
             for disconnected in self.conn_my_local_service.TerminatedStream(clientController.Empty()):
-                print('terminated ', disconnected)
                 target = player.transformFromJSON(disconnected.json_str)
                 for p in self.players:
                     if p.getUid() == target.getUid():
@@ -82,7 +80,6 @@ class PostOffice:
 
         except grpc._channel._Rendezvous as err:
             print(err)
-            print("disconnect from enemy")
 
     def __pinging_lobby(self):
         try:
@@ -188,18 +185,18 @@ class PostOffice:
 
     def StartGame(self):
         l = self.conn_auth.GetPlayerList(self.privateInfo)
-        print('List', l)
+        #print('List', l)
         self.players = player.transformFullListFromJSON(l.list)
         self.playersCheck = self.players.copy()
         mess = clientController.PlayerMessage()
         mess.json_str = player.transformFullListIntoJSON(self.players)
         self.conn_my_local_service.RecieveList(mess)
-        print('NewList', self.players)
+        #print('NewList', self.players)
         self.__set_user_list()
 
         # avviare le connessioni con grpc ai giocatori presenti in players tramite il campo ip
         for p in [x for x in self.players if x.getUid() != self.myPlayer.getUid()]:
-            print(p, " ----------------------------------------------")
+            #print(p, " ----------------------------------------------")
             channel = grpc.insecure_channel(p.getIp() + ':' + str(portGame))
             self.conn_enemies.append(
                 clientController_rpc.ClientControllerStub(channel))
@@ -245,23 +242,23 @@ class PostOffice:
 
     def _listen_enemy_action_stream(self, enemy):
         try:
-            print('inizio a leggere gli attacchi')
+            #print('inizio a leggere gli attacchi')
             for action in enemy.ActionStream(clientController.Empty()):
-                print('enemy', action)
+                #print('enemy', action)
                 self.actionList.append(action)
         except grpc._channel._Rendezvous as err:
             print(err)
-            print("disconnected from enemy - action")
+            #print("disconnected from enemy - action")
 
     def _listen_enemy_turn_stream(self, enemy):
         try:
-            print('inizio a leggere gli attacchi')
+            #print('inizio a leggere gli attacchi')
             for turn in enemy.TurnStream(clientController.Empty()):
-                print('turn', turn)
+                #print('turn', turn)
                 self.turnList.append(turn)
         except grpc._channel._Rendezvous as err:
             print(err)
-            print("disconnected from enemy - turns")
+            #print("disconnected from enemy - turns")
 
     def ActionStream(self):
         return self.conn_my_local_service.ActionStream(clientController.Empty())
