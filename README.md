@@ -18,7 +18,7 @@ The interface is built using tkinter because it's complete and easy to set up wh
 
 The application features a shared list of players, built using a custom class called Player that contains all of the information needed to identify a player like its username, its unique id, and the values for health and block, to name a few. Every peer handles events by using listener functions (called \_\_listen\_for\_ and the thing they listen for like actions or turn endings) that are connected to stream functions so that when an even gets put into its respective list it is broadcasted to all other peers and they handle it accordingly. For example when one player ends its turn every peer receives the message containing the next turn's player and they check to see if it is their turn before unlocking all buttons thus letting the user play that turn. The actions a player can take in a turn are: attacking, healing, blocking and ending the turn. After a player has performed any of the first three actions he can only end their turn but that button is always active in case the player wants, for some reason, to skip their turn. Whenever one of these actions (one per turn) is performed, an Action message is generated using the player who sends the action, the ''victim" of it, the amount and the type, for example in a turn a player decides to attack the monster so he uses the appropriate action and automatically a value gets randomly chosen and the action is sent to every peer so that they can properly adjust the labels for health and eventually block.
 
-## Start Game
+## Start Game - Instructions
 
 On a cloud machine or in your local pc run the lobby Auth service run:
 ````
