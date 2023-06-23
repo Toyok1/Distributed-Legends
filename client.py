@@ -417,12 +417,12 @@ class Client():
             self.turn_button["state"] = "normal"
 
     def loadImgs(self):
-        path = "src/"+"sprites/"
+        path = "../src/"+"sprites/"
         # for image in os.listdir(path):
         images = ["0.png", "1.png", "2.png", "3.png"]
         for image in images:
             self.imgs.append(ImageTk.PhotoImage(file=path+image))
-        pathMirror = "src/"+"sprites/mirrored/"
+        pathMirror = "../src/"+"sprites/mirrored/"
         # for image in os.listdir(path):
         images = ["0.png", "1.png", "2.png", "3.png"]
         for image in images:
@@ -436,7 +436,7 @@ class Client():
         self.master_frame.rowconfigure(0, weight=1, minsize=420)
         self.master_frame.rowconfigure(1, weight=1, minsize=180)
 
-        bgPhoto = ImageTk.PhotoImage(Image.open("./src/Background2.png"))
+        bgPhoto = ImageTk.PhotoImage(Image.open("../src/Background2.png"))
 
         self.background_frame = tk.Frame(
             self.master_frame, bg="", width=480, height=420)
@@ -594,7 +594,7 @@ if __name__ == '__main__':
     root.resizable(False, False)
     root.geometry("960x600")
     try:
-        root.iconbitmap("./src/icon/icon.ico")
+        root.iconbitmap("../src/icon/icon.ico")
     except:
         pass
     MainWindow = tk.Frame(root, width=300, height=300)
@@ -617,6 +617,7 @@ if __name__ == '__main__':
 
     while True:
         userType = userTypeDialog.UserTypeDialog(root)
+        print('userType', userType.result)
         root.wait_window(userType)
         if userType.result != None:
             break
