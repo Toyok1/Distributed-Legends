@@ -1,0 +1,1 @@
+kill $(ps aux | grep 'lobby.py' | awk '{print $2}')

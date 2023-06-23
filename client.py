@@ -603,6 +603,8 @@ if __name__ == '__main__':
     username = None
     # "localhost"  # None when we deploy but for testing localhost is fine
 
+    threading.Thread(target=lambda: os.system( "(python ../clientController.py || python3 ../clientController.py) "), daemon=True).start()
+
     while username is None or username.strip() == "":
         # retrieve a username so we can distinguish all the different clients
         username = simpledialog.askstring(
@@ -629,6 +631,7 @@ if __name__ == '__main__':
         if re.match(r"^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$", serverAddress):
             break
     isHost = 1
+    
     root.deiconify()  # Makes the window visible again
     # this starts a client and thus a thread which keeps connection to server open
     c = Client(username, userType.result if userType_int is None else userType_int,

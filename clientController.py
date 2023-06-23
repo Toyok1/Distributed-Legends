@@ -153,7 +153,7 @@ if __name__ == '__main__':
         max_workers=1000))
     rpc.add_ClientControllerServicer_to_server(
         ClientController(os.getpid()), server)
-    #print('Starting my clientController. Listening...')
+    print('Starting my clientController. Listening...')
     server.add_insecure_port('[::]:' + str(portGame))
     server.start()
     try:

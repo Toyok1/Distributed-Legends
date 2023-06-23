@@ -140,8 +140,8 @@ if __name__ == '__main__':
         Lobby(os.getpid()), server)
     server.add_insecure_port('[::]:' + str(portAuth))
     server.start()
-    #print('Lobby started. Listening...')
-    # print("Connect here: ", get('https://api.ipify.org').content.decode('utf8'))
+    print('Lobby started. Listening...')
+    print("Connect here: ", get('https://api.ipify.org').content.decode('utf8'))
     try:
         while True:
             time.sleep(86400)
