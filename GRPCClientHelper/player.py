@@ -64,19 +64,13 @@ class Player:
         return self.ping_time
 
     def takeDamage(self, amount):  # all >0
-        # se ho blocco, devo togliere prima quello, altrimenti prendo danni alla salute.
-        # #print(amount, "AMOUNT")
-        # #print(self.getHp() - amount, "POSSIBLE NEW AMOUNT")
         if self.getBlock() > 0:
-            # 20 hp, 10 block , attack 15     ==  15 - 10 > 0
             amount = amount - int(self.getBlock())
             self.setBlock(0 if amount > 0 else abs(amount))
             if amount > 0:
-                self.setHp(0 if self.getHp() - amount <
-                           0 else self.getHp() - amount)
+                self.setHp(0 if self.getHp() - amount < 0 else self.getHp() - amount)
         else:
-            self.setHp(0 if self.getHp() - amount <
-                       0 else self.getHp() - amount)
+            self.setHp(0 if self.getHp() - amount < 0 else self.getHp() - amount)
 
     def heal(self, amount):
         n_h = int(self.getHp()) + int(amount)

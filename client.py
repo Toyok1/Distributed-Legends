@@ -65,7 +65,6 @@ class Client():
             while len(self.myPostOffice.turnList) > self.history_index_turns:
                 turn = self.myPostOffice.turnList[self.history_index]
                 self.history_index_turns += 1
-                #print("TURNO - ", turn)
                 if self.myPostOffice.isFinished == True:
                     break
                 what = player.transformFromJSON(turn.json_str)
@@ -76,12 +75,10 @@ class Client():
                     # list of all types of users. If there is no monster the heroes win by default.
                     # NORMAL END GAME HANDLER (ONLY 1 PLAYER WITH MORE THAN 0 HP)
                     if len(self.myPostOffice.playersCheck) <= 1:
-                        #print(self.myPostOffice.playersCheck[0].getUsername())
                         self.isStartedGame = False
                         self.TERMINATE = True
                         self.myPostOffice.SendFinishGame(
                             self.myPostOffice.playersCheck[0].getUsername())
-                        #print("GAME FINISHED"+" should send " + self.myPostOffice.playersCheck[0].getUsername()+" to FinishGame")
                         break
 
                 if what.getUid() == self.myPostOffice.myPlayer.getUid():

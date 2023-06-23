@@ -80,9 +80,7 @@ class ClientController(rpc.ClientControllerServicer):
             else:
                 user.setHp(50)
 
-    def SendAction(self, request: clientController.Action, context):
-        # TODO: comment for testing manual comunication
-        
+    def SendAction(self, request: clientController.Action, context):        
         self.actions.append(request)
         return clientController.Empty()
 
@@ -107,8 +105,6 @@ class ClientController(rpc.ClientControllerServicer):
                 yield n
 
     def EndTurn(self, request: clientController.PlayerMessage, context):
-        # n = request
-        # pl = player.transformFromJSON(n.json_str)
         self.turns.append(request)
         return clientController.Empty()
 
@@ -135,7 +131,6 @@ class ClientController(rpc.ClientControllerServicer):
         return clientController.Empty()
 
     def FinishGame(self, request_iterator, context):
-        # #print("FinishGame called")
         self.isStartedGame = False
         n = clientController.EndNote()
         n.fin = request_iterator.fin
@@ -143,15 +138,12 @@ class ClientController(rpc.ClientControllerServicer):
         return clientController.Empty()
 
     def FinishStream(self, request_iterator, context):
-        # #print("FinishStream called")
-
         lastindex = 0
         # For every client a infinite loop starts (in gRPC's own managed thread)
         while True:
             # Check if there are any new messages
             while len(self.finish) > lastindex:
                 n = self.finish[lastindex]
-                # #print(n)
                 lastindex += 1
                 yield n
 

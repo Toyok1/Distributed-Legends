@@ -123,14 +123,6 @@ class PostOffice:
                 ping.id = self.privateInfo.u_id
                 pong = peer.SendPing(ping)
                 uid_sender = pong.u_id_sender
-                '''recievedList = player.transformFullListFromJSON(
-                    pong.list_players)
-                for p in recievedList:
-                    if p.getUid() not in [u.getUid() for u in self.players]:
-                        self.players.remove(
-                            [q for q in self.players if p.getUid() == q.getUid()][0])'''
-                # self.players = player.transformFullListFromJSON(pong.list_players)
-                # print(pong)
                 time.sleep(2.5)
             except:
                 for p in self.players:
@@ -157,7 +149,7 @@ class PostOffice:
             elif pong.message == "SET_FINISHED":
                 self.isFinished = True
             else:
-                raise Exception("Disconnect from the server!")
+                raise Exception("Disconnect from the game!")
 
     def ManualUpdateList(self, my_id):
         self.__create_ping(0, my_id)
@@ -171,7 +163,6 @@ class PostOffice:
 
     def SendEndTurn(self):
         mess_et = clientController.PlayerMessage()
-        # #print(last_turn, "last_turn")
         for i in range(len(self.players)):
             if self.players[i].getHp() < 1:
                 self.playersCheck.remove(self.players[i])
@@ -185,7 +176,6 @@ class PostOffice:
 
     def StartGame(self):
         l = self.conn_auth.GetPlayerList(self.privateInfo)
-        #print('List', l)
         self.players = player.transformFullListFromJSON(l.list)
         self.playersCheck = self.players.copy()
         mess = clientController.PlayerMessage()
@@ -196,15 +186,10 @@ class PostOffice:
 
         # avviare le connessioni con grpc ai giocatori presenti in players tramite il campo ip
         for p in [x for x in self.players if x.getUid() != self.myPlayer.getUid()]:
-            #print(p, " ----------------------------------------------")
             channel = grpc.insecure_channel(p.getIp() + ':' + str(portGame))
             self.conn_enemies.append(
                 clientController_rpc.ClientControllerStub(channel))
 
-        # testing manual comunication write
-        # self._send_tmp_attack()
-
-        # testing manual comunication read
         for enemy in self.conn_enemies:
             callback = partial(self.__ping_peer, enemy)
             threading.Thread(target=callback, daemon=True).start()
@@ -226,39 +211,21 @@ class PostOffice:
             mess_et.json_str = player.transformIntoJSON(self.myPlayer)
             self.conn_my_local_service.EndTurn(mess_et)
             self.turnList.append(mess_et)
-        # self.conn_auth.close()
         return
-
-    # testing
-    '''def _send_tmp_attack(self):
-        n = clientController.Action()
-        n.sender = 'pippo attacca'
-        n.reciever = 'pluto prende'
-        n.amount = 5
-        n.action_type = 1
-        self.conn_my_local_service.SendAction(n)
-        print('azione scritta correttamente')'''
-    # testing
 
     def _listen_enemy_action_stream(self, enemy):
         try:
-            #print('inizio a leggere gli attacchi')
             for action in enemy.ActionStream(clientController.Empty()):
-                #print('enemy', action)
                 self.actionList.append(action)
         except grpc._channel._Rendezvous as err:
             print(err)
-            #print("disconnected from enemy - action")
 
     def _listen_enemy_turn_stream(self, enemy):
         try:
-            #print('inizio a leggere gli attacchi')
             for turn in enemy.TurnStream(clientController.Empty()):
-                #print('turn', turn)
                 self.turnList.append(turn)
         except grpc._channel._Rendezvous as err:
             print(err)
-            #print("disconnected from enemy - turns")
 
     def ActionStream(self):
         return self.conn_my_local_service.ActionStream(clientController.Empty())
@@ -289,8 +256,6 @@ class PostOffice:
                     p.obtainBlock(int(n.amount))
                 else:
                     print("OPS! Error with the actions.")
-
-        # #print(n)
         self.conn_my_local_service.SendAction(n)
 
     def SendFinishGame(self, f):
@@ -300,45 +265,3 @@ class PostOffice:
 
     def FinishStream(self):
         return self.conn_my_local_service.FinishStream(clientController.Empty())
-
-    # TODO: connettersi agli altri player dopo l'autenticazione
-    '''
-    def __connect_to_peers(self, req_ip: list, req_id: list):
-        print("connecting to peers")
-        # time.sleep(2)
-        for i in range(len(req_ip)):
-            if req_ip[i] != get('https://api.ipify.org').text:
-                # print("connecting to peer", req_ip[i])
-                channel = grpc.insecure_channel(req_ip[i]+":"+str(8080))
-                stub = rpc.ChatServerStub(channel)
-                self.peers_connections.append(stub)
-                # print("connected to peer", req_ip[i])
-                self.__updateUserList(req_ip[i], req_id[i])
-                # TODO start pinging the peers
-
-        # print("connected to all peers")
-        for i in range(len(self.peers_connections)):
-            threading.Thread(target=self.__listen_for_action_stream, args=(
-                self.peers[i],), daemon=True).start()
-        print(self.peers_connections)
-
-    def __listen_for_action_stream(self, peer):
-        print("listening for action stream")
-        for action in peer.ActionStream(chat.Empty()):
-            print("action received from peer", action)
-            n = action
-            pl = player.transformFromJSON(n.reciever)
-            am = n.amount
-            action_type = n.action_type
-            for p in self.listUser:
-                if p.getUid() == pl.getUid():
-                    if action_type == 0:
-                        p.takeDamage(am)
-                    elif action_type == 1:
-                        p.heal(am)
-                    elif action_type == 2:
-                        p.block(am)
-                    else:
-                        print("OPS! Error with the actions.")
-            self.peers_actions.append(action)
-    '''

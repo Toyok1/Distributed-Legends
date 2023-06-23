@@ -19,8 +19,6 @@ class Lobby(lobby_auth_rpc.LobbyAuthServer):
     def __init__(self, pId):
         self.pId = pId
         self.fernet = Fernet(key)
-        self.listUser = []
-        self.start_stream = []
         self.list_of_lobby = []
         self.dict_of_starters = {}
         threading.Thread(target=self.__clean_lobbies, daemon=True).start()
