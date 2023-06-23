@@ -116,7 +116,7 @@ class Client():
         while True:
             while len(self.myPostOffice.peers_actions) < len(self.peers) + 1:
                 time.sleep(0.5)
-            #print("completing turn")
+            # print("completing turn")
             for action in self.peers_actions:
                 actor = player.transformFromJSON(action.sender)
                 victim = player.transformFromJSON(action.reciever)
@@ -205,9 +205,9 @@ class Client():
                     numberAlive = 0
                     break
             # print("Number of players alive: ", numberAlive)
-        #print("Game is finished BY LISTEN FOR FINISH")
+        # print("Game is finished BY LISTEN FOR FINISH")
         for finish in self.myPostOffice.FinishStream():
-            #print("Game is finished ", finish.fin)
+            # print("Game is finished ", finish.fin)
             self.entry_message.config(text=finish.fin + " won the game")
             break
 
@@ -215,7 +215,7 @@ class Client():
         self.turn_button["state"] = "disabled"
         self.lockButtons()
         for p in self.myPostOffice.players:
-                self.adjustLabels(p)
+            self.adjustLabels(p)
         self.myPostOffice.SendEndTurn()
 
     def closeGame(self):
@@ -235,7 +235,7 @@ class Client():
         self.heal_button["state"] = "normal"
         self.block_button["state"] = "normal"
         self.lavagnetta = []
-        #self.entry_message.config(text="Do something!")
+        # self.entry_message.config(text="Do something!")
 
     def attack_single(self, attacked):
         if self.myPostOffice.myPlayer.getUsertype() == 0:
@@ -257,7 +257,8 @@ class Client():
         amount = values["attack"] + random.randint(-5, 5)
         self.assignButtons()
         self.lockButtons()
-        self.entry_message.config(text="You are Attacking " + attacked.getUsername()+ " for " + str(amount) + " points!")
+        self.entry_message.config(
+            text="You are Attacking " + attacked.getUsername() + " for " + str(amount) + " points!")
         self.myPostOffice.SendAction(
             self.myPostOffice.myPlayer, attacked, actionType=0, amount=amount)
 
@@ -277,12 +278,13 @@ class Client():
         else:
             # default
             values = {"attack": 0, "heal": 0, "block": 0}
-        
+
         amount = values["heal"] + random.randint(-5, 5)
 
         self.assignButtons()
         self.lockButtons()
-        self.entry_message.config(text="You are recovering from damages" + " for " + str(amount) + " points!")
+        self.entry_message.config(
+            text="You are recovering from damages" + " for " + str(amount) + " points!")
         self.myPostOffice.SendAction(
             self.myPostOffice.myPlayer, healed, actionType=1, amount=amount)
 
@@ -302,12 +304,13 @@ class Client():
         else:
             # default
             values = {"attack": 0, "heal": 0, "block": 0}
-        
+
         self.assignButtons()
         self.lockButtons()
-        self.entry_message.config(text="Preparing to block" +  " for " + str(values["block"]) + " points!")
+        self.entry_message.config(
+            text="Preparing to block" + " for " + str(values["block"]) + " points!")
         self.myPostOffice.SendAction(
-            self.myPostOffice.myPlayer, blocked, actionType=2,amount=values["block"])
+            self.myPostOffice.myPlayer, blocked, actionType=2, amount=values["block"])
 
     def adjustLabels(self, pl):
         # #print("CHANGING LABELS FOR ", pl)
@@ -563,9 +566,8 @@ class Client():
         self.entry_message = tk.Label(self.text_frame, bd=5)
 
         if self.isHost == True:
-            my_str = "Welcome to the game! Have your friends connect to your global IP: " + \
-                "idk figure it out" + \
-                " \nor your local IP: " + self.get_local_ip()  # TODO: CHANGE THIS URGENTLY
+            my_str = "Welcome to the game! Have your friends connect to your local IP: " + \
+                self.get_local_ip()
             self.entry_message.config(text=my_str)
         else:
             self.entry_message.config(text="Welcome to the game!")
