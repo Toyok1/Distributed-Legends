@@ -22,7 +22,7 @@ class PostOffice:
 
     def __init__(self, address: str, user, u_id, id_lobby, user_type):
         # get('https://api.ipify.org').content.decode('utf8')
-        self.ip = self._get_local_ip()
+        self.ip = get('https://api.ipify.org').content.decode('utf8')
         self.fernet = Fernet(key)
         self.encIp = self.fernet.encrypt(self.ip.encode())
         self.actionList = []
